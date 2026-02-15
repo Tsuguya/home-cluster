@@ -1,3 +1,8 @@
+kubectl:
+  image:
+    repository: registry.k8s.io/kubectl
+    tag: "1.35.0"
+
 initContainers:
   - name: velero-plugin-for-aws
     image: velero/velero-plugin-for-aws:v1.12.0

@@ -31,3 +31,5 @@ server:
         sectionName: https
     hostnames:
       - argocd.tgy.io
+    rules:
+      - {}

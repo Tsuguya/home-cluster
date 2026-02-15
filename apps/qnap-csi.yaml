@@ -13,7 +13,7 @@ spec:
         releaseName: qnap-trident
         kubeVersion: "1.32.0"
         valueFiles:
-          - $values/apps/qnap-csi/values.yaml
+          - $values/helm-values/qnap-csi/values.yaml
     - repoURL: https://github.com/Tsuguya/home-cluster.git
       targetRevision: main
       ref: values

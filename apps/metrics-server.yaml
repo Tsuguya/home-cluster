@@ -12,7 +12,7 @@ spec:
       helm:
         releaseName: metrics-server
         valueFiles:
-          - $values/apps/metrics-server/values.yaml
+          - $values/helm-values/metrics-server/values.yaml
     - repoURL: https://github.com/Tsuguya/home-cluster.git
       targetRevision: main
       ref: values

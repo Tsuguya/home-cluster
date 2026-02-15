@@ -12,7 +12,7 @@ spec:
       helm:
         releaseName: external-dns
         valueFiles:
-          - $values/apps/external-dns/values.yaml
+          - $values/helm-values/external-dns/values.yaml
     - repoURL: https://github.com/Tsuguya/home-cluster.git
       targetRevision: main
       ref: values

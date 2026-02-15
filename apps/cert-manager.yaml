@@ -12,7 +12,7 @@ spec:
       helm:
         releaseName: cert-manager
         valueFiles:
-          - $values/apps/cert-manager/values.yaml
+          - $values/helm-values/cert-manager/values.yaml
     - repoURL: https://github.com/Tsuguya/home-cluster.git
       targetRevision: main
       ref: values

@@ -12,7 +12,7 @@ spec:
       helm:
         releaseName: cilium
         valueFiles:
-          - $values/apps/cilium/values.yaml
+          - $values/helm-values/cilium/values.yaml
     - repoURL: https://github.com/Tsuguya/home-cluster.git
       targetRevision: main
       ref: values

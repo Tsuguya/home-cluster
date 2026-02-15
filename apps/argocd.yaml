@@ -12,7 +12,7 @@ spec:
       helm:
         releaseName: argocd
         valueFiles:
-          - $values/apps/argocd/values.yaml
+          - $values/helm-values/argocd/values.yaml
     - repoURL: https://github.com/Tsuguya/home-cluster.git
       targetRevision: main
       ref: values

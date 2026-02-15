@@ -44,3 +44,23 @@ kubectl create secret generic onepassword-token \
 ```
 
 app-of-apps が `apps/onepassword.yaml` を検出し、Operator を自動デプロイする。
+
+## 4. Gateway API CRDs
+
+Cilium は Gateway API CRDs を同梱しないため、手動でインストールする。
+Cilium の `gatewayAPI.enabled: true` はこの CRDs が存在する前提で動作する。
+
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+```
+
+## 5. DNS レコード
+
+Gateway の LoadBalancer IP を確認し、Cloudflare で A レコードを作成する。
+
+```bash
+kubectl get gateway -n gateway main-gateway
+```
+
+Cloudflare DNS に以下を追加（Proxy OFF）:
+- `argocd.tgy.io` → `<GATEWAY_LB_IP>`

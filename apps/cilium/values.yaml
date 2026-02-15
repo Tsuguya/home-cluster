@@ -29,6 +29,12 @@ securityContext:
       - SYS_ADMIN
       - SYS_RESOURCE
 
+gatewayAPI:
+  enabled: true
+
+l2announcements:
+  enabled: true
+
 hubble:
   enabled: true
   relay:

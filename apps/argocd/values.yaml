@@ -7,7 +7,27 @@ configs:
           - CiliumIdentity
         clusters:
           - "*"
+  params:
+    server.insecure: "true"
 
 repoServer:
   livenessProbe:
     enabled: false
+
+server:
+  httproute:
+    enabled: true
+    parentRefs:
+      - name: main-gateway
+        namespace: gateway
+        sectionName: https
+    hostnames:
+      - argocd.tgy.io
+  grpcroute:
+    enabled: true
+    parentRefs:
+      - name: main-gateway
+        namespace: gateway
+        sectionName: https
+    hostnames:
+      - argocd.tgy.io

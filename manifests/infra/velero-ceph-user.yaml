@@ -1,8 +1,0 @@
-apiVersion: ceph.rook.io/v1
-kind: CephObjectStoreUser
-metadata:
-  name: velero
-  namespace: rook-ceph
-spec:
-  store: ceph-objectstore
-  displayName: Velero Backup

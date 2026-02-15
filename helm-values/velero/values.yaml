@@ -1,0 +1,47 @@
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.12.0
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+configuration:
+  features: EnableCSI
+
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: velero-backup
+      credential:
+        name: velero-s3-credentials
+        key: cloud
+      config:
+        region: us-east-1
+        s3ForcePathStyle: "true"
+        s3Url: http://rook-ceph-rgw-ceph-objectstore.rook-ceph:80
+
+  volumeSnapshotLocation:
+    - name: default
+      provider: csi
+
+credentials:
+  useSecret: true
+  name: velero-s3-credentials
+
+schedules:
+  daily-backup:
+    disabled: false
+    schedule: "0 2 * * *"
+    template:
+      ttl: 720h
+      includedNamespaces:
+        - "*"
+      snapshotMoveData: false
+    useOwnerReferencesInBackup: false
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi

@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: snapshot-controller
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://piraeus.io/helm-charts/
+      chart: snapshot-controller
+      targetRevision: "3.0.6"
+      helm:
+        releaseName: snapshot-controller
+        valueFiles:
+          - $values/helm-values/snapshot-controller/values.yaml
+    - repoURL: https://github.com/Tsuguya/home-cluster.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

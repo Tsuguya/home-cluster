@@ -1,0 +1,8 @@
+apiVersion: objectbucket.io/v1alpha1
+kind: ObjectBucketClaim
+metadata:
+  name: velero-backup
+  namespace: rook-ceph
+spec:
+  bucketName: velero-backup
+  storageClassName: ceph-bucket

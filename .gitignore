@@ -1,0 +1,6 @@
+# Secrets
+*.sops.yaml
+
+# Editor
+.vscode/
+*.swp

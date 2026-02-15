@@ -54,7 +54,26 @@ Cilium の `gatewayAPI.enabled: true` はこの CRDs が存在する前提で動
 kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
 ```
 
-## 5. DNS レコード
+## 5. Google OAuth クライアント (ArgoCD Dex)
+
+ArgoCD の Google ログインに使用する OAuth クライアントを作成する。
+
+### GCP Console
+
+1. [APIs & Services](https://console.cloud.google.com/apis/credentials) > OAuth consent screen > Internal
+2. Credentials > Create OAuth Client ID > Web application
+   - Authorized redirect URIs: `https://argocd.tgy.io/api/dex/callback`
+3. Client ID と Client Secret を控える
+
+### 1Password
+
+1. `home-cluster` vault に新規アイテム作成（名前: `argocd-google-oauth`）
+2. フィールド追加:
+   - `clientID` — GCP の Client ID
+   - `clientSecret` — GCP の Client Secret
+3. アイテム ID を確認し、`manifests/infra/argocd-google-oauth.yaml` の `<ITEM_ID>` を置換
+
+## 6. DNS レコード
 
 Gateway の LoadBalancer IP を確認し、Cloudflare で A レコードを作成する。
 

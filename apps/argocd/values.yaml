@@ -7,8 +7,40 @@ configs:
           - CiliumIdentity
         clusters:
           - "*"
+    url: https://argocd.tgy.io
+    dex.config: |
+      connectors:
+        - type: oidc
+          id: google
+          name: Google
+          config:
+            issuer: https://accounts.google.com
+            clientID: $GOOGLE_CLIENT_ID
+            clientSecret: $GOOGLE_CLIENT_SECRET
+            requestedScopes:
+              - openid
+              - profile
+              - email
+  rbac:
+    policy.csv: |
+      g, tsuguya.toma@tgy.io, role:admin
+    policy.default: ""
+    scopes: "[email]"
   params:
     server.insecure: "true"
+
+dex:
+  env:
+    - name: GOOGLE_CLIENT_ID
+      valueFrom:
+        secretKeyRef:
+          name: argocd-google-oauth
+          key: clientID
+    - name: GOOGLE_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: argocd-google-oauth
+          key: clientSecret
 
 repoServer:
   livenessProbe:

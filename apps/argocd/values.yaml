@@ -24,12 +24,4 @@ server:
     hostnames:
       - argocd.tgy.io
   grpcroute:
-    enabled: true
-    parentRefs:
-      - name: main-gateway
-        namespace: gateway
-        sectionName: https
-    hostnames:
-      - argocd.tgy.io
-    rules:
-      - {}
+    enabled: false

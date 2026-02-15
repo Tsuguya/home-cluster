@@ -1,3 +1,5 @@
+logFormat: json
+
 sources:
   - gateway-httproute
 

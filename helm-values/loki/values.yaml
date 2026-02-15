@@ -1,0 +1,54 @@
+deploymentMode: SingleBinary
+
+singleBinary:
+  replicas: 1
+  persistence:
+    storageClass: ceph-block
+    size: 10Gi
+  extraArgs:
+    - -config.expand-env=true
+  extraEnvFrom:
+    - secretRef:
+        name: loki-s3-credentials
+
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+  storage:
+    type: s3
+    s3:
+      endpoint: http://rook-ceph-rgw-ceph-objectstore.rook-ceph:80
+      region: us-east-1
+      accessKeyId: ${AWS_ACCESS_KEY_ID}
+      secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
+      s3ForcePathStyle: true
+      insecure: true
+    bucketNames:
+      chunks: loki
+      ruler: loki
+      admin: loki
+
+gateway:
+  enabled: true
+
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false

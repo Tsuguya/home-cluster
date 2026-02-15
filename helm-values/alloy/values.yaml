@@ -1,0 +1,73 @@
+alloy:
+  configMap:
+    content: |
+      // Kubernetes pod discovery
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      // Relabel: add metadata + derive log file path
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+          target_label  = "__path__"
+          separator     = "/"
+          replacement   = "/var/log/pods/*$1/$2/*.log"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_node_name"]
+          target_label  = "node"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          target_label  = "app"
+        }
+      }
+
+      // Match log files on host
+      local.file_match "pods" {
+        path_targets = discovery.relabel.pods.output
+      }
+
+      // Read log files
+      loki.source.file "pods" {
+        targets    = local.file_match.pods.targets
+        forward_to = [loki.process.pods.receiver]
+      }
+
+      // Parse CRI format + forward
+      loki.process "pods" {
+        stage.cri {}
+        forward_to = [loki.write.default.receiver]
+      }
+
+      // Kubernetes cluster events
+      loki.source.kubernetes_events "events" {
+        log_format = "json"
+        forward_to = [loki.write.default.receiver]
+      }
+
+      // Write to Loki
+      loki.write "default" {
+        endpoint {
+          url = "http://loki-gateway.monitoring.svc:80/loki/api/v1/push"
+        }
+      }
+
+  mounts:
+    varlog: true

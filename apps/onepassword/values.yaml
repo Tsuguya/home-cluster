@@ -1,0 +1,10 @@
+# Connect Server は不要（Service Account Token 方式）
+connect:
+  create: false
+
+operator:
+  create: true
+  authMethod: service-account
+  serviceAccountToken:
+    name: onepassword-token   # Step 1 で手動作成した secret
+  watchNamespace: []           # 全 namespace 監視

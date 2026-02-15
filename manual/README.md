@@ -73,7 +73,24 @@ ArgoCD の Google ログインに使用する OAuth クライアントを作成�
    - `clientSecret` — GCP の Client Secret
 3. アイテム ID を確認し、`manifests/infra/argocd-google-oauth.yaml` の `<ITEM_ID>` を置換
 
-## 6. DNS レコード
+## 6. QNAP CSI Backend 認証
+
+QNAP NAS の認証情報を 1Password で管理する。
+
+### 1Password
+
+1. `home-cluster` vault に新規アイテム作成（名前: `qnap-backend-secret`）
+2. フィールド追加:
+   - `username` — QNAP ユーザー名
+   - `password` — QNAP パスワード
+   - `storageAddress` — `192.168.0.240`
+   - `https` — `true`
+   - `port` — `443`
+3. アイテム ID を確認し、`manifests/storage/backend.yaml` の `<ITEM_ID>` を置換
+
+app-of-apps が `apps/qnap-csi.yaml` と `apps/qnap-csi-config.yaml` を検出し、CSI Operator・Backend・StorageClass を自動デプロイする。
+
+## 7. DNS レコード
 
 Gateway の LoadBalancer IP を確認し、Cloudflare で A レコードを作成する。
 

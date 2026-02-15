@@ -1,0 +1,9 @@
+tridentOperator:
+  image: qnapsystem/qnap-csi-operator:v1.6.0
+  cgiServerImage: qnapsystem/qnap-csi-backend-qts-sidecar:v1.6.0
+  imagePullPolicy: IfNotPresent
+  logLevel: info
+
+tridentOrchestrator:
+  image: qnapsystem/qnap-csi:v1.6.0
+  debug: false

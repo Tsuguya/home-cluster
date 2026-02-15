@@ -1,0 +1,23 @@
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: qnap-backend-secret
+  namespace: trident
+spec:
+  itemPath: "vaults/home-cluster/items/eywofuw62sg7tepkfotabtrywu"
+---
+apiVersion: trident.qnap.io/v1
+kind: TridentBackendConfig
+metadata:
+  name: qnap-backend
+  namespace: trident
+spec:
+  version: 1
+  storageDriverName: qnap-nas
+  backendName: qnap
+  credentials:
+    name: qnap-backend-secret
+  storage:
+    - serviceLevel: "ストレージプール1"
+      labels:
+        performance: default

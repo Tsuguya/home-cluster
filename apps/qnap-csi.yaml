@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: qnap-csi
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/qnap-dev/QNAP-CSI-PlugIn.git
+      targetRevision: main
+      path: Helm/trident
+      helm:
+        releaseName: qnap-trident
+        valueFiles:
+          - $values/apps/qnap-csi/values.yaml
+    - repoURL: https://github.com/Tsuguya/home-cluster.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trident
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

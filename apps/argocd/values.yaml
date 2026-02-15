@@ -51,7 +51,9 @@ server:
   httproute:
     enabled: true
     parentRefs:
-      - name: main-gateway
+      - group: gateway.networking.k8s.io
+        kind: Gateway
+        name: main-gateway
         namespace: gateway
         sectionName: https
     hostnames:

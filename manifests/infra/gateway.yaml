@@ -15,7 +15,9 @@ spec:
       tls:
         mode: Terminate
         certificateRefs:
-          - name: tgy-io-tls
+          - group: ""
+            kind: Secret
+            name: tgy-io-tls
       allowedRoutes:
         namespaces:
           from: All

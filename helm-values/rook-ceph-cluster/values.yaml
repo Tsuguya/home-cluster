@@ -1,0 +1,159 @@
+operatorNamespace: rook-ceph
+
+cephClusterSpec:
+  dataDirHostPath: /var/lib/rook
+
+  # --- Mon: CP nodes ---
+  mon:
+    count: 3
+    allowMultiplePerNode: false
+
+  # --- Mgr: CP nodes ---
+  mgr:
+    count: 2
+    allowMultiplePerNode: false
+    modules:
+      - name: pg_autoscaler
+        enabled: true
+
+  dashboard:
+    enabled: true
+    ssl: false
+
+  # --- Component placement ---
+  placement:
+    mon:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: Exists
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+    mgr:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: Exists
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+
+  # --- OSD: worker nodes only, explicit device ---
+  storage:
+    useAllNodes: false
+    useAllDevices: false
+    nodes:
+      - name: wn-01
+        devices:
+          - name: /dev/disk/by-partlabel/u-osd-data
+      - name: wn-02
+        devices:
+          - name: /dev/disk/by-partlabel/u-osd-data
+      - name: wn-03
+        devices:
+          - name: /dev/disk/by-partlabel/u-osd-data
+
+  # --- Resource limits (considering wn-02 has only 8GB RAM) ---
+  resources:
+    osd:
+      limits:
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 2Gi
+    mon:
+      limits:
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+    mgr:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+  # --- OSD memory target ---
+  cephConfig:
+    global:
+      osd_memory_target: "2147483648"
+
+# --- Block Pool + StorageClass ---
+cephBlockPools:
+  - name: ceph-block
+    spec:
+      failureDomain: host
+      replicated:
+        size: 3
+    storageClass:
+      enabled: true
+      name: ceph-block
+      isDefault: false
+      reclaimPolicy: Delete
+      allowVolumeExpansion: true
+      parameters:
+        imageFormat: "2"
+        imageFeatures: layering
+
+# --- CephFS + StorageClass ---
+cephFileSystems:
+  - name: ceph-filesystem
+    spec:
+      metadataPool:
+        replicated:
+          size: 3
+      dataPools:
+        - name: data0
+          failureDomain: host
+          replicated:
+            size: 3
+      metadataServer:
+        activeCount: 1
+        activeStandby: true
+        resources:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 512Mi
+    storageClass:
+      enabled: true
+      name: ceph-filesystem
+      reclaimPolicy: Delete
+      allowVolumeExpansion: true
+
+# --- Object Store (S3) + StorageClass ---
+cephObjectStores:
+  - name: ceph-objectstore
+    spec:
+      metadataPool:
+        failureDomain: host
+        replicated:
+          size: 3
+      dataPool:
+        failureDomain: host
+        replicated:
+          size: 3
+      gateway:
+        port: 80
+        instances: 1
+        resources:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 500m
+            memory: 512Mi
+    storageClass:
+      enabled: true
+      name: ceph-bucket
+      reclaimPolicy: Delete
+      parameters:
+        region: us-east-1

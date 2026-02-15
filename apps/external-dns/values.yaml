@@ -1,0 +1,20 @@
+sources:
+  - gateway-httproute
+
+provider:
+  name: cloudflare
+
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-api-token
+        key: credential
+
+policy: sync
+registry: txt
+txtOwnerId: home-cluster
+txtPrefix: _externaldns.
+
+domainFilters:
+  - tgy.io

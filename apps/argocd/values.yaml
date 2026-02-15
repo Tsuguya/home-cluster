@@ -1,0 +1,13 @@
+configs:
+  cm:
+    resource.exclusions: |
+      - apiGroups:
+          - cilium.io
+        kinds:
+          - CiliumIdentity
+        clusters:
+          - "*"
+
+repoServer:
+  livenessProbe:
+    enabled: false

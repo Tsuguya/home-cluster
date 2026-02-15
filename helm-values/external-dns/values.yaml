@@ -16,7 +16,5 @@ registry: txt
 txtOwnerId: home-cluster
 txtPrefix: _externaldns.
 
-logLevel: debug
-
 domainFilters:
   - tgy.io

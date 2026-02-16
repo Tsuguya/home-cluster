@@ -6,7 +6,7 @@ metadata:
 spec:
   instances: 2
   storage:
-    storageClass: ceph-block
+    storageClass: qnap-iscsi
     size: 10Gi
   bootstrap:
     initdb:

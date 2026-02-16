@@ -10,14 +10,13 @@ spec:
     size: 10Gi
   bootstrap:
     initdb:
-      database: grafana
       owner: app
       secret:
         name: shared-pg-credentials
       postInitSQL:
         - "CREATE ROLE grafana LOGIN;"
         - "CREATE ROLE argo LOGIN;"
-        - "ALTER DATABASE grafana OWNER TO grafana;"
+        - "CREATE DATABASE grafana OWNER grafana;"
         - "CREATE DATABASE argo OWNER argo;"
   managed:
     roles:

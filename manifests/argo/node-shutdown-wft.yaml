@@ -36,7 +36,9 @@ spec:
             arguments:
               parameters:
                 - name: ips
-                  value: "{{steps.resolve.outputs.result}}"
+                  value: "{{steps.resolve.outputs.parameters.ips}}"
+                - name: exec-node
+                  value: "{{steps.resolve.outputs.parameters.exec-node}}"
     - name: resolve-nodes
       inputs:
         parameters:
@@ -45,24 +47,48 @@ spec:
         image: alpine:3.21
         command: [sh]
         source: |
-          resolve() {
-            case "$1" in
-              cp-01) echo -n "192.168.0.230" ;;
-              cp-02) echo -n "192.168.0.231" ;;
-              cp-03) echo -n "192.168.0.232" ;;
-              wn-01) echo -n "192.168.0.200" ;;
-              wn-02) echo -n "192.168.0.201" ;;
-              wn-03) echo -n "192.168.0.202" ;;
-              all-workers) echo -n "192.168.0.200,192.168.0.201,192.168.0.202" ;;
-              all) echo -n "192.168.0.230,192.168.0.231,192.168.0.232,192.168.0.200,192.168.0.201,192.168.0.202" ;;
-              *) echo -n "$1" ;;
-            esac
-          }
-          echo -n "$(resolve "{{inputs.parameters.nodes}}")"
+          TARGET="{{inputs.parameters.nodes}}"
+
+          # Resolve target to IPs
+          case "$TARGET" in
+            cp-01) IPS="192.168.0.230" ;;
+            cp-02) IPS="192.168.0.231" ;;
+            cp-03) IPS="192.168.0.232" ;;
+            wn-01) IPS="192.168.0.200" ;;
+            wn-02) IPS="192.168.0.201" ;;
+            wn-03) IPS="192.168.0.202" ;;
+            all-workers) IPS="192.168.0.200,192.168.0.201,192.168.0.202" ;;
+            all) IPS="192.168.0.230,192.168.0.231,192.168.0.232,192.168.0.200,192.168.0.201,192.168.0.202" ;;
+            *) IPS="$TARGET" ;;
+          esac
+
+          # Pick a node NOT in the shutdown target to execute from
+          case "$TARGET" in
+            cp-*) EXEC="wn-01" ;;
+            *)    EXEC="cp-01" ;;
+          esac
+
+          echo -n "$IPS" > /tmp/ips
+          echo -n "$EXEC" > /tmp/exec-node
+      outputs:
+        parameters:
+          - name: ips
+            valueFrom:
+              path: /tmp/ips
+          - name: exec-node
+            valueFrom:
+              path: /tmp/exec-node
     - name: shutdown-nodes
       inputs:
         parameters:
           - name: ips
+          - name: exec-node
+      nodeSelector:
+        kubernetes.io/hostname: "{{inputs.parameters.exec-node}}"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
       container:
         image: ghcr.io/siderolabs/talosctl:v1.12.4
         command: [/talosctl]

@@ -5,12 +5,18 @@ metadata:
   namespace: gateway
 spec:
   parentRefs:
-    - name: main-gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: main-gateway
       sectionName: http
   hostnames:
     - "*.infra.tgy.io"
   rules:
-    - filters:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
         - type: RequestRedirect
           requestRedirect:
             scheme: https

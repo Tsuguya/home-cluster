@@ -5,12 +5,21 @@ metadata:
   namespace: rook-ceph
 spec:
   parentRefs:
-    - name: main-gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: main-gateway
       namespace: gateway
       sectionName: https
   hostnames:
     - ceph.infra.tgy.io
   rules:
-    - backendRefs:
-        - name: rook-ceph-mgr-dashboard
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: rook-ceph-mgr-dashboard
           port: 7000
+          weight: 1

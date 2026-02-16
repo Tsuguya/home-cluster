@@ -12,7 +12,7 @@ configs:
         clusters:
           - "*"
     admin.enabled: "false"
-    url: https://argocd.tgy.io
+    url: https://argocd.infra.tgy.io
     dex.config: |
       connectors:
         - type: oidc
@@ -61,6 +61,6 @@ server:
         namespace: gateway
         sectionName: https
     hostnames:
-      - argocd.tgy.io
+      - argocd.infra.tgy.io
   grpcroute:
     enabled: false

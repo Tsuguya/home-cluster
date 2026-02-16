@@ -9,7 +9,7 @@ spec:
       namespace: gateway
       sectionName: https
   hostnames:
-    - ceph.tgy.io
+    - ceph.infra.tgy.io
   rules:
     - backendRefs:
         - name: rook-ceph-mgr-dashboard

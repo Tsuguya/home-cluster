@@ -1,5 +1,6 @@
 controller:
   persistence:
+    archive: true
     postgresql:
       host: shared-pg-rw.database.svc
       port: 5432

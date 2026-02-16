@@ -1,0 +1,7 @@
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: grafana-sso
+  namespace: argocd
+spec:
+  itemPath: "vaults/home-cluster/items/nqmuxldvcyroavl3air37p4i24"

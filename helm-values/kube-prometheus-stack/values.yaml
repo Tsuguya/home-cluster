@@ -23,6 +23,20 @@ grafana:
       name: grafana
     server:
       root_url: https://grafana.infra.tgy.io
+    auth:
+      disable_login_form: true
+    auth.generic_oauth:
+      enabled: true
+      name: Dex
+      client_id: grafana-sso
+      scopes: openid profile email
+      auth_url: https://argocd.infra.tgy.io/api/dex/auth
+      token_url: https://argocd.infra.tgy.io/api/dex/token
+      api_url: https://argocd.infra.tgy.io/api/dex/userinfo
+      allowed_domains: tgy.io
+      allow_sign_up: true
+      auto_login: true
+      role_attribute_path: "'Admin'"
   envValueFrom:
     GF_DATABASE_USER:
       secretKeyRef:
@@ -32,6 +46,10 @@ grafana:
       secretKeyRef:
         name: grafana-pg-credentials
         key: password
+    GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
+      secretKeyRef:
+        name: grafana-sso
+        key: clientSecret
   additionalDataSources:
     - name: Loki
       type: loki

@@ -15,4 +15,18 @@ controller:
 
 server:
   authModes:
-    - server
+    - sso
+  sso:
+    enabled: true
+    issuer: https://argocd.infra.tgy.io/api/dex
+    clientId:
+      name: argo-workflows-sso
+      key: clientID
+    clientSecret:
+      name: argo-workflows-sso
+      key: clientSecret
+    redirectUrl: https://argo.infra.tgy.io/oauth2/callback
+    scopes:
+      - openid
+      - profile
+      - email

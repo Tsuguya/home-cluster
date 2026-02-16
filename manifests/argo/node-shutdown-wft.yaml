@@ -1,0 +1,74 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: node-shutdown
+  namespace: argo
+spec:
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: nodes
+        description: "Comma-separated node names (cp-01,wn-01,...) or IPs"
+  volumes:
+    - name: talosconfig
+      secret:
+        secretName: talosconfig
+  templates:
+    - name: main
+      steps:
+        - - name: resolve
+            template: resolve-nodes
+            arguments:
+              parameters:
+                - name: nodes
+                  value: "{{workflow.parameters.nodes}}"
+        - - name: shutdown
+            template: shutdown-nodes
+            arguments:
+              parameters:
+                - name: ips
+                  value: "{{steps.resolve.outputs.result}}"
+    - name: resolve-nodes
+      inputs:
+        parameters:
+          - name: nodes
+      script:
+        image: alpine:3.21
+        command: [sh]
+        source: |
+          resolve() {
+            case "$1" in
+              cp-01) echo -n "192.168.0.230" ;;
+              cp-02) echo -n "192.168.0.231" ;;
+              cp-03) echo -n "192.168.0.232" ;;
+              wn-01) echo -n "192.168.0.200" ;;
+              wn-02) echo -n "192.168.0.201" ;;
+              wn-03) echo -n "192.168.0.202" ;;
+              *) echo -n "$1" ;;
+            esac
+          }
+          INPUT="{{inputs.parameters.nodes}}"
+          RESULT=""
+          IFS=','
+          for node in $INPUT; do
+            ip=$(resolve "$node")
+            RESULT="${RESULT:+$RESULT,}$ip"
+          done
+          echo -n "$RESULT"
+    - name: shutdown-nodes
+      inputs:
+        parameters:
+          - name: ips
+      container:
+        image: ghcr.io/siderolabs/talosctl:v1.12.4
+        command: [/talosctl]
+        args:
+          - shutdown
+          - --nodes
+          - "{{inputs.parameters.ips}}"
+          - --talosconfig
+          - /talos/config
+        volumeMounts:
+          - name: talosconfig
+            mountPath: /talos
+            readOnly: true

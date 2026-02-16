@@ -6,10 +6,10 @@ controller:
       database: argo
       tableName: argo_workflows
       userNameSecret:
-        name: shared-pg-credentials
+        name: argo-pg-credentials
         key: username
       passwordSecret:
-        name: shared-pg-credentials
+        name: argo-pg-credentials
         key: password
 
 server:

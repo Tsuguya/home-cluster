@@ -26,7 +26,13 @@ HTTP requests are redirected to HTTPS (301).
 
 | Database | Owner | Used by |
 |---|---|---|
-| grafana | app | Grafana (kube-prometheus-stack) |
-| argo | app | Argo Workflows |
+| grafana | grafana | Grafana (kube-prometheus-stack) |
+| argo | argo | Argo Workflows |
 
-Credentials: 1Password "Shared PostgreSQL" → OnePasswordItem per namespace.
+Credentials: 1Password per service → OnePasswordItem per namespace.
+
+| 1Password Item | User | Secret Name | Namespaces |
+|---|---|---|---|
+| Shared PostgreSQL | app | shared-pg-credentials | database |
+| Grafana PostgreSQL | grafana | grafana-pg-credentials | database, monitoring |
+| Argo PostgreSQL | argo | argo-pg-credentials | database, argo |

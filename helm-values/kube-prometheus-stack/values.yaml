@@ -26,11 +26,11 @@ grafana:
   envValueFrom:
     GF_DATABASE_USER:
       secretKeyRef:
-        name: shared-pg-credentials
+        name: grafana-pg-credentials
         key: username
     GF_DATABASE_PASSWORD:
       secretKeyRef:
-        name: shared-pg-credentials
+        name: grafana-pg-credentials
         key: password
   additionalDataSources:
     - name: Loki

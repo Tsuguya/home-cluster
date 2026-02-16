@@ -15,4 +15,19 @@ spec:
       secret:
         name: shared-pg-credentials
       postInitSQL:
-        - "CREATE DATABASE argo OWNER app;"
+        - "CREATE ROLE grafana LOGIN;"
+        - "CREATE ROLE argo LOGIN;"
+        - "ALTER DATABASE grafana OWNER TO grafana;"
+        - "CREATE DATABASE argo OWNER argo;"
+  managed:
+    roles:
+      - name: grafana
+        ensure: present
+        login: true
+        passwordSecret:
+          name: grafana-pg-credentials
+      - name: argo
+        ensure: present
+        login: true
+        passwordSecret:
+          name: argo-pg-credentials

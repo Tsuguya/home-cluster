@@ -22,11 +22,15 @@ spec:
     roles:
       - name: grafana
         ensure: present
+        connectionLimit: -1
+        inherit: true
         login: true
         passwordSecret:
           name: grafana-pg-credentials
       - name: argo
         ensure: present
+        connectionLimit: -1
+        inherit: true
         login: true
         passwordSecret:
           name: argo-pg-credentials

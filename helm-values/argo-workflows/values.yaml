@@ -1,0 +1,17 @@
+controller:
+  persistence:
+    postgresql:
+      host: shared-pg-rw.database.svc
+      port: 5432
+      database: argo
+      tableName: argo_workflows
+      userNameSecret:
+        name: shared-pg-credentials
+        key: username
+      passwordSecret:
+        name: shared-pg-credentials
+        key: password
+
+server:
+  authModes:
+    - server

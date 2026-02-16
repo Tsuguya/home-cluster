@@ -1,0 +1,49 @@
+prometheus:
+  prometheusSpec:
+    retention: 14d
+    resources:
+      limits:
+        memory: 2Gi
+      requests:
+        cpu: 200m
+        memory: 1Gi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: ceph-block
+          resources:
+            requests:
+              storage: 20Gi
+
+grafana:
+  grafana.ini:
+    database:
+      type: postgres
+      host: shared-pg-rw.database.svc:5432
+      name: grafana
+    server:
+      root_url: https://grafana.infra.tgy.io
+  envValueFrom:
+    GF_DATABASE_USER:
+      secretKeyRef:
+        name: shared-pg-credentials
+        key: username
+    GF_DATABASE_PASSWORD:
+      secretKeyRef:
+        name: shared-pg-credentials
+        key: password
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki-gateway.monitoring.svc:80
+      access: proxy
+      isDefault: false
+
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi

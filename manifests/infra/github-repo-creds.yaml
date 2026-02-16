@@ -4,4 +4,4 @@ metadata:
   name: github-repo-creds
   namespace: argocd
 spec:
-  itemPath: "vaults/home-cluster/items/p6uza46c4jgchfs7dps76c55yy"
+  itemPath: "vaults/am37jjl6mctaze6xsytbxdhu5y/items/n666vcpnctcteyctoxjufawgfy"

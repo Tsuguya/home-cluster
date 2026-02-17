@@ -16,7 +16,7 @@ prometheus:
               storage: 20Gi
 
 grafana:
-  adminPassword: prom-operator
+  adminPassword: prom-operator # unused: login form disabled, Dex SSO only. Pinned to prevent OutOfSync.
   grafana.ini:
     database:
       type: postgres

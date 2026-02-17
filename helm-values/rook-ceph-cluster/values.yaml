@@ -1,3 +1,6 @@
+toolbox:
+  enabled: true
+
 operatorNamespace: rook-ceph
 
 cephClusterSpec:

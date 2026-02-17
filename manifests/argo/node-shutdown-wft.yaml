@@ -38,8 +38,8 @@ spec:
               parameters:
                 - name: ips
                   value: "{{steps.resolve.outputs.parameters.ips}}"
-                - name: exec-node
-                  value: "{{steps.resolve.outputs.parameters.exec-node}}"
+                - name: exec-role
+                  value: "{{steps.resolve.outputs.parameters.exec-role}}"
     - name: resolve-nodes
       inputs:
         parameters:
@@ -63,33 +63,38 @@ spec:
             *) IPS="$TARGET" ;;
           esac
 
-          # Pick a node NOT in the shutdown target to execute from
+          # Pick exec role: run on the opposite role from target
           case "$TARGET" in
-            cp-*) EXEC="wn-01" ;;
-            *)    EXEC="cp-01" ;;
+            cp-*) EXEC_ROLE="worker" ;;
+            *)    EXEC_ROLE="control-plane" ;;
           esac
 
           echo -n "$IPS" > /tmp/ips
-          echo -n "$EXEC" > /tmp/exec-node
+          echo -n "$EXEC_ROLE" > /tmp/exec-role
       outputs:
         parameters:
           - name: ips
             valueFrom:
               path: /tmp/ips
-          - name: exec-node
+          - name: exec-role
             valueFrom:
-              path: /tmp/exec-node
+              path: /tmp/exec-role
     - name: shutdown-nodes
       inputs:
         parameters:
           - name: ips
-          - name: exec-node
-      nodeSelector:
-        kubernetes.io/hostname: "{{inputs.parameters.exec-node}}"
+          - name: exec-role
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: '{{= inputs.parameters["exec-role"] == "control-plane" ? "Exists" : "DoesNotExist" }}'
       container:
         image: ghcr.io/siderolabs/talosctl:v1.12.4
         command: [/talosctl]

@@ -1,4 +1,8 @@
 alloy:
+  tolerations:
+    - key: memory-constrained
+      operator: Exists
+      effect: NoSchedule
   configMap:
     content: |
       // Kubernetes pod discovery

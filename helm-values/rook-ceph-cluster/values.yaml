@@ -25,6 +25,11 @@ cephClusterSpec:
 
   # --- Component placement ---
   placement:
+    all:
+      tolerations:
+        - key: memory-constrained
+          operator: Exists
+          effect: NoSchedule
     mon:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:

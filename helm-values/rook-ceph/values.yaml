@@ -1,1 +1,7 @@
 logLevel: INFO
+
+csi:
+  pluginTolerations:
+    - key: memory-constrained
+      operator: Exists
+      effect: NoSchedule

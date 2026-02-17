@@ -16,6 +16,7 @@ prometheus:
               storage: 20Gi
 
 grafana:
+  adminPassword: prom-operator
   grafana.ini:
     database:
       type: postgres

@@ -93,6 +93,8 @@ cephClusterSpec:
   cephConfig:
     global:
       osd_memory_target: "2147483648"
+      osd_pool_default_pg_num: "8"
+      osd_pool_default_pgp_num: "8"
 
 # --- Block Pool + StorageClass ---
 cephBlockPools:

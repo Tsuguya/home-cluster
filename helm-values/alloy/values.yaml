@@ -1,8 +1,4 @@
 alloy:
-  tolerations:
-    - key: memory-constrained
-      operator: Exists
-      effect: NoSchedule
   configMap:
     content: |
       // Kubernetes pod discovery
@@ -75,3 +71,9 @@ alloy:
 
   mounts:
     varlog: true
+
+controller:
+  tolerations:
+    - key: memory-constrained
+      operator: Exists
+      effect: NoSchedule

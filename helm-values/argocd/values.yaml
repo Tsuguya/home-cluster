@@ -3,6 +3,8 @@ global:
     format: json
 
 configs:
+  secret:
+    githubSecret: "47092f7304c0d8a46ec6cc33c6b0b7a639129450"
   cm:
     resource.exclusions: |
       - apiGroups:

@@ -29,6 +29,10 @@ securityContext:
       - SYS_ADMIN
       - SYS_RESOURCE
 
+encryption:
+  enabled: true
+  type: wireguard
+
 gatewayAPI:
   enabled: true
 

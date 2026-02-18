@@ -27,6 +27,8 @@ spec:
               protocol: TCP
             - port: "7844"
               protocol: TCP
+            - port: "7844"
+              protocol: UDP
     - toEndpoints:
         - matchLabels:
             app.kubernetes.io/name: argocd-server

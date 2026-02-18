@@ -1,4 +1,11 @@
 controller:
+  workflowDefaults:
+    spec:
+      ttlStrategy:
+        secondsAfterSuccess: 86400
+        secondsAfterFailure: 259200
+      podGC:
+        strategy: OnPodCompletion
   persistence:
     archive: true
     postgresql:

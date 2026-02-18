@@ -4,6 +4,7 @@ metadata:
   name: node-shutdown
   namespace: argo
 spec:
+  activeDeadlineSeconds: 300
   serviceAccountName: workflow-executor
   entrypoint: main
   arguments:

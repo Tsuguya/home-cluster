@@ -62,7 +62,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 | **alertmanager** | prometheus → 9093/8080 | DNS |
 | **grafana** | ingress → 3000; prometheus → 3000 | DNS, kube-apiserver, prometheus:9090, loki-gateway:8080, shared-pg (database):5432, HTTPS 443 |
 | **kube-state-metrics** | prometheus → 8080 | DNS, kube-apiserver |
-| **prometheus-operator** | kube-apiserver, prometheus → 10250 | DNS, kube-apiserver |
+| **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | DNS, kube-apiserver |
 | **loki** | loki-gateway, loki-canary → 3100 | DNS, kube-apiserver, ceph-rgw (rook-ceph):8080, self:7946 (memberlist) |
 | **loki-gateway** | grafana, alloy, loki-canary → 8080 | DNS, loki:3100 |
 | **loki-canary** | (none) | DNS, loki-gateway:8080, loki:3100 |

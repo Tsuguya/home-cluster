@@ -1,0 +1,62 @@
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: home-cloudflare-github-webhook
+  namespace: argo
+spec:
+  itemPath: "vaults/home-cluster/items/home-cloudflare-github-webhook"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: github-webhook
+  namespace: argo
+spec:
+  github:
+    push:
+      owner: Tsuguya
+      repository: home-cloudflare
+      webhook:
+        endpoint: /push
+        port: "12000"
+        method: POST
+      events:
+        - push
+      webhookSecret:
+        name: home-cloudflare-github-webhook
+        key: credential
+      active: false
+      contentType: json
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: tofu-cloudflare
+  namespace: argo
+spec:
+  dependencies:
+    - name: push
+      eventSourceName: github-webhook
+      eventName: push
+      filters:
+        script: |-
+          return string.find(event, ".tf", 1, true) ~= nil
+  triggers:
+    - template:
+        name: tofu-apply
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: tofu-cloudflare-
+                namespace: argo
+              spec:
+                workflowTemplateRef:
+                  name: tofu-cloudflare
+                arguments:
+                  parameters:
+                    - name: command
+                      value: apply

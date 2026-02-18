@@ -1,0 +1,117 @@
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: cloudflare-tofu-credentials
+  namespace: argo
+spec:
+  itemPath: "vaults/home-cluster/items/cloudflare-tofu-credentials"
+---
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: github-pat-tofu
+  namespace: argo
+spec:
+  itemPath: "vaults/home-cluster/items/github-pat-tofu"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tofu-executor
+  namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tofu-executor
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-edit
+subjects:
+  - kind: ServiceAccount
+    name: tofu-executor
+    namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tofu-state-manager
+  namespace: argo
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "create", "update", "patch", "delete"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "create", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tofu-state-manager
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tofu-state-manager
+subjects:
+  - kind: ServiceAccount
+    name: tofu-executor
+    namespace: argo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: tofu-cloudflare
+  namespace: argo
+spec:
+  activeDeadlineSeconds: 600
+  serviceAccountName: tofu-executor
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: command
+        default: apply
+        enum:
+          - plan
+          - apply
+  templates:
+    - name: main
+      container:
+        image: ghcr.io/opentofu/opentofu:1.11.5
+        command: [sh, -c]
+        args:
+          - |
+            set -euo pipefail
+            apk add --no-cache git
+            git clone --depth 1 https://${GITHUB_TOKEN}@github.com/Tsuguya/home-cloudflare.git /tmp/repo
+            cd /tmp/repo
+            tofu init
+            if [ "{{workflow.parameters.command}}" = "apply" ]; then
+              tofu apply -auto-approve
+            else
+              tofu plan
+            fi
+        env:
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-pat-tofu
+                key: credential
+          - name: CLOUDFLARE_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-tofu-credentials
+                key: api_token
+          - name: TF_VAR_cloudflare_account_id
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-tofu-credentials
+                key: account_id
+          - name: TF_VAR_cloudflare_zone_id
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-tofu-credentials
+                key: zone_id

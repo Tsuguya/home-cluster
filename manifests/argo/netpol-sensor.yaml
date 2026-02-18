@@ -1,0 +1,37 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: sensor
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      sensor-name: tofu-cloudflare
+  ingress: []
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            eventbus-name: default
+      toPorts:
+        - ports:
+            - port: "4222"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: argo-workflows-server
+      toPorts:
+        - ports:
+            - port: "2746"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver

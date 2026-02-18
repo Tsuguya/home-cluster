@@ -1,0 +1,55 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: eventbus
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      eventbus-name: default
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            eventsource-name: github-webhook
+        - matchLabels:
+            sensor-name: tofu-cloudflare
+      toPorts:
+        - ports:
+            - port: "4222"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            eventbus-name: default
+      toPorts:
+        - ports:
+            - port: "6222"
+              protocol: TCP
+            - port: "7777"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: argo-events-controller-manager
+      toPorts:
+        - ports:
+            - port: "8222"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            eventbus-name: default
+      toPorts:
+        - ports:
+            - port: "6222"
+              protocol: TCP
+            - port: "7777"
+              protocol: TCP

@@ -1,0 +1,30 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: events-controller
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: argo-events-controller-manager
+  ingress: []
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+    - toEndpoints:
+        - matchLabels:
+            eventbus-name: default
+      toPorts:
+        - ports:
+            - port: "8222"
+              protocol: TCP

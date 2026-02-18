@@ -1,0 +1,41 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: workflow-pods
+  namespace: argo
+spec:
+  endpointSelector:
+    matchExpressions:
+      - key: workflows.argoproj.io/workflow
+        operator: Exists
+  ingress: []
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+    - toCIDR:
+        - 0.0.0.0/0
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toCIDR:
+        - 192.168.0.200/32
+        - 192.168.0.201/32
+        - 192.168.0.202/32
+        - 192.168.0.230/32
+        - 192.168.0.231/32
+        - 192.168.0.232/32
+      toPorts:
+        - ports:
+            - port: "50000"
+              protocol: TCP

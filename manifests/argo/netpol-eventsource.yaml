@@ -1,0 +1,38 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: eventsource
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      eventsource-name: github-webhook
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: cloudflared
+            io.kubernetes.pod.namespace: argocd
+      toPorts:
+        - ports:
+            - port: "12000"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            eventbus-name: default
+      toPorts:
+        - ports:
+            - port: "4222"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver

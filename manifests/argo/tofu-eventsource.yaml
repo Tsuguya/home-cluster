@@ -38,6 +38,8 @@ metadata:
   name: tofu-cloudflare
   namespace: argo
 spec:
+  template:
+    serviceAccountName: workflow-executor
   dependencies:
     - name: push
       eventSourceName: github-webhook

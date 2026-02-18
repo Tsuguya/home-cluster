@@ -73,8 +73,8 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 | Component | Ingress | Egress |
 |---|---|---|
 | **mon** | all ceph daemons, CSI ctrlplugins → 3300/6789; remote-node → 3300/6789 | DNS, mon (self):3300/6789, mgr:6800 |
-| **mgr** | all ceph daemons → 6800; ingress → 7000 (dashboard); prometheus (monitoring) → 9283 | DNS, mon:3300/6789, mgr (self):6800, osd:6800-6806 |
-| **osd** | osd (self), mgr, mds, rgw, tools → 6800-6806; host/remote-node → 6800-6806 | DNS, mon:3300/6789, mgr:6800, osd (self):6800-6806 |
+| **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; ingress → 7000 (dashboard); prometheus (monitoring) → 9283 | DNS, mon:3300/6789, mgr (self):6800, osd:6800-6806 |
+| **osd** | osd (self), mgr, mds, rgw, tools, csi-rbd-ctrlplugin → 6800-6806; host/remote-node → 6800-6806 | DNS, mon:3300/6789, mgr:6800, osd (self):6800-6806 |
 | **mds** | (none) | DNS, mon:3300/6789, mgr:6800, osd:6800-6806 |
 | **rgw** | loki (monitoring) → 8080 | DNS, mon:3300/6789, mgr:6800, osd:6800-6806 |
 | **operator** | (none) | DNS, kube-apiserver, mon:3300/6789, mgr:6800 |
@@ -82,7 +82,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 | **crashcollector** | (none) | DNS, mon:3300/6789, mgr:6800 |
 | **tools** | (none) | DNS, mon:3300/6789, mgr:6800, osd:6800-6806 |
 | **osd-prepare** | (none) | DNS, kube-apiserver, mon:3300/6789 |
-| **csi-rbd-ctrlplugin** | (none) | DNS, kube-apiserver, mon:3300/6789 |
+| **csi-rbd-ctrlplugin** | (none) | DNS, kube-apiserver, mon:3300/6789, mgr:6800, osd:6800 |
 | **csi-cephfs-ctrlplugin** | (none) | DNS, kube-apiserver, mon:3300/6789 |
 | **csi-controller-manager** | host → 8081 | DNS, kube-apiserver |
 

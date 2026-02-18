@@ -15,6 +15,8 @@ spec:
         - ports:
             - port: "9093"
               protocol: TCP
+            - port: "8080"
+              protocol: TCP
   egress:
     - toEndpoints:
         - matchLabels:

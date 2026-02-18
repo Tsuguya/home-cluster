@@ -23,6 +23,14 @@ spec:
     - toEndpoints:
         - matchLabels:
             app.kubernetes.io/name: loki
+            app.kubernetes.io/component: gateway
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: loki
             app.kubernetes.io/component: single-binary
       toPorts:
         - ports:

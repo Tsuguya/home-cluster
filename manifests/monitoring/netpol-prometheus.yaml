@@ -35,6 +35,8 @@ spec:
         - ports:
             - port: "9093"
               protocol: TCP
+            - port: "8080"
+              protocol: TCP
     - toEndpoints:
         - matchLabels:
             app.kubernetes.io/name: kube-state-metrics
@@ -64,25 +66,15 @@ spec:
         - ports:
             - port: "9153"
               protocol: TCP
-    - toCIDR:
-        - 192.168.0.200/32
-        - 192.168.0.201/32
-        - 192.168.0.202/32
-        - 192.168.0.230/32
-        - 192.168.0.231/32
-        - 192.168.0.232/32
+    - toEntities:
+        - host
+        - remote-node
       toPorts:
         - ports:
             - port: "10250"
               protocol: TCP
             - port: "9100"
               protocol: TCP
-    - toCIDR:
-        - 192.168.0.230/32
-        - 192.168.0.231/32
-        - 192.168.0.232/32
-      toPorts:
-        - ports:
             - port: "2379"
               protocol: TCP
             - port: "10257"

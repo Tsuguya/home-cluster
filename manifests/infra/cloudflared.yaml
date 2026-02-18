@@ -23,6 +23,7 @@ spec:
       labels:
         app: cloudflared
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: cloudflared
           image: cloudflare/cloudflared:2026.2.0

@@ -72,6 +72,9 @@ repoServer:
   livenessProbe:
     enabled: false
 
+redis:
+  automountServiceAccountToken: false
+
 server:
   httproute:
     enabled: true

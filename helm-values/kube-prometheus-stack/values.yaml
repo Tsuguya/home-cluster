@@ -60,6 +60,7 @@ grafana:
 
 alertmanager:
   alertmanagerSpec:
+    automountServiceAccountToken: false
     resources:
       limits:
         memory: 256Mi

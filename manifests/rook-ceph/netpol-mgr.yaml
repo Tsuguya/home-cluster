@@ -25,6 +25,14 @@ spec:
             app: rook-ceph-tools
         - matchLabels:
             app: rook-ceph-exporter
+        - matchLabels:
+            app: rook-ceph.rbd.csi.ceph.com-ctrlplugin
+      toPorts:
+        - ports:
+            - port: "6800"
+              protocol: TCP
+    - fromEntities:
+        - remote-node
       toPorts:
         - ports:
             - port: "6800"

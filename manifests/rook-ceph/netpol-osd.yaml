@@ -19,6 +19,8 @@ spec:
             app: rook-ceph-rgw
         - matchLabels:
             app: rook-ceph-tools
+        - matchLabels:
+            app: rook-ceph.rbd.csi.ceph.com-ctrlplugin
       toPorts:
         - ports:
             - port: "6800"

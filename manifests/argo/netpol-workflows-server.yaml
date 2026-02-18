@@ -38,6 +38,14 @@ spec:
         - kube-apiserver
     - toEndpoints:
         - matchLabels:
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
             app.kubernetes.io/name: argocd-dex-server
             io.kubernetes.pod.namespace: argocd
       toPorts:

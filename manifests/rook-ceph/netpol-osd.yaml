@@ -1,0 +1,102 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: rook-ceph-osd
+  namespace: rook-ceph
+spec:
+  endpointSelector:
+    matchLabels:
+      app: rook-ceph-osd
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: rook-ceph-osd
+        - matchLabels:
+            app: rook-ceph-mgr
+        - matchLabels:
+            app: rook-ceph-mds
+        - matchLabels:
+            app: rook-ceph-rgw
+        - matchLabels:
+            app: rook-ceph-tools
+      toPorts:
+        - ports:
+            - port: "6800"
+              protocol: TCP
+            - port: "6801"
+              protocol: TCP
+            - port: "6802"
+              protocol: TCP
+            - port: "6803"
+              protocol: TCP
+            - port: "6804"
+              protocol: TCP
+            - port: "6805"
+              protocol: TCP
+            - port: "6806"
+              protocol: TCP
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "6800"
+              protocol: TCP
+            - port: "6801"
+              protocol: TCP
+            - port: "6802"
+              protocol: TCP
+            - port: "6803"
+              protocol: TCP
+            - port: "6804"
+              protocol: TCP
+            - port: "6805"
+              protocol: TCP
+            - port: "6806"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rook-ceph-mon
+      toPorts:
+        - ports:
+            - port: "3300"
+              protocol: TCP
+            - port: "6789"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rook-ceph-mgr
+      toPorts:
+        - ports:
+            - port: "6800"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rook-ceph-osd
+      toPorts:
+        - ports:
+            - port: "6800"
+              protocol: TCP
+            - port: "6801"
+              protocol: TCP
+            - port: "6802"
+              protocol: TCP
+            - port: "6803"
+              protocol: TCP
+            - port: "6804"
+              protocol: TCP
+            - port: "6805"
+              protocol: TCP
+            - port: "6806"
+              protocol: TCP

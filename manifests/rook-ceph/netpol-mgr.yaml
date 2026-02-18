@@ -1,0 +1,91 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: rook-ceph-mgr
+  namespace: rook-ceph
+spec:
+  endpointSelector:
+    matchLabels:
+      app: rook-ceph-mgr
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: rook-ceph-mon
+        - matchLabels:
+            app: rook-ceph-mgr
+        - matchLabels:
+            app: rook-ceph-osd
+        - matchLabels:
+            app: rook-ceph-mds
+        - matchLabels:
+            app: rook-ceph-rgw
+        - matchLabels:
+            app: rook-ceph-operator
+        - matchLabels:
+            app: rook-ceph-tools
+        - matchLabels:
+            app: rook-ceph-exporter
+      toPorts:
+        - ports:
+            - port: "6800"
+              protocol: TCP
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "7000"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: prometheus
+            io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "9283"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rook-ceph-mon
+      toPorts:
+        - ports:
+            - port: "3300"
+              protocol: TCP
+            - port: "6789"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rook-ceph-mgr
+      toPorts:
+        - ports:
+            - port: "6800"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rook-ceph-osd
+      toPorts:
+        - ports:
+            - port: "6800"
+              protocol: TCP
+            - port: "6801"
+              protocol: TCP
+            - port: "6802"
+              protocol: TCP
+            - port: "6803"
+              protocol: TCP
+            - port: "6804"
+              protocol: TCP
+            - port: "6805"
+              protocol: TCP
+            - port: "6806"
+              protocol: TCP

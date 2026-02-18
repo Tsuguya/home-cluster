@@ -20,11 +20,17 @@ spec:
             name: infra-tgy-io-tls
       allowedRoutes:
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              gateway-access: "true"
     - name: http
       hostname: "*.infra.tgy.io"
       port: 80
       protocol: HTTP
       allowedRoutes:
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              gateway-access: "true"

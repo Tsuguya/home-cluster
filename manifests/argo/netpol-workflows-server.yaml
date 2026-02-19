@@ -54,9 +54,6 @@ spec:
               protocol: TCP
             - port: "5557"
               protocol: TCP
+    # toPorts omitted to avoid L7 proxy interception (cilium/cilium#41970)
     - toCIDR:
-        - 0.0.0.0/0
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
+        - 192.168.0.190/32

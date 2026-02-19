@@ -97,3 +97,5 @@ spec:
               protocol: TCP
             - port: "10259"
               protocol: TCP
+            - port: "9965"
+              protocol: TCP

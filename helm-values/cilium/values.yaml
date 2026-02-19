@@ -41,6 +41,16 @@ l2announcements:
 
 hubble:
   enabled: true
+  metrics:
+    enabled:
+      - dns:query;ignoreAAAA
+      - drop
+      - tcp
+      - flow
+    serviceMonitor:
+      enabled: true
+    dashboards:
+      enabled: true
   relay:
     enabled: true
   ui:

@@ -66,17 +66,4 @@ server:
     hostnames:
       - argocd.infra.tgy.io
   grpcroute:
-    enabled: true
-    parentRefs:
-      - group: gateway.networking.k8s.io
-        kind: Gateway
-        name: main-gateway
-        namespace: gateway
-        sectionName: https
-    hostnames:
-      - argocd.infra.tgy.io
-    rules:
-      - matches:
-          - method:
-              type: RegularExpression
-              service: ".*"
+    enabled: false

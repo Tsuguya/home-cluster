@@ -17,7 +17,10 @@ data:
         prometheus :9153
 
         # Rewrite internal service discovery to bypass Cilium Gateway (cilium/cilium#41970)
-        rewrite name argocd.infra.tgy.io argocd-server.argocd.svc.cluster.local answer auto
+        rewrite stop {
+            name exact argocd.infra.tgy.io argocd-server.argocd.svc.cluster.local
+            answer auto
+        }
 
         kubernetes cluster.local in-addr.arpa ip6.arpa {
             pods insecure

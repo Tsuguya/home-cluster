@@ -42,7 +42,8 @@ configs:
       g, tsuguya.toma@tgy.io, role:admin
     policy.default: ""
     scopes: "[email]"
-  params: {}
+  params:
+    server.insecure: "true"
 
 dex:
   env:

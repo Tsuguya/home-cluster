@@ -26,6 +26,7 @@ grafana:
       root_url: https://grafana.infra.tgy.io
     auth:
       disable_login_form: true
+      oauth_allow_insecure_email_lookup: true
     auth.generic_oauth:
       enabled: true
       name: Google

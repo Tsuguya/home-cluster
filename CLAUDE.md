@@ -18,7 +18,7 @@ docs/              # 運用ドキュメント
 
 - **新サービス**: `apps/` に Application YAML + `helm-values/` に values.yaml
 - **Secrets**: `manifests/infra/` に OnePasswordItem YAML → 1Password Operator が Secret 自動生成
-- **CNP 変更**: `manifests/<namespace>/netpol-*.yaml` + `docs/network-policies.md` を同時に更新
+- **CNP 変更**: `manifests/<namespace>/netpol-*.yaml` + `docs/network-policies.md` を同時に更新。作業前に `docs/network-policies.md` を読んで通信の全体像を把握すること
 - **SSO 追加**: `docs/sso.md` の手順に従う
 
 ## CiliumNetworkPolicy (CNP) 規約

@@ -7,7 +7,7 @@ ArgoCD (GitOps) 管理外で、手動実行が必要な手順をまとめる。
 
 - Talos Linux ノードが起動済み（VIP: 192.168.0.229）
 - `talosctl` / `kubectl` が VIP に接続可能
-- 1Password vault `home-cluster` に必要なアイテムが作成済み（[1Password Items](#1password-items) 参照）
+- 1Password vault `home-cluster` に構築前アイテムが作成済み（[1Password Items](#1password-items) 参照）
 
 ## 1. Gateway API CRDs
 
@@ -71,21 +71,41 @@ cert-manager, external-dns, rook-ceph, CNPG, Grafana, Loki, Argo Workflows 等�
 
 DNS レコードも external-dns が Gateway の HTTPRoute / TLSRoute から自動作成する（Cloudflare）。
 
+## 5. Loki S3 クレデンシャル（rook-ceph 稼働後）
+
+rook-ceph が稼働し CephObjectStoreUser `loki` が作成されると、
+rook-ceph が S3 アクセスキーを含む Secret `rook-ceph-object-user-ceph-objectstore-loki` を `rook-ceph` namespace に生成する。
+
+```bash
+kubectl get secret -n rook-ceph rook-ceph-object-user-ceph-objectstore-loki \
+  -o jsonpath='{.data.AccessKey}' | base64 -d
+kubectl get secret -n rook-ceph rook-ceph-object-user-ceph-objectstore-loki \
+  -o jsonpath='{.data.SecretKey}' | base64 -d
+```
+
+取得した値を 1Password vault `home-cluster` の `loki-s3-credentials` アイテムに保存:
+- `AWS_ACCESS_KEY_ID` — AccessKey
+- `AWS_SECRET_ACCESS_KEY` — SecretKey
+
+1Password Operator が Secret を monitoring namespace に同期し、Loki が S3 に接続できるようになる。
+
 ---
 
 ## 1Password Items
 
 クラスタが参照する 1Password vault アイテム一覧。
-クラスタ再構築前にこれらが vault `home-cluster` に存在することを確認する。
+構築前に作成できるものと、クラスタ稼働後に作成が必要なものがある。
 
-### コアインフラ
+### 構築前に作成（外部サービスの認証情報）
+
+#### コアインフラ
 
 | Item | Deployed Namespaces | Keys | 用途 |
 |---|---|---|---|
 | cloudflare-api-token | cert-manager, external-dns | api-token | DNS-01 challenge, DNS レコード管理 |
 | cloudflared-tunnel-token | argocd | credential | Cloudflare Tunnel (GitHub webhook relay) |
 
-### 認証
+#### 認証
 
 | Item | Deployed Namespaces | Keys | 用途 |
 |---|---|---|---|
@@ -94,7 +114,7 @@ DNS レコードも external-dns が Gateway の HTTPRoute / TLSRoute から自�
 
 ¹ ArgoCD namespace では Secret 名が `argocd-google-oauth` になる
 
-### データベース
+#### データベース
 
 | Item | Deployed Namespaces | Keys | 用途 |
 |---|---|---|---|
@@ -102,14 +122,13 @@ DNS レコードも external-dns が Gateway の HTTPRoute / TLSRoute から自�
 | grafana-pg-credentials | database, monitoring | username, password | Grafana DB ユーザー |
 | argo-pg-credentials | database, argo | username, password | Argo Workflows DB ユーザー |
 
-### ストレージ
+#### ストレージ
 
 | Item | Deployed Namespaces | Keys | 用途 |
 |---|---|---|---|
-| loki-s3-credentials | monitoring | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY | Loki → Ceph RGW (S3) |
 | qnap-backend-secret | trident | username, password, storageAddress, https, port | QNAP NAS CSI |
 
-### Argo Workflows 自動化
+#### Argo Workflows 自動化
 
 | Item | Deployed Namespaces | Keys | 用途 |
 |---|---|---|---|
@@ -117,3 +136,9 @@ DNS レコードも external-dns が Gateway の HTTPRoute / TLSRoute から自�
 | cloudflare-tofu-credentials | argo | CLOUDFLARE_API_TOKEN | OpenTofu Cloudflare provider |
 | github-pat-tofu | argo | GITHUB_TOKEN | OpenTofu GitHub provider |
 | home-cloudflare-github-webhook | argo | secret | GitHub webhook 検証 |
+
+### 構築後に作成（クラスタ内サービスに依存）
+
+| Item | Deployed Namespaces | Keys | 依存先 | 用途 |
+|---|---|---|---|---|
+| loki-s3-credentials | monitoring | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY | rook-ceph (CephObjectStoreUser) | Loki → Ceph RGW (S3) |

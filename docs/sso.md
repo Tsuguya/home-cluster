@@ -16,10 +16,10 @@ ArgoCD のみ Dex 経由（ArgoCD 組み込み）。Grafana と Argo Workflows �
 
 | Item | Secret Name | Namespaces | Keys |
 |---|---|---|---|
-| argocd-google-oauth | argocd-google-oauth | argocd | clientID, clientSecret |
+| google-oauth | argocd-google-oauth | argocd | clientID, clientSecret |
 | google-oauth | google-oauth | monitoring, argo | clientID, clientSecret |
 
-ArgoCD 用と他サービス用で別の Google OAuth クライアント。
+全サービスで同じ 1Password item（google-oauth）を共用。Secret 名のみ ArgoCD は `argocd-google-oauth`。
 
 ## 新サービスに SSO を追加する手順
 

@@ -34,6 +34,7 @@ grafana:
       auth_url: https://argocd.infra.tgy.io/api/dex/auth
       token_url: https://argocd.infra.tgy.io/api/dex/token
       api_url: https://argocd.infra.tgy.io/api/dex/userinfo
+      tls_skip_verify_insecure: true
       allowed_domains: tgy.io
       allow_sign_up: true
       auto_login: true

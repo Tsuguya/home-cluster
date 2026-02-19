@@ -31,5 +31,9 @@ spec:
         - 0.0.0.0/0
       toPorts:
         - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
             - port: "443"
               protocol: TCP

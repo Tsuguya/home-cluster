@@ -106,7 +106,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **controller** | host → 9403 | DNS, kube-apiserver, HTTPS 443 (ACME/Cloudflare) |
+| **controller** | host → 9403 | DNS, kube-apiserver, external DNS 53 + HTTPS 443 (ACME/Cloudflare DNS-01) |
 | **cainjector** | (none) | DNS, kube-apiserver |
 | **webhook** | kube-apiserver/remote-node → 10250; host → 6080 | DNS, kube-apiserver |
 

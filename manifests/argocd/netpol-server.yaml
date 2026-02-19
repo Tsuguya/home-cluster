@@ -17,6 +17,9 @@ spec:
     - fromEndpoints:
         - matchLabels:
             app: cloudflared
+        - matchLabels:
+            app.kubernetes.io/name: argo-workflows-server
+            io.kubernetes.pod.namespace: argo
       toPorts:
         - ports:
             - port: "8080"

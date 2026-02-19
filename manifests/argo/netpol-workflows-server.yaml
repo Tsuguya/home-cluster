@@ -54,6 +54,11 @@ spec:
               protocol: TCP
             - port: "5557"
               protocol: TCP
-    # toPorts omitted to avoid L7 proxy interception (cilium/cilium#41970)
-    - toCIDR:
-        - 192.168.0.190/32
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: argocd-server
+            io.kubernetes.pod.namespace: argocd
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

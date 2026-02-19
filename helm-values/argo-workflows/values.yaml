@@ -26,6 +26,7 @@ server:
   sso:
     enabled: true
     issuer: https://argocd.infra.tgy.io/api/dex
+    insecureSkipVerify: true
     clientId:
       name: argo-workflows-sso
       key: clientID

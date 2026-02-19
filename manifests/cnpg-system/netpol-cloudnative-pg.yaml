@@ -29,3 +29,11 @@ spec:
               protocol: TCP
     - toEntities:
         - kube-apiserver
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP

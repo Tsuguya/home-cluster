@@ -123,7 +123,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **cloudnative-pg** | kube-apiserver/host/remote-node → 9443 | DNS, kube-apiserver |
+| **cloudnative-pg** | kube-apiserver/host/remote-node → 9443 | DNS, kube-apiserver, shared-pg (database):8000 |
 
 ## 1password (1 policy)
 

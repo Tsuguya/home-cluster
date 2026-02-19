@@ -55,6 +55,12 @@ redis:
   automountServiceAccountToken: false
 
 server:
+  certificate:
+    enabled: true
+    domain: argocd.infra.tgy.io
+    issuer:
+      kind: ClusterIssuer
+      name: letsencrypt-prod
   httproute:
     enabled: false
   grpcroute:

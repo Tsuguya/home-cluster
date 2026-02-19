@@ -24,6 +24,20 @@ spec:
           selector:
             matchLabels:
               gateway-access: "true"
+    - name: argocd-passthrough
+      hostname: argocd.infra.tgy.io
+      port: 443
+      protocol: TLS
+      tls:
+        mode: Passthrough
+      allowedRoutes:
+        kinds:
+          - kind: TLSRoute
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              gateway-access: "true"
     - name: http
       hostname: "*.infra.tgy.io"
       port: 80

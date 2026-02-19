@@ -8,6 +8,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 |---|---|---|---|
 | Grafana (monitoring) | shared-pg (database) | 5432 | Dashboard state |
 | Grafana (monitoring) | Dex (argocd) | 5556, 5557 | SSO |
+| Grafana (monitoring) | ArgoCD server (argocd) | 8080 | SSO OIDC discovery (via CoreDNS rewrite) |
 | Prometheus (monitoring) | CoreDNS (kube-system) | 9153 | Metrics scrape |
 | Prometheus (monitoring) | Ceph exporter (rook-ceph) | 9926 | Metrics scrape |
 | Prometheus (monitoring) | Ceph MGR (rook-ceph) | 9283 | Metrics scrape |
@@ -35,7 +36,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **server** | ingress, cloudflared, argo-workflows-server (argo) → 8080 | DNS, kube-apiserver, repo-server:8081, dex:5556/5557, redis:6379 |
+| **server** | ingress, cloudflared, argo-workflows-server (argo), grafana (monitoring) → 8080 | DNS, kube-apiserver, repo-server:8081, dex:5556/5557, redis:6379 |
 | **application-controller** | (none) | DNS, kube-apiserver, repo-server:8081, redis:6379 |
 | **repo-server** | server, app-controller → 8081 | DNS, HTTPS 443, redis:6379 |
 | **dex-server** | server → 5556/5557; argo-workflows-server (argo) → 5556/5557; grafana (monitoring) → 5556/5557 | DNS, kube-apiserver, HTTPS 443 |
@@ -62,7 +63,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 |---|---|---|
 | **prometheus** | grafana → 9090 | DNS, kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, coredns (kube-system):9153, host/remote-node:10250/9100/2379/10257/10259 |
 | **alertmanager** | prometheus → 9093/8080 | DNS |
-| **grafana** | ingress → 3000; prometheus → 3000 | DNS, kube-apiserver, prometheus:9090, loki-gateway:8080, shared-pg (database):5432, HTTPS 443 |
+| **grafana** | ingress → 3000; prometheus → 3000 | DNS, kube-apiserver, prometheus:9090, loki-gateway:8080, shared-pg (database):5432, argocd-server (argocd):8080, HTTPS 443 |
 | **kube-state-metrics** | prometheus → 8080 | DNS, kube-apiserver |
 | **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | DNS, kube-apiserver |
 | **loki** | loki-gateway, loki-canary → 3100 | DNS, kube-apiserver, ceph-rgw (rook-ceph):8080, self:7946 (memberlist) |

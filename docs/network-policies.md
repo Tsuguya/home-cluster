@@ -94,7 +94,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 | **hubble-ui** | ingress/host → 8081 | DNS, kube-apiserver, hubble-relay:4245 |
 | **metrics-server** | host/remote-node/kube-apiserver → 10250 | DNS, kube-apiserver, host/remote-node:10250 |
 | **snapshot-controller** | host → 8080 | DNS, kube-apiserver |
-| **snapshot-validation-webhook** | kube-apiserver/host → 8443 | DNS, kube-apiserver |
+| **snapshot-validation-webhook** | kube-apiserver/host/remote-node → 8443 | DNS, kube-apiserver |
 
 ## database (1 policy)
 
@@ -108,7 +108,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 |---|---|---|
 | **controller** | host → 9403 | DNS, kube-apiserver, HTTPS 443 (ACME/Cloudflare) |
 | **cainjector** | (none) | DNS, kube-apiserver |
-| **webhook** | kube-apiserver → 10250; host → 6080 | DNS, kube-apiserver |
+| **webhook** | kube-apiserver/remote-node → 10250; host → 6080 | DNS, kube-apiserver |
 
 ## external-dns (1 policy)
 

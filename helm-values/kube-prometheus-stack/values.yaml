@@ -33,6 +33,9 @@ grafana:
       auth_url: https://accounts.google.com/o/oauth2/v2/auth
       token_url: https://oauth2.googleapis.com/token
       api_url: https://openidconnect.googleapis.com/v1/userinfo
+      email_attribute_path: email
+      login_attribute_path: email
+      name_attribute_path: name
       allowed_domains: tgy.io
       allow_sign_up: true
       auto_login: true

@@ -31,6 +31,14 @@ spec:
               protocol: TCP
             - port: "8000"
               protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: cloudnative-pg
+            io.kubernetes.pod.namespace: cnpg-system
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
     - fromEntities:
         - host
       toPorts:

@@ -16,6 +16,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 | Argo Workflows server (argo) | shared-pg (database) | 5432 | Workflow archive |
 | Argo Workflows server (argo) | Dex (argocd) | 5556, 5557 | SSO |
 | Argo Workflows server (argo) | ArgoCD server (argocd) | 8080 | SSO OIDC discovery (via CoreDNS rewrite) |
+| CloudNative-PG (cnpg-system) | shared-pg (database) | 8000 | Health probes |
 | Cloudflared (argocd) | EventSource (argo) | 12000 | GitHub webhook relay |
 
 ## Excluded Pods (hostNetwork: true)
@@ -73,7 +74,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **mon** | all ceph daemons, CSI ctrlplugins → 3300/6789; remote-node → 3300/6789 | DNS, mon (self):3300/6789, mgr:6800 |
+| **mon** | all ceph daemons, exporter, CSI ctrlplugins → 3300/6789; remote-node → 3300/6789 | DNS, mon (self):3300/6789, mgr:6800 |
 | **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; ingress → 7000 (dashboard); prometheus (monitoring) → 9283 | DNS, mon:3300/6789, mgr (self):6800, osd:6800-6806 |
 | **osd** | osd (self), mgr, mds, rgw, tools, csi-rbd-ctrlplugin → 6800-6806; host/remote-node → 6800-6806 | DNS, mon:3300/6789, mgr:6800, osd (self):6800-6806 |
 | **mds** | (none) | DNS, mon:3300/6789, mgr:6800, osd:6800-6806 |
@@ -102,7 +103,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo) → 5432; self → 5432/8000 (replication); host → 8000 (probes) | DNS, kube-apiserver, self:5432/8000 |
+| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo) → 5432; self → 5432/8000 (replication); cloudnative-pg (cnpg-system), host → 8000 (probes) | DNS, kube-apiserver, self:5432/8000 |
 
 ## cert-manager (3 policies)
 

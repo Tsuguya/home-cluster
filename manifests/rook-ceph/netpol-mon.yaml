@@ -20,6 +20,8 @@ spec:
         - matchLabels:
             app: rook-ceph-rgw
         - matchLabels:
+            app: rook-ceph-exporter
+        - matchLabels:
             app: rook-ceph-operator
         - matchLabels:
             app: rook-ceph-tools

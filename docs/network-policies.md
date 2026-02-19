@@ -15,6 +15,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 | Argo Workflows controller (argo) | shared-pg (database) | 5432 | Workflow archive |
 | Argo Workflows server (argo) | shared-pg (database) | 5432 | Workflow archive |
 | Argo Workflows server (argo) | Dex (argocd) | 5556, 5557 | SSO |
+| Argo Workflows server (argo) | ArgoCD server (argocd) | 8080 | SSO OIDC discovery (via CoreDNS rewrite) |
 | Cloudflared (argocd) | EventSource (argo) | 12000 | GitHub webhook relay |
 
 ## Excluded Pods (hostNetwork: true)
@@ -101,7 +102,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo) → 5432; self → 5432/8000 (replication); host → 8000 (probes) | DNS, kube-apiserver, self:5432/8000 |
+| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo) → 5432; self → 5432/8000 (replication); host → 8000 (probes) | DNS, kube-apiserver, self:5432/8000 |
 
 ## cert-manager (3 policies)
 

@@ -15,6 +15,9 @@ spec:
         - matchLabels:
             app.kubernetes.io/name: argo-workflows-workflow-controller
             io.kubernetes.pod.namespace: argo
+        - matchLabels:
+            app.kubernetes.io/name: argo-workflows-server
+            io.kubernetes.pod.namespace: argo
       toPorts:
         - ports:
             - port: "5432"

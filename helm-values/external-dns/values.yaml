@@ -2,6 +2,7 @@ logFormat: json
 
 sources:
   - gateway-httproute
+  - gateway-tlsroute
 
 provider:
   name: cloudflare

@@ -34,3 +34,12 @@ spec:
         - ports:
             - port: "6800"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rook-ceph-mon
+      toPorts:
+        - ports:
+            - port: "3300"
+              protocol: TCP
+            - port: "6789"
+              protocol: TCP

@@ -46,7 +46,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **workflows-server** | ingress → 2746; sensor, workflows-controller → 2746 | DNS, kube-apiserver, shared-pg (database):5432, dex (argocd):5556/5557 |
+| **workflows-server** | ingress → 2746; sensor, workflows-controller → 2746 | DNS, kube-apiserver, shared-pg (database):5432, dex (argocd):5556/5557, gateway:443 (SSO OIDC discovery) |
 | **workflows-controller** | (none) | DNS, kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | DNS, kube-apiserver, eventbus:4222 |
 | **sensor** | (none) | DNS, kube-apiserver, eventbus:4222, workflows-server:2746 |
@@ -78,7 +78,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 | **mds** | (none) | DNS, mon:3300/6789, mgr:6800, osd:6800-6806 |
 | **rgw** | loki (monitoring) → 8080 | DNS, mon:3300/6789, mgr:6800, osd:6800-6806 |
 | **operator** | (none) | DNS, kube-apiserver, mon:3300/6789, mgr:6800 |
-| **exporter** | prometheus (monitoring) → 9926 | DNS, mgr:6800 |
+| **exporter** | prometheus (monitoring) → 9926 | DNS, mgr:6800, mon:3300/6789 |
 | **crashcollector** | (none) | DNS, mon:3300/6789, mgr:6800 |
 | **tools** | (none) | DNS, mon:3300/6789, mgr:6800, osd:6800-6806 |
 | **osd-prepare** | (none) | DNS, kube-apiserver, mon:3300/6789 |

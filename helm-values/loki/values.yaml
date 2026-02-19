@@ -13,6 +13,8 @@ singleBinary:
 
 loki:
   auth_enabled: false
+  analytics:
+    reporting_enabled: false
   commonConfig:
     replication_factor: 1
   limits_config:

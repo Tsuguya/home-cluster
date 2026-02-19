@@ -83,6 +83,10 @@ spec:
     - toEndpoints:
         - matchLabels:
             app: rook-ceph-osd
+        - matchLabels:
+            app: rook-ceph-mds
+        - matchLabels:
+            app: rook-ceph-rgw
       toPorts:
         - ports:
             - port: "6800"

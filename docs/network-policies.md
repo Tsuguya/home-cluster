@@ -71,7 +71,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **mon** | all ceph daemons, exporter, CSI ctrlplugins → 3300/6789; remote-node → 3300/6789 | DNS, mon (self):3300/6789, mgr:6800 |
+| **mon** | all ceph daemons, exporter, crashcollector, CSI ctrlplugins → 3300/6789; remote-node → 3300/6789 | DNS, mon (self):3300/6789, mgr:6800 |
 | **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; ingress → 7000 (dashboard); prometheus (monitoring) → 9283 | DNS, mon:3300/6789, mgr (self):6800, osd:6800-6806 |
 | **osd** | osd (self), mgr, mds, rgw, tools, csi-rbd-ctrlplugin → 6800-6806; host/remote-node → 6800-6806 | DNS, mon:3300/6789, mgr:6800, osd (self):6800-6806 |
 | **mds** | (none) | DNS, mon:3300/6789, mgr:6800, osd:6800-6806 |

@@ -26,6 +26,8 @@ spec:
         - matchLabels:
             app: rook-ceph-tools
         - matchLabels:
+            app: rook-ceph-crashcollector
+        - matchLabels:
             app: rook-ceph.cephfs.csi.ceph.com-ctrlplugin
         - matchLabels:
             app: rook-ceph.rbd.csi.ceph.com-ctrlplugin

@@ -1,6 +1,14 @@
 # Network Policies
 
-All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are not subject to CNP and are excluded.
+All policies are CiliumNetworkPolicy (CNP) and CiliumClusterwideNetworkPolicy (CCNP). Pods with `hostNetwork: true` are not subject to network policies and are excluded.
+
+## Cluster-Wide Policies (CCNP)
+
+| Policy | Selector | Egress |
+|---|---|---|
+| **allow-dns** | all pods | kube-dns:53 (UDP/TCP) |
+
+All pods can reach kube-dns for DNS resolution. Individual CNPs below do not repeat this rule.
 
 ## Cross-Namespace Communication
 
@@ -32,105 +40,105 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **server** | ingress, cloudflared → 8080 | DNS, kube-apiserver, repo-server:8081, dex:5556/5557, redis:6379 |
-| **application-controller** | (none) | DNS, kube-apiserver, repo-server:8081, redis:6379 |
-| **repo-server** | server, app-controller → 8081 | DNS, HTTPS 443, redis:6379 |
-| **dex-server** | server → 5556/5557 | DNS, kube-apiserver, HTTPS 443 |
-| **redis** | server, repo-server, app-controller → 6379 | DNS |
-| **applicationset-controller** | (none) | DNS, kube-apiserver |
-| **notifications-controller** | (none) | DNS, kube-apiserver |
-| **cloudflared** | (none) | DNS, HTTPS 443, QUIC 7844, server:8080, eventsource (argo):12000 |
+| **server** | ingress, cloudflared → 8080 | kube-apiserver, repo-server:8081, dex:5556/5557, redis:6379 |
+| **application-controller** | (none) | kube-apiserver, repo-server:8081, redis:6379 |
+| **repo-server** | server, app-controller → 8081 | HTTPS 443, redis:6379 |
+| **dex-server** | server → 5556/5557 | kube-apiserver, HTTPS 443 |
+| **redis** | server, repo-server, app-controller → 6379 | (none) |
+| **applicationset-controller** | (none) | kube-apiserver |
+| **notifications-controller** | (none) | kube-apiserver |
+| **cloudflared** | (none) | HTTPS 443, QUIC 7844, server:8080, eventsource (argo):12000 |
 
 ## argo (7 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **workflows-server** | ingress → 2746; sensor, workflows-controller → 2746 | DNS, kube-apiserver, shared-pg (database):5432, HTTPS 443 |
-| **workflows-controller** | (none) | DNS, kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
-| **eventsource** | cloudflared (argocd) → 12000 | DNS, kube-apiserver, eventbus:4222 |
-| **sensor** | (none) | DNS, kube-apiserver, eventbus:4222, workflows-server:2746 |
-| **events-controller** | (none) | DNS, kube-apiserver, eventbus:8222 |
-| **eventbus** | eventsource, sensor → 4222; self → 6222/7777; events-controller → 8222 | DNS, self:6222/7777 |
-| **workflow-pods** | (none) | DNS, kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid) |
+| **workflows-server** | ingress → 2746; sensor, workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, HTTPS 443 |
+| **workflows-controller** | (none) | kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
+| **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
+| **sensor** | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
+| **events-controller** | (none) | kube-apiserver, eventbus:8222 |
+| **eventbus** | eventsource, sensor → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
+| **workflow-pods** | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid) |
 
 ## monitoring (9 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **prometheus** | grafana → 9090 | DNS, kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, coredns (kube-system):9153, ceph exporter (rook-ceph):9926, ceph mgr (rook-ceph):9283, host/remote-node:10250/9100/2379/10257/10259/9965 |
-| **alertmanager** | prometheus → 9093/8080 | DNS |
-| **grafana** | ingress → 3000; prometheus → 3000 | DNS, kube-apiserver, prometheus:9090, loki-gateway:8080, shared-pg (database):5432, HTTPS 443 |
-| **kube-state-metrics** | prometheus → 8080 | DNS, kube-apiserver |
-| **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | DNS, kube-apiserver |
-| **loki** | loki-gateway, loki-canary → 3100 | DNS, kube-apiserver, ceph-rgw (rook-ceph):8080, self:7946 (memberlist) |
-| **loki-gateway** | grafana, alloy, loki-canary → 8080 | DNS, loki:3100 |
-| **loki-canary** | (none) | DNS, loki-gateway:8080, loki:3100 |
-| **alloy** | (none) | DNS, kube-apiserver, loki-gateway:8080 |
+| **prometheus** | grafana → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, coredns (kube-system):9153, ceph exporter (rook-ceph):9926, ceph mgr (rook-ceph):9283, host/remote-node:10250/9100/2379/10257/10259/9965 |
+| **alertmanager** | prometheus → 9093/8080 | (none) |
+| **grafana** | ingress → 3000; prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, shared-pg (database):5432, HTTPS 443 |
+| **kube-state-metrics** | prometheus → 8080 | kube-apiserver |
+| **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | kube-apiserver |
+| **loki** | loki-gateway, loki-canary → 3100 | kube-apiserver, ceph-rgw (rook-ceph):8080, self:7946 (memberlist) |
+| **loki-gateway** | grafana, alloy, loki-canary → 8080 | loki:3100 |
+| **loki-canary** | (none) | loki-gateway:8080, loki:3100 |
+| **alloy** | (none) | kube-apiserver, loki-gateway:8080 |
 
 ## rook-ceph (13 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **mon** | all ceph daemons, exporter, crashcollector, CSI ctrlplugins → 3300/6789; remote-node → 3300/6789 | DNS, mon (self):3300/6789, mgr:6800 |
-| **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; ingress → 7000 (dashboard); prometheus (monitoring) → 9283 | DNS, kube-apiserver, mon:3300/6789, mgr (self):6800, osd/mds/rgw:6800-6806 |
-| **osd** | osd (self), mgr, mds, rgw, tools, csi-rbd-ctrlplugin → 6800-6806; host/remote-node → 6800-6806 | DNS, mon:3300/6789, mgr:6800, osd (self):6800-6806 |
-| **mds** | (none) | DNS, mon:3300/6789, mgr:6800, osd:6800-6806 |
-| **rgw** | loki (monitoring) → 8080 | DNS, mon:3300/6789, mgr:6800, osd:6800-6806 |
-| **operator** | (none) | DNS, kube-apiserver, mon:3300/6789, mgr:6800 |
-| **exporter** | prometheus (monitoring) → 9926 | DNS, mgr:6800, mon:3300/6789 |
-| **crashcollector** | (none) | DNS, mon:3300/6789, mgr:6800 |
-| **tools** | (none) | DNS, mon:3300/6789, mgr:6800, osd:6800-6806 |
-| **osd-prepare** | (none) | DNS, kube-apiserver, mon:3300/6789 |
-| **csi-rbd-ctrlplugin** | (none) | DNS, kube-apiserver, mon:3300/6789, mgr:6800, osd:6800 |
-| **csi-cephfs-ctrlplugin** | (none) | DNS, kube-apiserver, mon:3300/6789 |
-| **csi-controller-manager** | host → 8081 | DNS, kube-apiserver |
+| **mon** | all ceph daemons, exporter, crashcollector, CSI ctrlplugins → 3300/6789; remote-node → 3300/6789 | mon (self):3300/6789, mgr:6800 |
+| **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; ingress → 7000 (dashboard); prometheus (monitoring) → 9283 | kube-apiserver, mon:3300/6789, mgr (self):6800, osd/mds/rgw:6800-6806 |
+| **osd** | osd (self), mgr, mds, rgw, tools, csi-rbd-ctrlplugin → 6800-6806; host/remote-node → 6800-6806 | mon:3300/6789, mgr:6800, osd (self):6800-6806 |
+| **mds** | (none) | mon:3300/6789, mgr:6800, osd:6800-6806 |
+| **rgw** | loki (monitoring) → 8080 | mon:3300/6789, mgr:6800, osd:6800-6806 |
+| **operator** | (none) | kube-apiserver, mon:3300/6789, mgr:6800 |
+| **exporter** | prometheus (monitoring) → 9926 | mgr:6800, mon:3300/6789 |
+| **crashcollector** | (none) | mon:3300/6789, mgr:6800 |
+| **tools** | (none) | mon:3300/6789, mgr:6800, osd:6800-6806 |
+| **osd-prepare** | (none) | kube-apiserver, mon:3300/6789 |
+| **csi-rbd-ctrlplugin** | (none) | kube-apiserver, mon:3300/6789, mgr:6800, osd:6800 |
+| **csi-cephfs-ctrlplugin** | (none) | kube-apiserver, mon:3300/6789 |
+| **csi-controller-manager** | host → 8081 | kube-apiserver |
 
 ## kube-system (6 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
 | **coredns** | cluster/host/remote-node → 53; prometheus (monitoring) → 9153 | host:53 (upstream), kube-apiserver |
-| **hubble-relay** | host → 4222; hubble-ui → 4245 | DNS, host/remote-node/kube-apiserver:4244 |
-| **hubble-ui** | ingress/host → 8081 | DNS, kube-apiserver, hubble-relay:4245 |
-| **metrics-server** | host/remote-node/kube-apiserver → 10250 | DNS, kube-apiserver, host/remote-node:10250 |
-| **snapshot-controller** | host → 8080 | DNS, kube-apiserver |
-| **snapshot-validation-webhook** | kube-apiserver/host/remote-node → 8443 | DNS, kube-apiserver |
+| **hubble-relay** | host → 4222; hubble-ui → 4245 | host/remote-node/kube-apiserver:4244 |
+| **hubble-ui** | ingress/host → 8081 | kube-apiserver, hubble-relay:4245 |
+| **metrics-server** | host/remote-node/kube-apiserver → 10250 | kube-apiserver, host/remote-node:10250 |
+| **snapshot-controller** | host → 8080 | kube-apiserver |
+| **snapshot-validation-webhook** | kube-apiserver/host/remote-node → 8443 | kube-apiserver |
 
 ## database (1 policy)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo) → 5432; self → 5432/8000 (replication); cloudnative-pg (cnpg-system), host → 8000 (probes) | DNS, kube-apiserver, self:5432/8000 |
+| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo) → 5432; self → 5432/8000 (replication); cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000 |
 
 ## cert-manager (3 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **controller** | host → 9403 | DNS, kube-apiserver, external DNS 53 + HTTPS 443 (ACME/Cloudflare DNS-01) |
-| **cainjector** | (none) | DNS, kube-apiserver |
-| **webhook** | kube-apiserver/remote-node → 10250; host → 6080 | DNS, kube-apiserver |
+| **controller** | host → 9403 | kube-apiserver, external DNS 53 + HTTPS 443 (ACME/Cloudflare DNS-01) |
+| **cainjector** | (none) | kube-apiserver |
+| **webhook** | kube-apiserver/remote-node → 10250; host → 6080 | kube-apiserver |
 
 ## external-dns (1 policy)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **external-dns** | host → 7979 | DNS, kube-apiserver, HTTPS 443 (Cloudflare API) |
+| **external-dns** | host → 7979 | kube-apiserver, HTTPS 443 (Cloudflare API) |
 
 ## cnpg-system (1 policy)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **cloudnative-pg** | kube-apiserver/host/remote-node → 9443 | DNS, kube-apiserver, shared-pg (database):8000 |
+| **cloudnative-pg** | kube-apiserver/host/remote-node → 9443 | kube-apiserver, shared-pg (database):8000 |
 
 ## 1password (1 policy)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **connect-operator** | (none) | DNS, kube-apiserver, HTTPS 443 (1Password API) |
+| **connect-operator** | (none) | kube-apiserver, HTTPS 443 (1Password API) |
 
 ## trident (2 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **controller** | (none) | DNS, kube-apiserver, 192.168.0.240:8080 (QNAP NAS) |
-| **operator** | (none) | DNS, kube-apiserver |
+| **controller** | (none) | kube-apiserver, 192.168.0.240:8080 (QNAP NAS) |
+| **operator** | (none) | kube-apiserver |

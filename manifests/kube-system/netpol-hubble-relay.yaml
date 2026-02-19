@@ -22,16 +22,6 @@ spec:
             - port: "4245"
               protocol: TCP
   egress:
-    - toEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: kube-system
-            k8s-app: kube-dns
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-            - port: "53"
-              protocol: TCP
     - toEntities:
         - host
         - remote-node

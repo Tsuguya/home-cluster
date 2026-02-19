@@ -23,22 +23,12 @@ docs/              # 運用ドキュメント
 
 ## CiliumNetworkPolicy (CNP) 規約
 
-全 Pod に CNP を適用（デフォルト deny）。新しい CNP を作るときは以下を守る:
+全 Pod に CNP を適用（デフォルト deny）。DNS egress は CCNP (`manifests/infra/ccnp-dns.yaml`) で全 Pod に共通適用済み。新しい CNP を作るときは以下を守る:
 
 ### egress の必須ルール
 ```yaml
 egress:
-  # 1. DNS は必ず入れる
-  - toEndpoints:
-      - matchLabels:
-          io.kubernetes.pod.namespace: kube-system
-          k8s-app: kube-dns
-    toPorts:
-      - ports:
-          - port: "53"
-            protocol: UDP
-          - port: "53"
-            protocol: TCP
+  # 1. DNS は CCNP で共通適用済み — 個別 CNP には不要
   # 2. kube-apiserver が必要なら toEntities で
   - toEntities:
       - kube-apiserver

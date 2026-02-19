@@ -46,7 +46,7 @@ All policies are CiliumNetworkPolicy (CNP). Pods with `hostNetwork: true` are no
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **workflows-server** | ingress → 2746; sensor, workflows-controller → 2746 | DNS, kube-apiserver, shared-pg (database):5432, dex (argocd):5556/5557, gateway:443 (SSO OIDC discovery) |
+| **workflows-server** | ingress → 2746; sensor, workflows-controller → 2746 | DNS, kube-apiserver, shared-pg (database):5432, dex (argocd):5556/5557, ingress:443 (SSO OIDC discovery) |
 | **workflows-controller** | (none) | DNS, kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | DNS, kube-apiserver, eventbus:4222 |
 | **sensor** | (none) | DNS, kube-apiserver, eventbus:4222, workflows-server:2746 |

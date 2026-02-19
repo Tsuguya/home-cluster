@@ -75,3 +75,8 @@ server:
         sectionName: https
     hostnames:
       - argocd.infra.tgy.io
+    rules:
+      - matches:
+          - method:
+              type: RegularExpression
+              service: ".*"

@@ -1,7 +1,7 @@
 apiVersion: onepassword.com/v1
 kind: OnePasswordItem
 metadata:
-  name: grafana-sso
+  name: google-oauth
   namespace: monitoring
 spec:
-  itemPath: "vaults/home-cluster/items/nqmuxldvcyroavl3air37p4i24"
+  itemPath: "vaults/home-cluster/items/xc4g6jfzyxeuwxrrlp2phuekka"

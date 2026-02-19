@@ -26,17 +26,6 @@ configs:
               - openid
               - profile
               - email
-      staticClients:
-        - id: grafana-sso
-          name: Grafana
-          redirectURIs:
-            - https://grafana.infra.tgy.io/login/generic_oauth
-          secretEnv: GRAFANA_SSO_CLIENT_SECRET
-        - id: argo-workflows-sso
-          name: Argo Workflows
-          redirectURIs:
-            - https://argo.infra.tgy.io/oauth2/callback
-          secretEnv: ARGO_WORKFLOWS_SSO_CLIENT_SECRET
   rbac:
     policy.csv: |
       g, tsuguya.toma@tgy.io, role:admin
@@ -56,16 +45,6 @@ dex:
       valueFrom:
         secretKeyRef:
           name: argocd-google-oauth
-          key: clientSecret
-    - name: GRAFANA_SSO_CLIENT_SECRET
-      valueFrom:
-        secretKeyRef:
-          name: grafana-sso
-          key: clientSecret
-    - name: ARGO_WORKFLOWS_SSO_CLIENT_SECRET
-      valueFrom:
-        secretKeyRef:
-          name: argo-workflows-sso
           key: clientSecret
 
 repoServer:

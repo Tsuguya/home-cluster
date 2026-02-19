@@ -17,12 +17,6 @@ spec:
     - fromEndpoints:
         - matchLabels:
             app: cloudflared
-        - matchLabels:
-            app.kubernetes.io/name: argo-workflows-server
-            io.kubernetes.pod.namespace: argo
-        - matchLabels:
-            app.kubernetes.io/name: grafana
-            io.kubernetes.pod.namespace: monitoring
       toPorts:
         - ports:
             - port: "8080"

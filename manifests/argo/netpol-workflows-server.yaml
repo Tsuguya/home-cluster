@@ -44,21 +44,9 @@ spec:
         - ports:
             - port: "5432"
               protocol: TCP
-    - toEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: argocd-dex-server
-            io.kubernetes.pod.namespace: argocd
+    - toCIDR:
+        - 0.0.0.0/0
       toPorts:
         - ports:
-            - port: "5556"
-              protocol: TCP
-            - port: "5557"
-              protocol: TCP
-    - toEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: argocd-server
-            io.kubernetes.pod.namespace: argocd
-      toPorts:
-        - ports:
-            - port: "8080"
+            - port: "443"
               protocol: TCP

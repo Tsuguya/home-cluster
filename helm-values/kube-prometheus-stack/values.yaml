@@ -16,7 +16,7 @@ prometheus:
               storage: 20Gi
 
 grafana:
-  adminPassword: prom-operator # unused: login form disabled, Dex SSO only. Pinned to prevent OutOfSync.
+  adminPassword: prom-operator # unused: login form disabled, SSO only. Pinned to prevent OutOfSync.
   grafana.ini:
     database:
       type: postgres
@@ -28,13 +28,11 @@ grafana:
       disable_login_form: true
     auth.generic_oauth:
       enabled: true
-      name: Dex
-      client_id: grafana-sso
+      name: Google
       scopes: openid profile email
-      auth_url: https://argocd.infra.tgy.io/api/dex/auth
-      token_url: https://argocd.infra.tgy.io/api/dex/token
-      api_url: https://argocd.infra.tgy.io/api/dex/userinfo
-      tls_skip_verify_insecure: true
+      auth_url: https://accounts.google.com/o/oauth2/v2/auth
+      token_url: https://oauth2.googleapis.com/token
+      api_url: https://openidconnect.googleapis.com/v1/userinfo
       allowed_domains: tgy.io
       allow_sign_up: true
       auto_login: true
@@ -48,9 +46,13 @@ grafana:
       secretKeyRef:
         name: grafana-pg-credentials
         key: password
+    GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
+      secretKeyRef:
+        name: google-oauth
+        key: clientID
     GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
       secretKeyRef:
-        name: grafana-sso
+        name: google-oauth
         key: clientSecret
   additionalDataSources:
     - name: Loki

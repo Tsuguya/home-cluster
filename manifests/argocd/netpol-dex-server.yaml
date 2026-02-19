@@ -17,26 +17,6 @@ spec:
               protocol: TCP
             - port: "5557"
               protocol: TCP
-    - fromEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: argo-workflows-server
-            io.kubernetes.pod.namespace: argo
-      toPorts:
-        - ports:
-            - port: "5556"
-              protocol: TCP
-            - port: "5557"
-              protocol: TCP
-    - fromEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: grafana
-            io.kubernetes.pod.namespace: monitoring
-      toPorts:
-        - ports:
-            - port: "5556"
-              protocol: TCP
-            - port: "5557"
-              protocol: TCP
   egress:
     - toEndpoints:
         - matchLabels:

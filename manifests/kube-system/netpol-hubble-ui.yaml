@@ -26,6 +26,8 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
+    - toEntities:
+        - kube-apiserver
     - toEndpoints:
         - matchLabels:
             k8s-app: hubble-relay

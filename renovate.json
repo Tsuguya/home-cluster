@@ -3,6 +3,12 @@
   "extends": [
     "config:recommended"
   ],
+  "argocd": {
+    "managerFilePatterns": ["/apps/.+\\.yaml$/"]
+  },
+  "kubernetes": {
+    "managerFilePatterns": ["/manifests/.+\\.yaml$/"]
+  },
   "packageRules": [
     {
       "description": "Automerge patch updates",

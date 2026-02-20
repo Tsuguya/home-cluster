@@ -1,4 +1,6 @@
 controller:
+  logging:
+    format: json
   securityContext:
     readOnlyRootFilesystem: true
     runAsNonRoot: true
@@ -28,6 +30,8 @@ controller:
         key: password
 
 server:
+  logging:
+    format: json
   securityContext:
     readOnlyRootFilesystem: false
     runAsNonRoot: true

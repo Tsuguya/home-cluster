@@ -14,6 +14,7 @@ spec:
         mode: Passthrough
       allowedRoutes:
         kinds:
-          - kind: TLSRoute
+          - group: gateway.networking.k8s.io
+            kind: TLSRoute
         namespaces:
           from: Same

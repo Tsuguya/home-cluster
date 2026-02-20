@@ -99,3 +99,81 @@ spec:
               secretKeyRef:
                 name: cloudflare-tofu-credentials
                 key: zone_id
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: tofu-cloudflare-plan
+  namespace: argo
+spec:
+  activeDeadlineSeconds: 600
+  serviceAccountName: tofu-executor
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: pr-number
+      - name: branch
+  templates:
+    - name: main
+      container:
+        image: ghcr.io/opentofu/opentofu:1.11.5
+        command: [sh, -c]
+        args:
+          - |
+            set -uo pipefail
+            apk add --no-cache git curl jq
+            git clone --depth 1 -b "{{workflow.parameters.branch}}" "https://${GITHUB_TOKEN}@github.com/Tsuguya/home-cloudflare.git" /tmp/repo
+            cd /tmp/repo
+            tofu init -input=false
+            PLAN_OUTPUT=$(tofu plan -detailed-exitcode -no-color 2>&1) && EXIT_CODE=0 || EXIT_CODE=$?
+            PR="{{workflow.parameters.pr-number}}"
+            REPO="Tsuguya/home-cloudflare"
+            API="https://api.github.com"
+            if [ "$EXIT_CODE" = "0" ]; then
+              TITLE="Tofu Plan: No Changes"
+              MSG="Infrastructure is up-to-date."
+            elif [ "$EXIT_CODE" = "2" ]; then
+              TITLE="Tofu Plan: Changes Detected"
+              MSG="Review required before merge."
+            else
+              TITLE="Tofu Plan: Error"
+              MSG="Plan failed with exit code $EXIT_CODE."
+            fi
+            BODY=$(jq -n \
+              --arg title "$TITLE" \
+              --arg msg "$MSG" \
+              --arg output "$PLAN_OUTPUT" \
+              '{body: ("### " + $title + "\n" + $msg + "\n\n<details>\n<summary>Plan Output</summary>\n\n```\n" + $output + "\n```\n\n</details>")}')
+            curl -sf -X POST \
+              -H "Authorization: token ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "$API/repos/$REPO/issues/$PR/comments" \
+              -d "$BODY"
+            if [ "$EXIT_CODE" = "0" ]; then
+              curl -sf -X PUT \
+                -H "Authorization: token ${GITHUB_TOKEN}" \
+                -H "Accept: application/vnd.github+json" \
+                "$API/repos/$REPO/pulls/$PR/merge" \
+                -d '{"merge_method":"squash"}'
+            fi
+        env:
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-pat-tofu
+                key: credential
+          - name: CLOUDFLARE_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-tofu-credentials
+                key: api_token
+          - name: TF_VAR_cloudflare_account_id
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-tofu-credentials
+                key: account_id
+          - name: TF_VAR_cloudflare_zone_id
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-tofu-credentials
+                key: zone_id

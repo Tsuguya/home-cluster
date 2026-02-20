@@ -14,6 +14,8 @@ spec:
         - matchLabels:
             app: rook-ceph-mgr
         - matchLabels:
+            app: rook-ceph-operator
+        - matchLabels:
             app: rook-ceph-mds
         - matchLabels:
             app: rook-ceph-rgw

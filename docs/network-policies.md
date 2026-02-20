@@ -79,16 +79,17 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **alloy** | (none) | kube-apiserver, loki-gateway:8080 |
 | **prometheus-admission** (Job) | (none) | kube-apiserver |
 
-## rook-ceph (13 policies)
+## rook-ceph (14 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
 | **mon** | all ceph daemons, exporter, crashcollector, CSI ctrlplugins → 3300/6789; remote-node → 3300/6789 | mon (self):3300/6789, mgr:6800 |
 | **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; ingress → 7000 (dashboard); prometheus (monitoring) → 9283 | kube-apiserver, mon:3300/6789, mgr (self):6800, osd/mds/rgw:6800-6806 |
-| **osd** | osd (self), mgr, mds, rgw, tools, csi-rbd-ctrlplugin → 6800-6806; host/remote-node → 6800-6806 | mon:3300/6789, mgr:6800, osd (self):6800-6806 |
+| **osd** | osd (self), mgr, operator, mds, rgw, tools, csi-rbd-ctrlplugin → 6800-6806; host/remote-node → 6800-6806 | mon:3300/6789, mgr:6800, osd (self):6800-6806 |
 | **mds** | (none) | mon:3300/6789, mgr:6800, osd:6800-6806 |
-| **rgw** | loki (monitoring), workflow-pods (argo), workflows-server (argo) → 8080 | mon:3300/6789, mgr:6800, osd:6800-6806 |
-| **operator** | (none) | kube-apiserver, mon:3300/6789, mgr:6800 |
+| **rgw** | operator, loki (monitoring), workflow-pods (argo), workflows-server (argo) → 8080 | mon:3300/6789, mgr:6800, osd:6800-6806 |
+| **operator** | (none) | kube-apiserver, mon:3300/6789, mgr:6800, osd:6800, rgw:8080 |
+| **detect-version** (Job) | (none) | kube-apiserver |
 | **exporter** | prometheus (monitoring) → 9926 | mgr:6800, mon:3300/6789 |
 | **crashcollector** | (none) | mon:3300/6789, mgr:6800 |
 | **tools** | (none) | mon:3300/6789, mgr:6800, osd:6800-6806 |

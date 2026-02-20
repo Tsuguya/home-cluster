@@ -27,3 +27,17 @@ spec:
         - ports:
             - port: "6800"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rook-ceph-osd
+      toPorts:
+        - ports:
+            - port: "6800"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rook-ceph-rgw
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

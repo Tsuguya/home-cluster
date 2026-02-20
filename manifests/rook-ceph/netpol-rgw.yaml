@@ -10,6 +10,8 @@ spec:
   ingress:
     - fromEndpoints:
         - matchLabels:
+            app: rook-ceph-operator
+        - matchLabels:
             app.kubernetes.io/name: loki
             app.kubernetes.io/component: single-binary
             io.kubernetes.pod.namespace: monitoring

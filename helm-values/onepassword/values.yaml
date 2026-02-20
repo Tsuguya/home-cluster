@@ -9,3 +9,16 @@ operator:
   serviceAccountToken:
     name: onepassword-token
   watchNamespace: []
+  podSecurityContext:
+    fsGroup: 65532
+    runAsUser: 65532
+    runAsGroup: 65532
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL

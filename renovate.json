@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "description": "Automerge patch updates",
+      "matchUpdateTypes": ["patch", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "Group rook-ceph packages",
+      "matchPackagePatterns": ["rook-ceph"],
+      "groupName": "rook-ceph"
+    },
+    {
+      "description": "Do not automerge critical infrastructure",
+      "matchPackageNames": ["cilium", "rook-ceph", "rook-ceph-cluster"],
+      "automerge": false
+    }
+  ]
+}

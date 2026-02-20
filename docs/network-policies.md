@@ -6,9 +6,9 @@ All policies are CiliumNetworkPolicy (CNP) and CiliumClusterwideNetworkPolicy (C
 
 | Policy | Selector | Egress |
 |---|---|---|
-| **allow-dns** | all pods | kube-dns:53 (UDP/TCP) |
+| **allow-dns** | all pods (`io.cilium.k8s.policy.cluster: default`) | kube-dns:53 (UDP/TCP) |
 
-All pods can reach kube-dns for DNS resolution. Individual CNPs below do not repeat this rule.
+All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do not repeat this rule. The selector excludes Cilium internal endpoints (e.g. Gateway) to avoid breaking `enforce_policy_on_l7lb`.
 
 ## Cross-Namespace Communication
 
@@ -36,7 +36,7 @@ All pods can reach kube-dns for DNS resolution. Individual CNPs below do not rep
 
 ---
 
-## argocd (8 policies)
+## argocd (9 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
@@ -47,6 +47,7 @@ All pods can reach kube-dns for DNS resolution. Individual CNPs below do not rep
 | **redis** | server, repo-server, app-controller → 6379 | (none) |
 | **applicationset-controller** | (none) | kube-apiserver |
 | **notifications-controller** | (none) | kube-apiserver |
+| **redis-secret-init** (Job) | (none) | kube-apiserver |
 | **cloudflared** | (none) | HTTPS 443, QUIC 7844, server:8080, eventsource (argo):12000 |
 
 ## argo (7 policies)
@@ -110,13 +111,14 @@ All pods can reach kube-dns for DNS resolution. Individual CNPs below do not rep
 |---|---|---|
 | **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo) → 5432; self → 5432/8000 (replication); cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000 |
 
-## cert-manager (3 policies)
+## cert-manager (4 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
 | **controller** | host → 9403 | kube-apiserver, external DNS 53 + HTTPS 443 (ACME/Cloudflare DNS-01) |
 | **cainjector** | (none) | kube-apiserver |
 | **webhook** | kube-apiserver/remote-node → 10250; host → 6080 | kube-apiserver |
+| **startupapicheck** (Job) | (none) | kube-apiserver |
 
 ## external-dns (1 policy)
 

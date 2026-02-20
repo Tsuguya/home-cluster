@@ -1,0 +1,13 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: prometheus-admission
+  namespace: monitoring
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: prometheus-operator-webhook
+  ingress: []
+  egress:
+    - toEntities:
+        - kube-apiserver

@@ -113,6 +113,8 @@ spec:
     parameters:
       - name: pr-number
       - name: branch
+      - name: author
+        default: ""
   templates:
     - name: main
       container:
@@ -149,7 +151,8 @@ spec:
               -H "Accept: application/vnd.github+json" \
               "$API/repos/$REPO/issues/$PR/comments" \
               -d "$BODY"
-            if [ "$EXIT_CODE" = "0" ]; then
+            AUTHOR="{{workflow.parameters.author}}"
+            if [ "$EXIT_CODE" = "0" ] && [ "$AUTHOR" = "renovate[bot]" ]; then
               curl -sf -X PUT \
                 -H "Authorization: token ${GITHUB_TOKEN}" \
                 -H "Accept: application/vnd.github+json" \

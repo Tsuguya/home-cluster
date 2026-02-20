@@ -111,3 +111,7 @@ spec:
                 dependencyName: pull-request
                 dataKey: body.pull_request.head.ref
               dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: pull-request
+                dataKey: body.pull_request.user.login
+              dest: spec.arguments.parameters.2.value

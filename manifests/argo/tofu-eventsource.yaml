@@ -60,7 +60,7 @@ spec:
             return false
           end
           local action = event.body.action
-          return action == "opened" or action == "synchronize"
+          return action == "opened" or action == "synchronize" or action == "reopened"
   triggers:
     - template:
         name: tofu-apply

@@ -1,0 +1,18 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: rook-ceph-detect-version
+  namespace: rook-ceph
+spec:
+  endpointSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - rook-ceph-detect-version
+          - ceph-file-controller-detect-version
+          - ceph-object-controller-detect-version
+  ingress: []
+  egress:
+    - toEntities:
+        - kube-apiserver

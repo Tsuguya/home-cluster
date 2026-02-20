@@ -67,6 +67,7 @@ grafana:
         key: clientSecret
   additionalDataSources:
     - name: Loki
+      uid: loki
       type: loki
       url: http://loki-gateway.monitoring.svc:80
       access: proxy

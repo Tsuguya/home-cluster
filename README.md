@@ -20,10 +20,12 @@ ArgoCD GitOps で管理するホーム Kubernetes クラスタの構成リポジ
 
 ## Nodes
 
-| Role | Count | Hardware |
-|------|-------|----------|
-| Control Plane | 3 | Minisforum S100 (Intel N150) |
-| Worker | 3 | TRIGKEY G4 |
+| Node | Hardware | RAM |
+|------|----------|-----|
+| cp-01〜03 | Minisforum S100 (Intel N150) | - |
+| wn-01 | TRIGKEY G4 | 32GB |
+| wn-02 | NiPoGi AK2Plus | 32GB |
+| wn-03 | MINISFORUM UM790Pro | 64GB |
 
 ## Structure
 

@@ -9,7 +9,7 @@ singleBinary:
     - -config.expand-env=true
   extraEnvFrom:
     - secretRef:
-        name: loki-s3-credentials
+        name: loki-storage
 
 loki:
   podSecurityContext:
@@ -54,9 +54,9 @@ loki:
       s3ForcePathStyle: true
       insecure: true
     bucketNames:
-      chunks: loki
-      ruler: loki
-      admin: loki
+      chunks: loki-storage
+      ruler: loki-storage
+      admin: loki-storage
 
 gateway:
   enabled: true

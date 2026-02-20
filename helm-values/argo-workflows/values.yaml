@@ -1,4 +1,11 @@
 controller:
+  securityContext:
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
   workflowDefaults:
     spec:
       ttlStrategy:
@@ -21,6 +28,13 @@ controller:
         key: password
 
 server:
+  securityContext:
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
   authModes:
     - sso
   sso:

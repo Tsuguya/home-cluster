@@ -9,7 +9,8 @@ apps/              # ArgoCD Application 定義（各サービス1ファイル）
 argocd/            # app-of-apps.yaml（ArgoCD ブートストラップ）
 helm-values/       # Helm chart の values.yaml（サービスごとにディレクトリ）
 manifests/         # 生の K8s マニフェスト（namespace ごとにディレクトリ）
-  infra/           # Gateway, CertManager, IP Pool, 1Password items
+  infra/           # Gateway, CertManager, IP Pool, CCNP
+  secrets/         # 全 OnePasswordItem（専用 secrets app で管理）
   storage/         # CSI StorageClass, Backend
 docs/              # 運用ドキュメント
 ```
@@ -17,7 +18,7 @@ docs/              # 運用ドキュメント
 ## 変更パターン
 
 - **新サービス**: `apps/` に Application YAML + `helm-values/` に values.yaml
-- **Secrets**: `manifests/infra/` に OnePasswordItem YAML → 1Password Operator が Secret 自動生成
+- **Secrets**: `manifests/secrets/` に OnePasswordItem YAML → 1Password Operator が Secret 自動生成（専用 `secrets` app で他 app の reconcile から隔離）
 - **CNP 変更**: `manifests/<namespace>/netpol-*.yaml` + `docs/network-policies.md` を同時に更新。作業前に `docs/network-policies.md` を読んで通信の全体像を把握すること
 - **SSO 追加**: `docs/sso.md` の手順に従う
 

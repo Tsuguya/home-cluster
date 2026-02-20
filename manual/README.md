@@ -62,7 +62,8 @@ kubectl create secret generic onepassword-token \
 ```
 
 app-of-apps が `apps/onepassword.yaml` を検出し、Operator を自動デプロイする。
-Operator が起動すると、各 namespace の OnePasswordItem から Secret を自動生成する。
+Operator が起動すると、`manifests/secrets/` の OnePasswordItem から各 namespace に Secret を自動生成する。
+OnePasswordItem は専用の `secrets` ArgoCD Application で管理され、他 app の reconcile による 1Password API コール増加を防止する。
 
 ## 以降は自動
 

@@ -1,5 +1,8 @@
 logLevel: INFO
 
+enableOBCWatchOperatorNamespace: false
+obcProvisionerNamePrefix: rook-ceph
+
 csi:
   pluginTolerations:
     - key: memory-constrained

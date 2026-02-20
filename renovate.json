@@ -21,6 +21,12 @@
       "groupName": "rook-ceph"
     },
     {
+      "description": "Automerge alpine minor updates",
+      "matchPackageNames": ["alpine"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
       "description": "Do not automerge critical infrastructure",
       "matchPackageNames": ["cilium", "rook-ceph", "rook-ceph-cluster"],
       "automerge": false

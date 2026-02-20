@@ -13,6 +13,14 @@ spec:
             app.kubernetes.io/name: loki
             app.kubernetes.io/component: single-binary
             io.kubernetes.pod.namespace: monitoring
+        - matchExpressions:
+            - key: workflows.argoproj.io/workflow
+              operator: Exists
+          matchLabels:
+            io.kubernetes.pod.namespace: argo
+        - matchLabels:
+            app.kubernetes.io/name: argo-workflows-server
+            io.kubernetes.pod.namespace: argo
       toPorts:
         - ports:
             - port: "8080"

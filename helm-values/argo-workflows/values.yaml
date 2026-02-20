@@ -1,3 +1,16 @@
+artifactRepository:
+  archiveLogs: true
+  s3:
+    endpoint: rook-ceph-rgw-ceph-objectstore.rook-ceph:80
+    insecure: true
+    bucket: argo-artifacts
+    accessKeySecret:
+      name: argo-artifacts
+      key: AWS_ACCESS_KEY_ID
+    secretKeySecret:
+      name: argo-artifacts
+      key: AWS_SECRET_ACCESS_KEY
+
 controller:
   logging:
     format: json

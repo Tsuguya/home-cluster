@@ -1,11 +1,3 @@
-apiVersion: onepassword.com/v1
-kind: OnePasswordItem
-metadata:
-  name: qnap-backend-secret
-  namespace: trident
-spec:
-  itemPath: "vaults/home-cluster/items/eywofuw62sg7tepkfotabtrywu"
----
 apiVersion: trident.qnap.io/v1
 kind: TridentBackendConfig
 metadata:

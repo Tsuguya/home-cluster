@@ -1,11 +1,3 @@
-apiVersion: onepassword.com/v1
-kind: OnePasswordItem
-metadata:
-  name: home-cloudflare-github-webhook
-  namespace: argo
-spec:
-  itemPath: "vaults/home-cluster/items/home-cloudflare-github-webhook"
----
 apiVersion: argoproj.io/v1alpha1
 kind: EventSource
 metadata:

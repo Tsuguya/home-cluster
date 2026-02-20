@@ -12,6 +12,19 @@ singleBinary:
         name: loki-s3-credentials
 
 loki:
+  podSecurityContext:
+    fsGroup: 10001
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
   auth_enabled: false
   analytics:
     reporting_enabled: false
@@ -47,6 +60,19 @@ loki:
 
 gateway:
   enabled: true
+  podSecurityContext:
+    fsGroup: 101
+    runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
 
 backend:
   replicas: 0

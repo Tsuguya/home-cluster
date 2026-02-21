@@ -3,6 +3,8 @@ kind: TridentBackendConfig
 metadata:
   name: qnap-backend
   namespace: trident
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   version: 1
   storageDriverName: qnap-nas

@@ -179,6 +179,8 @@ spec:
 
           def gh_api(endpoint, method="GET", data=None):
               cmd = ["gh", "api", f"repos/{REPO}/{endpoint}", "--method", method]
+              if data:
+                  cmd += ["--input", "-"]
               inp = json.dumps(data).encode() if data else None
               r = subprocess.run(cmd, input=inp, capture_output=True, cwd="/workspace")
               if r.returncode != 0:

@@ -1,3 +1,6 @@
+kubeProxy:
+  enabled: false
+
 prometheusOperator:
   logFormat: json
 

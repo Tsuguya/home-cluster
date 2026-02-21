@@ -19,6 +19,7 @@ spec:
               protocol: TCP
   egress:
     - toFQDNs:
+        - matchName: "discord.com"
         - matchPattern: "*.discord.com"
       toPorts:
         - ports:

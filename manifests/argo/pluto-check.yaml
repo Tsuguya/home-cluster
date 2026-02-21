@@ -155,7 +155,9 @@ spec:
           claude --print "$(cat /tmp/prompt.txt)" \
             --allowedTools Edit,Read,Bash,Glob,Grep,Write
 
-          if git status --porcelain | grep -q .; then
+          if ! git diff --quiet HEAD || git ls-files --others --exclude-standard | grep -q .; then
+            :
+          else
             echo "No changes made by Claude"
             exit 1
           fi
@@ -178,22 +180,28 @@ spec:
           def gh_api(endpoint, method="GET", data=None):
               cmd = ["gh", "api", f"repos/{REPO}/{endpoint}", "--method", method]
               inp = json.dumps(data).encode() if data else None
-              r = subprocess.run(cmd, input=inp, capture_output=True)
+              r = subprocess.run(cmd, input=inp, capture_output=True, cwd="/workspace")
               if r.returncode != 0:
                   print(f"gh api error ({endpoint}): {r.stderr.decode()}", file=sys.stderr)
                   sys.exit(1)
               return json.loads(r.stdout) if r.stdout.strip() else {}
 
-          # Changed files
-          status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True).stdout
-          changed, deleted = {}, []
-          for line in status.strip().splitlines():
-              code, path = line[:2].strip(), line[3:].strip()
-              if code == "D":
-                  deleted.append(path)
-              else:
-                  changed[path] = open(path, "rb").read()
+          # Changed files via git diff (simpler and more reliable than porcelain parsing)
+          modified = subprocess.run(
+              ["git", "diff", "--name-only", "HEAD"],
+              capture_output=True, text=True, cwd="/workspace"
+          ).stdout.strip().splitlines()
+          new_files = subprocess.run(
+              ["git", "ls-files", "--others", "--exclude-standard"],
+              capture_output=True, text=True, cwd="/workspace"
+          ).stdout.strip().splitlines()
+          deleted = subprocess.run(
+              ["git", "diff", "--name-only", "--diff-filter=D", "HEAD"],
+              capture_output=True, text=True, cwd="/workspace"
+          ).stdout.strip().splitlines()
 
+          changed = {f: open(f"/workspace/{f}", "rb").read() for f in modified + new_files if f}
+          deleted = [f for f in deleted if f]
           print(f"Changed: {list(changed)}, Deleted: {deleted}")
 
           # Base commit

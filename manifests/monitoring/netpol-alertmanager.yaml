@@ -17,3 +17,10 @@ spec:
               protocol: TCP
             - port: "8080"
               protocol: TCP
+  egress:
+    - toFQDNs:
+        - matchPattern: "*.discord.com"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

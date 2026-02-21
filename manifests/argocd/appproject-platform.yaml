@@ -32,3 +32,5 @@ spec:
       kind: APIService
     - group: '*'
       kind: GatewayClass
+    - group: '*'
+      kind: Namespace

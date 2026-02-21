@@ -7,7 +7,7 @@ spec:
   templates:
     - name: send
       container:
-        image: curlimages/curl:8.12.1
+        image: curlimages/curl:8.18.0
         command: [sh, -c]
         args:
           - |

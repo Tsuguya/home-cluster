@@ -299,7 +299,7 @@ data:
         },
         {
           "collapsed": false,
-          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 16},
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 27},
           "id": 102,
           "title": "Pod Details",
           "type": "row"
@@ -399,7 +399,7 @@ data:
               }
             ]
           },
-          "gridPos": {"h": 20, "w": 24, "x": 0, "y": 17},
+          "gridPos": {"h": 20, "w": 24, "x": 0, "y": 28},
           "id": 7,
           "options": {
             "footer": {"show": false},
@@ -464,7 +464,7 @@ data:
         },
         {
           "collapsed": false,
-          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 37},
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 16},
           "id": 103,
           "title": "Top Consumers by Node",
           "type": "row"
@@ -480,7 +480,7 @@ data:
             },
             "overrides": []
           },
-          "gridPos": {"h": 10, "w": 12, "x": 0, "y": 38},
+          "gridPos": {"h": 10, "w": 12, "x": 0, "y": 17},
           "id": 8,
           "options": {
             "displayMode": "gradient",
@@ -513,7 +513,7 @@ data:
             },
             "overrides": []
           },
-          "gridPos": {"h": 10, "w": 12, "x": 12, "y": 38},
+          "gridPos": {"h": 10, "w": 12, "x": 12, "y": 17},
           "id": 9,
           "options": {
             "displayMode": "gradient",

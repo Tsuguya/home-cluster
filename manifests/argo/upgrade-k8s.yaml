@@ -136,8 +136,8 @@ spec:
             DIFF=$(curl -sf "https://api.github.com/repos/Tsuguya/home-infra/compare/${BEFORE}...${AFTER}" \
               -H "Accept: application/vnd.github.v3.diff")
 
-            OLD_VER=$(echo "$DIFF" | grep '^-kubernetesVersion:' | sed 's/^-kubernetesVersion: *//' | tr -d '"' | head -1)
-            NEW_VER=$(echo "$DIFF" | grep '^+kubernetesVersion:' | sed 's/^+kubernetesVersion: *//' | tr -d '"' | head -1)
+            OLD_VER=$(echo "$DIFF" | grep '^-kubernetesVersion:' | sed 's/^-kubernetesVersion: *//' | tr -d '"' | head -1 || true)
+            NEW_VER=$(echo "$DIFF" | grep '^+kubernetesVersion:' | sed 's/^+kubernetesVersion: *//' | tr -d '"' | head -1 || true)
 
             if [ -z "$OLD_VER" ] || [ -z "$NEW_VER" ]; then
               echo "No kubernetesVersion change detected."

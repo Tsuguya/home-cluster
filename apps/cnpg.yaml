@@ -4,7 +4,7 @@ metadata:
   name: cnpg
   namespace: argocd
 spec:
-  project: default
+  project: storage
   sources:
     - repoURL: https://cloudnative-pg.github.io/charts
       chart: cloudnative-pg

@@ -4,7 +4,7 @@ metadata:
   name: rook-ceph-cluster
   namespace: argocd
 spec:
-  project: default
+  project: storage
   sources:
     - repoURL: https://charts.rook.io/release
       chart: rook-ceph-cluster

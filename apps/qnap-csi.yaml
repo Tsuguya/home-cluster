@@ -4,7 +4,7 @@ metadata:
   name: qnap-csi
   namespace: argocd
 spec:
-  project: default
+  project: storage
   sources:
     - repoURL: https://github.com/qnap-dev/QNAP-CSI-PlugIn.git
       targetRevision: main

@@ -4,7 +4,7 @@ metadata:
   name: cert-manager-config
   namespace: argocd
 spec:
-  project: default
+  project: infra
   source:
     repoURL: https://github.com/Tsuguya/home-cluster.git
     targetRevision: main

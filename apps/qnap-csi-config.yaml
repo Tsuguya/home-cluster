@@ -4,7 +4,7 @@ metadata:
   name: qnap-csi-config
   namespace: argocd
 spec:
-  project: default
+  project: storage
   source:
     repoURL: https://github.com/Tsuguya/home-cluster.git
     targetRevision: main

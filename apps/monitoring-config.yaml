@@ -4,7 +4,7 @@ metadata:
   name: monitoring-config
   namespace: argocd
 spec:
-  project: default
+  project: monitoring
   source:
     repoURL: https://github.com/Tsuguya/home-cluster.git
     targetRevision: main

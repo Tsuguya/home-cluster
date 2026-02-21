@@ -5,15 +5,6 @@ metadata:
   namespace: argo
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: pluto-checker
-rules:
-  - apiGroups: ["*"]
-    resources: ["*"]
-    verbs: ["get", "list"]
----
-apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: pluto-checker
@@ -26,6 +17,15 @@ subjects:
   - kind: ServiceAccount
     name: pluto-checker
     namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pluto-checker
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["get", "list"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -46,7 +46,7 @@ metadata:
   name: pluto-check
   namespace: argo
 spec:
-  activeDeadlineSeconds: 300
+  activeDeadlineSeconds: 2400
   serviceAccountName: pluto-checker
   entrypoint: main
   templates:
@@ -54,8 +54,19 @@ spec:
       steps:
         - - name: detect-in-cluster
             template: detect-in-cluster
+            continueOn:
+              failed: true
           - name: detect-helm
             template: detect-helm
+            continueOn:
+              failed: true
+        - - name: ai-fix
+            template: ai-fix
+            when: "{{steps.detect-in-cluster.status}} == Failed || {{steps.detect-helm.status}} == Failed"
+        - - name: fail-if-deprecated
+            template: fail-if-deprecated
+            when: "{{steps.detect-in-cluster.status}} == Failed || {{steps.detect-helm.status}} == Failed"
+
     - name: detect-in-cluster
       container:
         image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.22.7
@@ -66,6 +77,7 @@ spec:
           - k8s=v1.36.0
           - -o
           - wide
+
     - name: detect-helm
       container:
         image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.22.7
@@ -76,6 +88,121 @@ spec:
           - k8s=v1.36.0
           - -o
           - wide
+
+    - name: ai-fix
+      timeout: "30m"
+      script:
+        image: node:20-alpine
+        command: [sh]
+        env:
+          - name: CLAUDE_CODE_OAUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: claude-code-token
+                key: credential
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-pat-pluto-fix
+                key: credential
+        source: |
+          set -euo pipefail
+
+          echo "=== Installing dependencies ==="
+          apk add --no-cache git github-cli curl tar >/dev/null 2>&1
+
+          PLUTO_VERSION=v5.22.7
+          curl -sL "https://github.com/FairwindsOps/pluto/releases/download/${PLUTO_VERSION}/pluto_${PLUTO_VERSION#v}_linux_amd64.tar.gz" \
+            | tar -xz -C /usr/local/bin pluto
+
+          npm install -g @anthropic-ai/claude-code >/dev/null 2>&1
+
+          git config --global user.email "argo-pluto-bot@home.tgy.io"
+          git config --global user.name "Argo Pluto Bot"
+
+          echo "=== Cloning home-cluster ==="
+          git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-cluster.git" /workspace
+          cd /workspace
+
+          echo "=== Running Pluto ==="
+          pluto detect-all-in-cluster --target-versions k8s=v1.36.0 -o wide 2>&1 | tee /tmp/pluto-cluster.txt || true
+          pluto detect-helm --target-versions k8s=v1.36.0 -o wide 2>&1 | tee /tmp/pluto-helm.txt || true
+
+          echo "[detect-all-in-cluster]"
+          cat /tmp/pluto-cluster.txt
+          echo "[detect-helm]"
+          cat /tmp/pluto-helm.txt
+
+          if ! grep -qE "DEPRECATED|REMOVED" /tmp/pluto-cluster.txt /tmp/pluto-helm.txt 2>/dev/null; then
+            echo "No deprecated APIs detected in ai-fix step"
+            exit 0
+          fi
+
+          BRANCH="fix/deprecated-api-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH"
+
+          cat > /tmp/prompt.txt << 'PROMPT_EOF'
+          Kubernetes クラスターで deprecated API が検出されました（対象: k8s v1.36.0）。
+
+          この home-cluster リポジトリの manifests/ と helm-values/ を調査して、
+          deprecated/removed な apiVersion を新しい apiVersion に更新してください。
+
+          git 操作は行わないでください（スクリプトが処理します）。
+
+          ## Pluto detect-all-in-cluster
+          PROMPT_EOF
+
+          cat /tmp/pluto-cluster.txt >> /tmp/prompt.txt
+          echo "" >> /tmp/prompt.txt
+          echo "## Pluto detect-helm" >> /tmp/prompt.txt
+          cat /tmp/pluto-helm.txt >> /tmp/prompt.txt
+
+          echo "=== Running Claude Code ==="
+          claude --print "$(cat /tmp/prompt.txt)" \
+            --allowedTools Edit,Read,Bash,Glob,Grep,Write
+
+          if git diff --quiet; then
+            echo "No changes made by Claude"
+            exit 1
+          fi
+
+          git add -A
+          git commit -m "fix: update deprecated Kubernetes API versions for k8s v1.36.0
+
+          Auto-fixed by Claude Code (triggered by Pluto check).
+          Review before merging."
+
+          git push origin "$BRANCH"
+
+          cat > /tmp/pr-body.txt << 'BODY_EOF'
+          ## Summary
+
+          Pluto が k8s v1.36.0 で deprecated/removed となる API を検出したため、Claude Code が自動修正しました。
+
+          ## Pluto 検出結果
+
+          ```
+          BODY_EOF
+
+          cat /tmp/pluto-cluster.txt >> /tmp/pr-body.txt
+          cat /tmp/pluto-helm.txt >> /tmp/pr-body.txt
+          printf '```\n\n---\n> 自動生成された PR です。マージ前に変更内容を必ず確認してください。\n' >> /tmp/pr-body.txt
+
+          gh pr create \
+            --title "fix: update deprecated Kubernetes API versions (k8s v1.36.0)" \
+            --body-file /tmp/pr-body.txt \
+            --base main
+
+          echo "PR created for branch: $BRANCH"
+
+    - name: fail-if-deprecated
+      container:
+        image: alpine:3.21
+        command: [sh, -c]
+        args:
+          - |
+            echo "Deprecated APIs found. PR has been created for review."
+            exit 1
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: CronWorkflow

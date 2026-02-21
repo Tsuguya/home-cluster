@@ -5,7 +5,7 @@ connect:
 operator:
   create: true
   authMethod: service-account
-  pollingInterval: 1800
+  pollingInterval: 7200
   serviceAccountToken:
     name: onepassword-token
   watchNamespace: []

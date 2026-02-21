@@ -34,4 +34,12 @@ apps/          # ArgoCD Application definitions
 helm-values/   # Helm chart values
 manifests/     # Raw K8s manifests
 docs/          # Operational docs
+manual/        # Manual bootstrap steps
 ```
+
+## Documentation
+
+- [Bootstrap手順](manual/README.md) — クラスタ再構築時の手動ステップ
+- [サービス一覧](docs/services.md) — 外部/内部エンドポイント
+- [SSO設定](docs/sso.md) — Google OIDC 設定・新サービス追加手順
+- [ネットワークポリシー](docs/network-policies.md) — CNP/CCNP 全ポリシー一覧

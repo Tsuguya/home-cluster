@@ -72,23 +72,8 @@ cert-manager, external-dns, rook-ceph, CNPG, Grafana, Loki, Argo Workflows 等�
 
 DNS レコードも external-dns が Gateway の HTTPRoute / TLSRoute から自動作成する（Cloudflare）。
 
-## 5. Loki S3 クレデンシャル（rook-ceph 稼働後）
-
-rook-ceph が稼働し CephObjectStoreUser `loki` が作成されると、
-rook-ceph が S3 アクセスキーを含む Secret `rook-ceph-object-user-ceph-objectstore-loki` を `rook-ceph` namespace に生成する。
-
-```bash
-kubectl get secret -n rook-ceph rook-ceph-object-user-ceph-objectstore-loki \
-  -o jsonpath='{.data.AccessKey}' | base64 -d
-kubectl get secret -n rook-ceph rook-ceph-object-user-ceph-objectstore-loki \
-  -o jsonpath='{.data.SecretKey}' | base64 -d
-```
-
-取得した値を 1Password vault `home-cluster` の `loki-s3-credentials` アイテムに保存:
-- `AWS_ACCESS_KEY_ID` — AccessKey
-- `AWS_SECRET_ACCESS_KEY` — SecretKey
-
-1Password Operator が Secret を monitoring namespace に同期し、Loki が S3 に接続できるようになる。
+S3 ストレージ（Loki、Argo Workflows）は OBC (ObjectBucketClaim) で自動管理される。
+rook-ceph 稼働後、OBC が バケット作成 + S3 credentials Secret を各 namespace に自動生成するため手動操作不要。
 
 ---
 
@@ -140,6 +125,4 @@ kubectl get secret -n rook-ceph rook-ceph-object-user-ceph-objectstore-loki \
 
 ### 構築後に作成（クラスタ内サービスに依存）
 
-| Item | Deployed Namespaces | Keys | 依存先 | 用途 |
-|---|---|---|---|---|
-| loki-s3-credentials | monitoring | AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY | rook-ceph (CephObjectStoreUser) | Loki → Ceph RGW (S3) |
+なし。S3 ストレージ (Loki / Argo Workflows) は OBC で自動管理。

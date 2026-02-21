@@ -109,16 +109,13 @@ spec:
           set -euo pipefail
 
           echo "=== Installing dependencies ==="
-          apk add --no-cache git github-cli curl tar >/dev/null 2>&1
+          apk add --no-cache git github-cli curl tar python3 >/dev/null 2>&1
 
           PLUTO_VERSION=v5.22.7
           curl -sL "https://github.com/FairwindsOps/pluto/releases/download/${PLUTO_VERSION}/pluto_${PLUTO_VERSION#v}_linux_amd64.tar.gz" \
             | tar -xz -C /usr/local/bin pluto
 
           npm install -g @anthropic-ai/claude-code >/dev/null 2>&1
-
-          git config --global user.email "argo-pluto-bot@home.tgy.io"
-          git config --global user.name "Argo Pluto Bot"
 
           echo "=== Cloning home-cluster ==="
           git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-cluster.git" /workspace
@@ -137,9 +134,6 @@ spec:
             echo "No deprecated APIs detected in ai-fix step"
             exit 0
           fi
-
-          BRANCH="fix/deprecated-api-$(date +%Y%m%d-%H%M%S)"
-          git checkout -b "$BRANCH"
 
           cat > /tmp/prompt.txt << 'PROMPT_EOF'
           Kubernetes クラスターで deprecated API が検出されました（対象: k8s v1.36.0）。
@@ -161,18 +155,76 @@ spec:
           claude --print "$(cat /tmp/prompt.txt)" \
             --allowedTools Edit,Read,Bash,Glob,Grep,Write
 
-          if git diff --quiet; then
+          if git status --porcelain | grep -q .; then
             echo "No changes made by Claude"
             exit 1
           fi
 
-          git add -A
-          git commit -m "fix: update deprecated Kubernetes API versions for k8s v1.36.0
+          echo "=== Creating signed commit via GitHub API ==="
+          BRANCH="fix/deprecated-api-$(date +%Y%m%d-%H%M%S)"
+          export BRANCH
 
-          Auto-fixed by Claude Code (triggered by Pluto check).
-          Review before merging."
+          python3 << 'PYEOF'
+          import subprocess, json, base64, sys, os
 
-          git push origin "$BRANCH"
+          REPO = "Tsuguya/home-cluster"
+          BRANCH = os.environ["BRANCH"]
+          COMMIT_MSG = (
+              "fix: update deprecated Kubernetes API versions for k8s v1.36.0\n\n"
+              "Auto-fixed by Claude Code (triggered by Pluto check).\n"
+              "Review before merging."
+          )
+
+          def gh_api(endpoint, method="GET", data=None):
+              cmd = ["gh", "api", f"repos/{REPO}/{endpoint}", "--method", method]
+              inp = json.dumps(data).encode() if data else None
+              r = subprocess.run(cmd, input=inp, capture_output=True)
+              if r.returncode != 0:
+                  print(f"gh api error ({endpoint}): {r.stderr.decode()}", file=sys.stderr)
+                  sys.exit(1)
+              return json.loads(r.stdout) if r.stdout.strip() else {}
+
+          # Changed files
+          status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True).stdout
+          changed, deleted = {}, []
+          for line in status.strip().splitlines():
+              code, path = line[:2].strip(), line[3:].strip()
+              if code == "D":
+                  deleted.append(path)
+              else:
+                  changed[path] = open(path, "rb").read()
+
+          print(f"Changed: {list(changed)}, Deleted: {deleted}")
+
+          # Base commit
+          base_sha = gh_api("git/ref/heads/main")["object"]["sha"]
+          base_tree = gh_api(f"git/commits/{base_sha}")["tree"]["sha"]
+
+          # Create branch
+          gh_api("git/refs", "POST", {"ref": f"refs/heads/{BRANCH}", "sha": base_sha})
+          print(f"Created branch: {BRANCH}")
+
+          # Create blobs
+          tree_items = []
+          for path, content in changed.items():
+              blob = gh_api("git/blobs", "POST", {
+                  "content": base64.b64encode(content).decode(),
+                  "encoding": "base64"
+              })
+              tree_items.append({"path": path, "mode": "100644", "type": "blob", "sha": blob["sha"]})
+          for path in deleted:
+              tree_items.append({"path": path, "mode": "100644", "type": "blob", "sha": None})
+
+          # Create tree → commit (GitHub signs) → update ref
+          tree = gh_api("git/trees", "POST", {"base_tree": base_tree, "tree": tree_items})
+          commit = gh_api("git/commits", "POST", {
+              "message": COMMIT_MSG,
+              "tree": tree["sha"],
+              "parents": [base_sha]
+          })
+          gh_api(f"git/refs/heads/{BRANCH}", "PATCH", {"sha": commit["sha"]})
+          print(f"Signed commit created: {commit['sha']}")
+          PYEOF
 
           cat > /tmp/pr-body.txt << 'BODY_EOF'
           ## Summary
@@ -191,6 +243,7 @@ spec:
           gh pr create \
             --title "fix: update deprecated Kubernetes API versions (k8s v1.36.0)" \
             --body-file /tmp/pr-body.txt \
+            --head "$BRANCH" \
             --base main
 
           echo "PR created for branch: $BRANCH"

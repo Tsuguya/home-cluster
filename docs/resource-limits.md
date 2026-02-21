@@ -1,0 +1,133 @@
+# Resource Requests and Limits
+
+## 方針
+
+- **requests.cpu**: 実測値ベース（スケジューラがノード配置に使用）
+- **requests.memory**: 実測値 + 小幅なヘッドルーム
+- **limits.memory**: 実測値の約 2 倍（バースト対応、OOMKill 防止）
+- **limits.cpu**: 設定しない（CPU はコンプレッシブルリソース。limit を設定すると CFS throttling が発生し、レイテンシが悪化する）
+
+計測日: 2026-02-22（`kubectl top pods` による実測値）
+
+## Helm Values
+
+### ArgoCD
+
+| Component | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|
+| controller | 50m / 384Mi | 768Mi | 3-39m / 295-473Mi |
+| server | 10m / 64Mi | 256Mi | 3m / 38Mi |
+| repo-server | 10m / 128Mi | 1Gi | 1m / 54Mi（helm template でスパイク） |
+| redis | 10m / 64Mi | 256Mi | 14m / 83Mi |
+| dex | 10m / 32Mi | 128Mi | 低負荷 |
+| applicationSet | 10m / 64Mi | 192Mi | 低負荷 |
+| notifications | 10m / 64Mi | 128Mi | 低負荷 |
+
+### Cilium
+
+| Component | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|
+| agent (DS) | 50m / 128Mi | 512Mi | 37-77m / 142-185Mi |
+| operator | 10m / 64Mi | 256Mi | 5m / 40Mi |
+| envoy (DS) | 10m / 32Mi | 256Mi | 低負荷 |
+| hubble-relay | 10m / 32Mi | 192Mi | 低負荷 |
+| hubble-ui frontend | 10m / 32Mi | 128Mi | 合計 43m / 96Mi |
+| hubble-ui backend | 10m / 32Mi | 128Mi | 同上 |
+
+### cert-manager
+
+| Component | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|
+| controller | 10m / 32Mi | 128Mi | 低負荷 |
+| webhook | 10m / 32Mi | 64Mi | 低負荷 |
+| cainjector | 10m / 32Mi | 128Mi | 1m / 51Mi |
+
+### Loki
+
+| Component | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|
+| singleBinary | 25m / 256Mi | 512Mi | 20-24m / 259Mi |
+| gateway (nginx) | 10m / 32Mi | 64Mi | 低負荷 |
+| canary (DS) | 10m / 32Mi | 64Mi | 低負荷 |
+| sidecar (sc-rules) | 10m / 32Mi | 128Mi | 低負荷（64Mi で OOMKill 発生） |
+
+### Alloy (DS)
+
+| Component | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|
+| alloy | 25m / 128Mi | 512Mi | 21-29m / 87-315Mi |
+
+### kube-prometheus-stack
+
+| Component | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|
+| prometheus | 200m / 1Gi | 2Gi | 93-117m / 1225-1738Mi |
+| alertmanager | 50m / 128Mi | 256Mi | 2m / 35Mi |
+| operator | 10m / 32Mi | 128Mi | 4m / 23Mi |
+| config-reloader | 10m / 32Mi | 64Mi | 低負荷 |
+| grafana | 25m / 256Mi | 512Mi | 17-20m / 260Mi |
+| grafana sidecar | 10m / 64Mi | 256Mi | 低負荷（64Mi で OOMKill 発生） |
+| kube-state-metrics | 10m / 32Mi | 128Mi | 低負荷 |
+| node-exporter (DS) | 10m / 32Mi | 64Mi | 低負荷 |
+
+### その他
+
+| Service | Component | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|---|
+| external-dns | | 10m / 32Mi | 128Mi | 低負荷 |
+| metrics-server | | 10m / 32Mi | 128Mi | 低負荷 |
+| cnpg | operator | 10m / 64Mi | 256Mi | 4m / 38Mi |
+| onepassword | operator | 10m / 64Mi | 256Mi | 1m / 119Mi |
+| argo-workflows | controller | 10m / 64Mi | 256Mi | 2m / 19Mi |
+| argo-workflows | server | 10m / 64Mi | 256Mi | 1m / 21Mi |
+| argo-events | controller | 10m / 64Mi | 256Mi | 2m / 27Mi |
+| rook-ceph | operator | 100m / 128Mi | 512Mi | 71-111m / 67-88Mi |
+| rook-ceph-cluster | osd/mon/mgr/mds/rgw | (別途設定済み) | | |
+
+## CRD マニフェスト
+
+### Argo Events
+
+| Component | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|
+| EventBus (JetStream) main | 10m / 32Mi | 128Mi | 8-13m / 17-26Mi |
+| EventBus metrics | 10m / 32Mi | 64Mi | 低負荷 |
+| EventBus reloader | 10m / 32Mi | 64Mi | 低負荷 |
+| EventSource | 10m / 32Mi | 64Mi | 1m / 16Mi |
+| Sensor | 10m / 32Mi | 64Mi | 7m / 19-20Mi |
+
+### CNPG
+
+| Component | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|
+| shared-pg | 10m / 128Mi | 512Mi | 3-24m / 96-124Mi |
+
+## WorkflowTemplate コンテナ
+
+| Template | Container | requests (cpu/mem) | limits (mem) |
+|---|---|---|---|
+| tofu-cloudflare | main (opentofu) | 50m / 128Mi | 512Mi |
+| tofu-cloudflare-plan | main (opentofu) | 50m / 128Mi | 512Mi |
+| pluto-check | detect-in-cluster | 10m / 32Mi | 128Mi |
+| pluto-check | detect-helm | 10m / 32Mi | 128Mi |
+| pluto-check | ai-fix (node + claude) | 100m / 256Mi | 1Gi |
+| pluto-check | fail-if-deprecated | 10m / 16Mi | 64Mi |
+| upgrade-k8s | validate/upgrade/remaining/verify | 10m / 64Mi | 256Mi |
+| cnp-coverage-check | main | 10m / 64Mi | 128Mi |
+| discord-notify | send (curl) | 10m / 16Mi | 64Mi |
+| node-shutdown | resolve-nodes | 10m / 16Mi | 64Mi |
+| node-shutdown | shutdown-nodes (talosctl) | 10m / 32Mi | 64Mi |
+
+## 未設定
+
+| Service | 理由 |
+|---|---|
+| QNAP CSI (trident) | chart が resources 設定をサポートしていない |
+
+## OOMKill 調整履歴
+
+| 日付 | Component | 変更前 | 変更後 | 原因 |
+|---|---|---|---|---|
+| 2026-02-22 | argocd repo-server | 512Mi | 1Gi | helm template rendering で大量メモリ使用 |
+| 2026-02-22 | loki sidecar (sc-rules) | 64Mi | 128Mi | 起動時メモリ超過 |
+| 2026-02-22 | grafana sidecar (sc-dashboard/datasources) | 64Mi | 256Mi | 起動時メモリ超過 |

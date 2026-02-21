@@ -11,9 +11,13 @@ spec:
         command: [sh, -c]
         args:
           - |
+            URL="https://argo.infra.tgy.io/workflows/{{workflow.namespace}}/{{workflow.name}}"
+            TITLE="Workflow {{workflow.status}}: {{workflow.name}}"
+            NS="{{workflow.namespace}}"
+            PAYLOAD="{\"embeds\":[{\"title\":\"$TITLE\",\"url\":\"$URL\",\"color\":15298678,\"fields\":[{\"name\":\"Namespace\",\"value\":\"$NS\",\"inline\":true}]}]}"
             curl -sfS -X POST "$DISCORD_WEBHOOK_URL" \
               -H "Content-Type: application/json" \
-              -d '{"embeds":[{"title":"Workflow {{workflow.status}}: {{workflow.name}}","url":"https://argo.infra.tgy.io/workflows/{{workflow.namespace}}/{{workflow.name}}","color":15298678,"fields":[{"name":"Namespace","value":"{{workflow.namespace}}","inline":true}]}]}'
+              -d "$PAYLOAD"
         env:
           - name: DISCORD_WEBHOOK_URL
             valueFrom:

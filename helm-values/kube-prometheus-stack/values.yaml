@@ -84,6 +84,8 @@ grafana:
       root_url: https://grafana.infra.tgy.io
     auth:
       disable_login_form: true
+    auth.basic:
+      enabled: true
     auth.generic_oauth:
       enabled: true
       name: Google

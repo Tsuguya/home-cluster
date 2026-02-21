@@ -7,7 +7,7 @@ spec:
   project: storage
   sources:
     - repoURL: https://github.com/qnap-dev/QNAP-CSI-PlugIn.git
-      targetRevision: main
+      targetRevision: v1.6.0
       path: Helm/trident
       helm:
         releaseName: qnap-trident

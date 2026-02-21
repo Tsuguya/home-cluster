@@ -9,6 +9,17 @@
   "kubernetes": {
     "managerFilePatterns": ["/manifests/.+\\.yaml$/"]
   },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/apps/qnap-csi\\.yaml$"],
+      "matchStrings": [
+        "repoURL: https://github\\.com/qnap-dev/QNAP-CSI-PlugIn\\.git\\s+targetRevision: (?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "packageNameTemplate": "qnap-dev/QNAP-CSI-PlugIn"
+    }
+  ],
   "packageRules": [
     {
       "description": "Automerge patch updates",

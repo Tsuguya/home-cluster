@@ -36,3 +36,5 @@ spec:
       kind: StorageClass
     - group: '*'
       kind: CSIDriver
+    - group: '*'
+      kind: TridentOrchestrator

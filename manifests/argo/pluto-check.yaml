@@ -92,7 +92,7 @@ spec:
     - name: ai-fix
       timeout: "30m"
       script:
-        image: node:20-alpine
+        image: node:24-alpine
         command: [sh]
         env:
           - name: CLAUDE_CODE_OAUTH_TOKEN

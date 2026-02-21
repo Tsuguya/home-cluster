@@ -48,7 +48,26 @@ configs:
               - email
   rbac:
     policy.csv: |
-      g, tsuguya.toma@tgy.io, role:admin
+      p, role:owner, applications, *, */*, allow
+      p, role:owner, applicationsets, *, */*, allow
+      p, role:owner, clusters, *, *, allow
+      p, role:owner, repositories, *, *, allow
+      p, role:owner, certificates, *, *, allow
+      p, role:owner, accounts, *, *, allow
+      p, role:owner, gpgkeys, *, *, allow
+      p, role:owner, logs, get, */*, allow
+      p, role:owner, exec, create, */*, allow
+      p, role:owner, projects, *, *, allow
+      p, role:owner, extensions, invoke, *, allow
+      p, role:owner, applications, delete, storage/*, deny
+      p, role:owner, applications, delete, platform/*, deny
+      p, role:owner, applications, delete, security/*, deny
+      p, role:readonly, applications, get, */*, allow
+      p, role:readonly, projects, get, *, allow
+      p, role:readonly, clusters, get, *, allow
+      p, role:readonly, logs, get, */*, allow
+      p, role:readonly, exec, create, */*, deny
+      g, tsuguya.toma@tgy.io, role:owner
     policy.default: ""
     scopes: "[email]"
   params:

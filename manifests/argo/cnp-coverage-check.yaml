@@ -30,7 +30,7 @@ spec:
   templates:
     - name: main
       container:
-        image: alpine:3.21
+        image: alpine:3.23
         command: [sh, -c]
         args:
           - |

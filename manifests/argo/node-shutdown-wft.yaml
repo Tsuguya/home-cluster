@@ -46,7 +46,7 @@ spec:
         parameters:
           - name: nodes
       script:
-        image: alpine:3.21
+        image: alpine:3.23
         command: [sh]
         source: |
           TARGET="{{inputs.parameters.nodes}}"

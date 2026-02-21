@@ -65,6 +65,31 @@ grafana:
       secretKeyRef:
         name: google-oauth
         key: clientSecret
+    GF_DISCORD_WEBHOOK_URL:
+      secretKeyRef:
+        name: discord-webhook-grafana
+        key: url
+  alerting:
+    contactpoints.yaml:
+      apiVersion: 1
+      contactPoints:
+        - orgId: 1
+          name: discord
+          receivers:
+            - uid: discord
+              type: discord
+              settings:
+                url: $__env{GF_DISCORD_WEBHOOK_URL}
+                use_discord_username: true
+    policies.yaml:
+      apiVersion: 1
+      policies:
+        - orgId: 1
+          receiver: discord
+          group_by: ['grafana_folder', 'alertname']
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 4h
   additionalDataSources:
     - name: Loki
       uid: loki

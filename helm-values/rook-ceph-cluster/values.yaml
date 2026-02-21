@@ -23,6 +23,10 @@ cephClusterSpec:
     enabled: true
     ssl: false
 
+  monitoring:
+    enabled: true
+    createPrometheusRules: true
+
   # --- Component placement ---
   placement:
     all:

@@ -14,11 +14,6 @@ spec:
         - ports:
             - port: "6060"
               protocol: TCP
-  ingressDeny:
-    - fromEntities:
-        - cluster
-        - world
-        - remote-node
   egress:
     - toEntities:
         - kube-apiserver

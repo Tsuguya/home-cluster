@@ -15,11 +15,6 @@ spec:
         - ports:
             - port: "3500"
               protocol: TCP
-  ingressDeny:
-    - fromEntities:
-        - cluster
-        - world
-        - remote-node
   egress:
     - toEndpoints:
         - matchLabels:

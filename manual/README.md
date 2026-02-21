@@ -46,6 +46,9 @@ helm install argocd argo/argo-cd \
   --version 9.4.2 \
   -f helm-values/argocd/values.yaml
 
+# AppProject を先に作成（app-of-apps が project: platform を参照するため）
+kubectl apply -f manifests/argocd/appproject-*.yaml
+
 kubectl apply -f argocd/app-of-apps.yaml
 ```
 

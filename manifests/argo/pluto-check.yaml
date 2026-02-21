@@ -162,7 +162,7 @@ spec:
             exit 1
           fi
 
-          echo "=== Creating signed commit via GitHub API ==="
+          echo "=== Creating signed commit via GitHub GraphQL API ==="
           BRANCH="fix/deprecated-api-$(date +%Y%m%d-%H%M%S)"
           export BRANCH
 
@@ -171,11 +171,14 @@ spec:
 
           REPO = "Tsuguya/home-cluster"
           BRANCH = os.environ["BRANCH"]
-          COMMIT_MSG = (
-              "fix: update deprecated Kubernetes API versions for k8s v1.36.0\n\n"
-              "Auto-fixed by Claude Code (triggered by Pluto check).\n"
-              "Review before merging."
-          )
+
+          MUTATION = """
+          mutation ($input: CreateCommitOnBranchInput!) {
+            createCommitOnBranch(input: $input) {
+              commit { oid }
+            }
+          }
+          """
 
           def gh_api(endpoint, method="GET", data=None):
               cmd = ["gh", "api", f"repos/{REPO}/{endpoint}", "--method", method]
@@ -184,11 +187,24 @@ spec:
               inp = json.dumps(data).encode() if data else None
               r = subprocess.run(cmd, input=inp, capture_output=True, cwd="/workspace")
               if r.returncode != 0:
-                  print(f"gh api error ({endpoint}): {r.stderr.decode()}", file=sys.stderr)
+                  print(f"ERROR ({endpoint}): {r.stderr.decode()}", file=sys.stderr)
                   sys.exit(1)
               return json.loads(r.stdout) if r.stdout.strip() else {}
 
-          # Changed files via git diff (simpler and more reliable than porcelain parsing)
+          def gh_graphql(variables):
+              payload = json.dumps({"query": MUTATION, "variables": variables}).encode()
+              r = subprocess.run(
+                  ["gh", "api", "graphql", "--input", "-"],
+                  input=payload, capture_output=True, cwd="/workspace"
+              )
+              if r.returncode != 0:
+                  print(f"GraphQL ERROR: {r.stderr.decode()}", file=sys.stderr); sys.exit(1)
+              result = json.loads(r.stdout)
+              if "errors" in result:
+                  print(f"GraphQL errors: {result['errors']}", file=sys.stderr); sys.exit(1)
+              return result["data"]
+
+          # Changed files
           modified = subprocess.run(
               ["git", "diff", "--name-only", "HEAD"],
               capture_output=True, text=True, cwd="/workspace"
@@ -202,38 +218,31 @@ spec:
               capture_output=True, text=True, cwd="/workspace"
           ).stdout.strip().splitlines()
 
-          changed = {f: open(f"/workspace/{f}", "rb").read() for f in modified + new_files if f}
-          deleted = [f for f in deleted if f]
-          print(f"Changed: {list(changed)}, Deleted: {deleted}")
+          additions = [
+              {"path": f, "contents": base64.b64encode(open(f"/workspace/{f}", "rb").read()).decode()}
+              for f in modified + new_files if f and f not in deleted
+          ]
+          deletions = [{"path": f} for f in deleted if f]
+          print(f"Additions: {[a['path'] for a in additions]}, Deletions: {deletions}")
 
-          # Base commit
+          # Get base SHA and create branch
           base_sha = gh_api("git/ref/heads/main")["object"]["sha"]
-          base_tree = gh_api(f"git/commits/{base_sha}")["tree"]["sha"]
-
-          # Create branch
           gh_api("git/refs", "POST", {"ref": f"refs/heads/{BRANCH}", "sha": base_sha})
-          print(f"Created branch: {BRANCH}")
+          print(f"Branch created: {BRANCH}")
 
-          # Create blobs
-          tree_items = []
-          for path, content in changed.items():
-              blob = gh_api("git/blobs", "POST", {
-                  "content": base64.b64encode(content).decode(),
-                  "encoding": "base64"
-              })
-              tree_items.append({"path": path, "mode": "100644", "type": "blob", "sha": blob["sha"]})
-          for path in deleted:
-              tree_items.append({"path": path, "mode": "100644", "type": "blob", "sha": None})
-
-          # Create tree → commit (GitHub signs) → update ref
-          tree = gh_api("git/trees", "POST", {"base_tree": base_tree, "tree": tree_items})
-          commit = gh_api("git/commits", "POST", {
-              "message": COMMIT_MSG,
-              "tree": tree["sha"],
-              "parents": [base_sha]
+          # Create signed commit via GraphQL (GitHub signs automatically)
+          result = gh_graphql({
+              "input": {
+                  "branch": {"repositoryNameWithOwner": REPO, "branchName": BRANCH},
+                  "message": {
+                      "headline": "fix: update deprecated Kubernetes API versions for k8s v1.36.0",
+                      "body": "Auto-fixed by Claude Code (triggered by Pluto check).\nReview before merging."
+                  },
+                  "fileChanges": {"additions": additions, "deletions": deletions},
+                  "expectedHeadOid": base_sha
+              }
           })
-          gh_api(f"git/refs/heads/{BRANCH}", "PATCH", {"sha": commit["sha"]})
-          print(f"Signed commit created: {commit['sha']}")
+          print(f"Signed commit: {result['createCommitOnBranch']['commit']['oid']}")
           PYEOF
 
           cat > /tmp/pr-body.txt << 'BODY_EOF'

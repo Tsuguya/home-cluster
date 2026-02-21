@@ -13,6 +13,8 @@ spec:
             eventsource-name: github-webhook
         - matchLabels:
             sensor-name: tofu-cloudflare
+        - matchLabels:
+            sensor-name: upgrade-k8s
       toPorts:
         - ports:
             - port: "4222"

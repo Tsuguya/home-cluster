@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: upgrade-k8s
+  namespace: argo
+spec:
+  template:
+    serviceAccountName: workflow-executor
+  dependencies:
+    - name: push
+      eventSourceName: github-webhook
+      eventName: home-infra
+      filters:
+        script: |-
+          if event.body == nil or event.body.ref ~= "refs/heads/main" then
+            return false
+          end
+          if event.body.commits == nil then
+            return false
+          end
+          for _, c in ipairs(event.body.commits) do
+            for _, list in ipairs({c.added or {}, c.modified or {}}) do
+              for _, f in ipairs(list) do
+                if f == "talconfig.yaml" then
+                  return true
+                end
+              end
+            end
+          end
+          return false
+  triggers:
+    - template:
+        name: upgrade-k8s
+        conditions: "push"
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: upgrade-k8s-
+                namespace: argo
+              spec:
+                workflowTemplateRef:
+                  name: upgrade-k8s
+                arguments:
+                  parameters:
+                    - name: before-sha
+                      value: ""
+                    - name: after-sha
+                      value: ""
+          parameters:
+            - src:
+                dependencyName: push
+                dataKey: body.before
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: push
+                dataKey: body.after
+              dest: spec.arguments.parameters.1.value

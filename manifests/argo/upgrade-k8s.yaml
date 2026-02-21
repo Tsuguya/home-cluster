@@ -1,0 +1,447 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: upgrade-k8s-executor
+  namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: upgrade-k8s-executor
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/eviction"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: upgrade-k8s-executor
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: upgrade-k8s-executor
+subjects:
+  - kind: ServiceAccount
+    name: upgrade-k8s-executor
+    namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: upgrade-k8s-executor
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-edit
+subjects:
+  - kind: ServiceAccount
+    name: upgrade-k8s-executor
+    namespace: argo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: upgrade-k8s
+  namespace: argo
+spec:
+  activeDeadlineSeconds: 3600
+  synchronization:
+    mutex:
+      name: upgrade-k8s
+  serviceAccountName: upgrade-k8s-executor
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: before-sha
+      - name: after-sha
+  volumes:
+    - name: talosconfig
+      secret:
+        secretName: talosconfig
+        defaultMode: 0400
+  templates:
+    - name: main
+      steps:
+        - - name: validate
+            template: validate
+        - - name: upgrade
+            template: upgrade
+            when: "{{steps.validate.outputs.parameters.should-upgrade}} == true"
+            arguments:
+              parameters:
+                - name: old-version
+                  value: "{{steps.validate.outputs.parameters.old-version}}"
+                - name: new-version
+                  value: "{{steps.validate.outputs.parameters.new-version}}"
+                - name: talos-version
+                  value: "{{steps.validate.outputs.parameters.talos-version}}"
+                - name: nodes-json
+                  value: "{{steps.validate.outputs.parameters.nodes-json}}"
+                - name: cp-ips
+                  value: "{{steps.validate.outputs.parameters.cp-ips}}"
+                - name: worker-ips
+                  value: "{{steps.validate.outputs.parameters.worker-ips}}"
+        - - name: upgrade-remaining
+            template: upgrade-remaining
+            when: "{{steps.validate.outputs.parameters.should-upgrade}} == true"
+            arguments:
+              parameters:
+                - name: upgraded-node
+                  value: "{{steps.upgrade.outputs.parameters.upgraded-node}}"
+                - name: new-version
+                  value: "{{steps.validate.outputs.parameters.new-version}}"
+                - name: talos-version
+                  value: "{{steps.validate.outputs.parameters.talos-version}}"
+                - name: nodes-json
+                  value: "{{steps.validate.outputs.parameters.nodes-json}}"
+        - - name: verify-and-notify
+            template: verify-and-notify
+            when: "{{steps.validate.outputs.parameters.should-upgrade}} == true"
+            arguments:
+              parameters:
+                - name: old-version
+                  value: "{{steps.validate.outputs.parameters.old-version}}"
+                - name: new-version
+                  value: "{{steps.validate.outputs.parameters.new-version}}"
+                - name: talos-version
+                  value: "{{steps.validate.outputs.parameters.talos-version}}"
+                - name: nodes-json
+                  value: "{{steps.validate.outputs.parameters.nodes-json}}"
+                - name: cp-ips
+                  value: "{{steps.validate.outputs.parameters.cp-ips}}"
+                - name: worker-ips
+                  value: "{{steps.validate.outputs.parameters.worker-ips}}"
+
+    - name: validate
+      container:
+        image: alpine:3.21
+        command: [sh, -c]
+        args:
+          - |
+            set -euo pipefail
+            apk add --no-cache curl jq yq > /dev/null
+
+            BEFORE="{{workflow.parameters.before-sha}}"
+            AFTER="{{workflow.parameters.after-sha}}"
+
+            echo "=== Fetching diff ${BEFORE}...${AFTER} ==="
+            DIFF=$(curl -sf "https://api.github.com/repos/Tsuguya/home-infra/compare/${BEFORE}...${AFTER}" \
+              -H "Accept: application/vnd.github.v3.diff")
+
+            OLD_VER=$(echo "$DIFF" | grep '^-kubernetesVersion:' | sed 's/^-kubernetesVersion: *//' | tr -d '"' | head -1)
+            NEW_VER=$(echo "$DIFF" | grep '^+kubernetesVersion:' | sed 's/^+kubernetesVersion: *//' | tr -d '"' | head -1)
+
+            if [ -z "$OLD_VER" ] || [ -z "$NEW_VER" ]; then
+              echo "No kubernetesVersion change detected."
+              echo "false" > /tmp/should-upgrade
+              echo "" > /tmp/old-version
+              echo "" > /tmp/new-version
+              echo "" > /tmp/talos-version
+              echo "[]" > /tmp/nodes-json
+              echo "" > /tmp/cp-ips
+              echo "" > /tmp/worker-ips
+              exit 0
+            fi
+
+            echo "Version change: ${OLD_VER} -> ${NEW_VER}"
+
+            if echo "$DIFF" | grep -q '^[+-]talosVersion:'; then
+              echo "ERROR: talosVersion changed simultaneously. Separate upgrade required."
+              exit 1
+            fi
+
+            OLD_MM=$(echo "$OLD_VER" | cut -d. -f1,2)
+            NEW_MM=$(echo "$NEW_VER" | cut -d. -f1,2)
+            if [ "$OLD_MM" != "$NEW_MM" ]; then
+              echo "ERROR: Major/minor version change (${OLD_MM} -> ${NEW_MM}). Only patch upgrades are automated."
+              exit 1
+            fi
+
+            echo "=== Fetching talconfig.yaml at ${AFTER} ==="
+            TALCONFIG=$(curl -sf "https://api.github.com/repos/Tsuguya/home-infra/contents/talconfig.yaml?ref=${AFTER}" \
+              | jq -r '.content' | base64 -d)
+
+            TALOS_VER=$(echo "$TALCONFIG" | yq '.talosVersion')
+            echo "Talos version: ${TALOS_VER}"
+
+            NODES_JSON=$(echo "$TALCONFIG" | yq -o=json '[.nodes[] | {"hostname": .hostname, "ip": .ipAddress, "controlPlane": .controlPlane}]')
+            echo "Nodes: ${NODES_JSON}"
+
+            CP_IPS=$(echo "$NODES_JSON" | jq -r '[.[] | select(.controlPlane == true) | .ip] | join(",")')
+            WORKER_IPS=$(echo "$NODES_JSON" | jq -r '[.[] | select(.controlPlane == false or .controlPlane == null) | .ip] | join(",")')
+            echo "CP IPs: ${CP_IPS}"
+            echo "Worker IPs: ${WORKER_IPS}"
+
+            echo "true" > /tmp/should-upgrade
+            echo "$OLD_VER" > /tmp/old-version
+            echo "$NEW_VER" > /tmp/new-version
+            echo "$TALOS_VER" > /tmp/talos-version
+            echo "$NODES_JSON" > /tmp/nodes-json
+            echo "$CP_IPS" > /tmp/cp-ips
+            echo "$WORKER_IPS" > /tmp/worker-ips
+      outputs:
+        parameters:
+          - name: should-upgrade
+            valueFrom:
+              path: /tmp/should-upgrade
+          - name: old-version
+            valueFrom:
+              path: /tmp/old-version
+          - name: new-version
+            valueFrom:
+              path: /tmp/new-version
+          - name: talos-version
+            valueFrom:
+              path: /tmp/talos-version
+          - name: nodes-json
+            valueFrom:
+              path: /tmp/nodes-json
+          - name: cp-ips
+            valueFrom:
+              path: /tmp/cp-ips
+          - name: worker-ips
+            valueFrom:
+              path: /tmp/worker-ips
+
+    - name: upgrade
+      inputs:
+        parameters:
+          - name: old-version
+          - name: new-version
+          - name: talos-version
+          - name: nodes-json
+          - name: cp-ips
+          - name: worker-ips
+      container:
+        image: alpine:3.21
+        command: [sh, -c]
+        args:
+          - |
+            set -euo pipefail
+            apk add --no-cache curl jq > /dev/null
+
+            OLD_VER="{{inputs.parameters.old-version}}"
+            NEW_VER="{{inputs.parameters.new-version}}"
+            TALOS_VER="{{inputs.parameters.talos-version}}"
+            NODES_JSON='{{inputs.parameters.nodes-json}}'
+            CP_IPS="{{inputs.parameters.cp-ips}}"
+            WORKER_IPS="{{inputs.parameters.worker-ips}}"
+
+            echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
+            curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
+              -o /usr/local/bin/talosctl && chmod +x /usr/local/bin/talosctl
+            curl -fsSL "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl" \
+              -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
+
+            echo "=== Pre-flight: talosctl health ==="
+            talosctl health \
+              --talosconfig /etc/talos/config \
+              --control-plane-nodes "${CP_IPS}" \
+              --worker-nodes "${WORKER_IPS}" \
+              --wait-timeout 1m
+
+            echo "=== Verifying current cluster version ==="
+            ACTUAL_VER=$(kubectl version -o json | jq -r '.serverVersion.gitVersion' | sed 's/^v//')
+            if [ "${ACTUAL_VER}" != "${OLD_VER}" ]; then
+              echo "ERROR: Cluster version mismatch. expected=${OLD_VER} actual=${ACTUAL_VER}"
+              echo "Previous upgrade may not have completed. Manual investigation required."
+              exit 1
+            fi
+
+            echo "=== Upgrading CP components to v${NEW_VER} (kubelet skipped) ==="
+            talosctl upgrade-k8s \
+              --talosconfig /etc/talos/config \
+              --to "${NEW_VER}" \
+              --upgrade-kubelet=false
+
+            echo "=== Upgrading first kubelet ==="
+            ALL_NODES=$(echo "$NODES_JSON" | jq -c '.[]')
+
+            while IFS= read -r node; do
+              HOSTNAME=$(echo "$node" | jq -r '.hostname')
+              SHORT_NAME=$(echo "$HOSTNAME" | cut -d. -f1)
+              IP=$(echo "$node" | jq -r '.ip')
+
+              STATUS=$(kubectl get node "$SHORT_NAME" -o jsonpath='{.status.nodeInfo.kubeletVersion}' 2>/dev/null || echo "unknown")
+              if [ "$STATUS" = "v${NEW_VER}" ]; then
+                echo "Node ${SHORT_NAME} already at v${NEW_VER}, skipping"
+                echo "$SHORT_NAME" > /tmp/upgraded-node
+                continue
+              fi
+
+              echo "Upgrading kubelet on ${SHORT_NAME} (${IP})"
+              kubectl drain "$SHORT_NAME" --ignore-daemonsets --delete-emptydir-data --timeout=300s
+              talosctl -n "$IP" --talosconfig /etc/talos/config \
+                patch machineconfig \
+                -p "[{\"op\":\"add\",\"path\":\"/machine/kubelet/image\",\"value\":\"ghcr.io/siderolabs/kubelet:v${NEW_VER}\"}]"
+              kubectl wait --for=condition=Ready "node/${SHORT_NAME}" --timeout=300s
+              kubectl uncordon "$SHORT_NAME"
+              echo "Node ${SHORT_NAME} upgraded to v${NEW_VER}"
+              echo "$SHORT_NAME" > /tmp/upgraded-node
+              break
+            done <<< "$ALL_NODES"
+        env:
+          - name: TALOSCONFIG
+            value: /etc/talos/config
+        volumeMounts:
+          - name: talosconfig
+            mountPath: /etc/talos
+            readOnly: true
+      outputs:
+        parameters:
+          - name: upgraded-node
+            valueFrom:
+              path: /tmp/upgraded-node
+
+    - name: upgrade-remaining
+      inputs:
+        parameters:
+          - name: upgraded-node
+          - name: new-version
+          - name: talos-version
+          - name: nodes-json
+      nodeSelector:
+        kubernetes.io/hostname: "{{inputs.parameters.upgraded-node}}"
+      container:
+        image: alpine:3.21
+        command: [sh, -c]
+        args:
+          - |
+            set -euo pipefail
+            apk add --no-cache curl jq > /dev/null
+
+            NEW_VER="{{inputs.parameters.new-version}}"
+            TALOS_VER="{{inputs.parameters.talos-version}}"
+            NODES_JSON='{{inputs.parameters.nodes-json}}'
+            UPGRADED_NODE="{{inputs.parameters.upgraded-node}}"
+
+            echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
+            curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
+              -o /usr/local/bin/talosctl && chmod +x /usr/local/bin/talosctl
+            curl -fsSL "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl" \
+              -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
+
+            echo "=== Upgrading remaining nodes (pinned to ${UPGRADED_NODE}) ==="
+            ALL_NODES=$(echo "$NODES_JSON" | jq -c '.[]')
+
+            while IFS= read -r node; do
+              HOSTNAME=$(echo "$node" | jq -r '.hostname')
+              SHORT_NAME=$(echo "$HOSTNAME" | cut -d. -f1)
+              IP=$(echo "$node" | jq -r '.ip')
+
+              STATUS=$(kubectl get node "$SHORT_NAME" -o jsonpath='{.status.nodeInfo.kubeletVersion}' 2>/dev/null || echo "unknown")
+              if [ "$STATUS" = "v${NEW_VER}" ]; then
+                echo "Node ${SHORT_NAME} already at v${NEW_VER}, skipping"
+                continue
+              fi
+
+              echo "Upgrading kubelet on ${SHORT_NAME} (${IP})"
+              kubectl drain "$SHORT_NAME" --ignore-daemonsets --delete-emptydir-data --timeout=300s
+              talosctl -n "$IP" --talosconfig /etc/talos/config \
+                patch machineconfig \
+                -p "[{\"op\":\"add\",\"path\":\"/machine/kubelet/image\",\"value\":\"ghcr.io/siderolabs/kubelet:v${NEW_VER}\"}]"
+              kubectl wait --for=condition=Ready "node/${SHORT_NAME}" --timeout=300s
+              kubectl uncordon "$SHORT_NAME"
+              echo "Node ${SHORT_NAME} upgraded to v${NEW_VER}"
+            done <<< "$ALL_NODES"
+
+            echo "=== All nodes upgraded ==="
+        env:
+          - name: TALOSCONFIG
+            value: /etc/talos/config
+        volumeMounts:
+          - name: talosconfig
+            mountPath: /etc/talos
+            readOnly: true
+
+    - name: verify-and-notify
+      inputs:
+        parameters:
+          - name: old-version
+          - name: new-version
+          - name: talos-version
+          - name: nodes-json
+          - name: cp-ips
+          - name: worker-ips
+      container:
+        image: alpine:3.21
+        command: [sh, -c]
+        args:
+          - |
+            set -euo pipefail
+            apk add --no-cache curl jq > /dev/null
+
+            OLD_VER="{{inputs.parameters.old-version}}"
+            NEW_VER="{{inputs.parameters.new-version}}"
+            TALOS_VER="{{inputs.parameters.talos-version}}"
+            CP_IPS="{{inputs.parameters.cp-ips}}"
+            WORKER_IPS="{{inputs.parameters.worker-ips}}"
+            NODES_JSON='{{inputs.parameters.nodes-json}}'
+
+            echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
+            curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
+              -o /usr/local/bin/talosctl && chmod +x /usr/local/bin/talosctl
+            curl -fsSL "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl" \
+              -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
+
+            echo "=== Post-upgrade: talosctl health ==="
+            talosctl health \
+              --talosconfig /etc/talos/config \
+              --control-plane-nodes "${CP_IPS}" \
+              --worker-nodes "${WORKER_IPS}" \
+              --wait-timeout 2m
+
+            echo "=== Verifying all nodes ==="
+            NODE_COUNT=$(echo "$NODES_JSON" | jq length)
+            kubectl get nodes -o json | jq -r '.items[] | "\(.metadata.name) \(.status.nodeInfo.kubeletVersion)"' | while read -r name ver; do
+              echo "  ${name}: ${ver}"
+            done
+            UPGRADED_COUNT=$(kubectl get nodes -o json | jq "[.items[] | select(.status.nodeInfo.kubeletVersion == \"v${NEW_VER}\")] | length")
+            echo "Upgraded: ${UPGRADED_COUNT}/${NODE_COUNT}"
+
+            echo "=== Sending Discord notification ==="
+            TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+            PAYLOAD=$(jq -n \
+              --arg old "$OLD_VER" \
+              --arg new "$NEW_VER" \
+              --arg count "${UPGRADED_COUNT}/${NODE_COUNT}" \
+              --arg ts "$TIMESTAMP" \
+              '{
+                username: "K8s Upgrade Bot",
+                embeds: [{
+                  title: "Kubernetes Patch Upgrade Complete",
+                  description: ("v" + $old + " \u2192 v" + $new),
+                  color: 65280,
+                  fields: [
+                    { name: "Cluster", value: "home-cluster", inline: true },
+                    { name: "Status", value: "Success", inline: true },
+                    { name: "Nodes Upgraded", value: $count, inline: true }
+                  ],
+                  timestamp: $ts
+                }]
+              }')
+            curl -sf -X POST \
+              -H "Content-Type: application/json" \
+              "${DISCORD_WEBHOOK_URL}" \
+              -d "$PAYLOAD"
+            echo "Upgrade complete: v${OLD_VER} -> v${NEW_VER}"
+        env:
+          - name: TALOSCONFIG
+            value: /etc/talos/config
+          - name: DISCORD_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+                name: discord-webhook-argo
+                key: credential
+        volumeMounts:
+          - name: talosconfig
+            mountPath: /etc/talos
+            readOnly: true

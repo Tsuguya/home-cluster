@@ -5,8 +5,12 @@ metadata:
   namespace: argo
 spec:
   endpointSelector:
-    matchLabels:
-      sensor-name: tofu-cloudflare
+    matchExpressions:
+      - key: sensor-name
+        operator: In
+        values:
+          - tofu-cloudflare
+          - upgrade-k8s
   ingress: []
   egress:
     - toEndpoints:

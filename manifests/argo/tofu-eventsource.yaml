@@ -23,6 +23,20 @@ spec:
         key: credential
       active: false
       contentType: json
+    home-infra:
+      owner: Tsuguya
+      repository: home-infra
+      webhook:
+        endpoint: /home-infra
+        port: "12000"
+        method: POST
+      events:
+        - push
+      webhookSecret:
+        name: home-infra-github-webhook
+        key: credential
+      active: false
+      contentType: json
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor

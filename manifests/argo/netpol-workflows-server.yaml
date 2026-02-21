@@ -18,6 +18,8 @@ spec:
         - matchLabels:
             sensor-name: tofu-cloudflare
         - matchLabels:
+            sensor-name: upgrade-k8s
+        - matchLabels:
             app.kubernetes.io/name: argo-workflows-workflow-controller
       toPorts:
         - ports:

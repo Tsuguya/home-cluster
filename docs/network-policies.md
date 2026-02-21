@@ -56,12 +56,12 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **workflows-server** | ingress → 2746; sensor, workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, HTTPS 443, ceph-rgw (rook-ceph):8080 |
+| **workflows-server** | ingress → 2746; sensors (tofu-cloudflare, upgrade-k8s), workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, HTTPS 443, ceph-rgw (rook-ceph):8080 |
 | **workflows-controller** | (none) | kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
-| **sensor** | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
+| **sensor** (tofu-cloudflare, upgrade-k8s) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **events-controller** | (none) | kube-apiserver, eventbus:8222 |
-| **eventbus** | eventsource, sensor → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
+| **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
 | **workflow-pods** | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
 
 ## monitoring (10 policies)

@@ -6,10 +6,20 @@ metadata:
 spec:
   description: Observability stack (kube-prometheus-stack, loki, alloy)
   sourceRepos:
-    - '*'
+    - https://grafana.github.io/helm-charts
+    - https://prometheus-community.github.io/helm-charts
+    - https://github.com/Tsuguya/home-cluster.git
   destinations:
     - server: https://kubernetes.default.svc
-      namespace: '*'
+      namespace: monitoring
   clusterResourceWhitelist:
     - group: '*'
-      kind: '*'
+      kind: CustomResourceDefinition
+    - group: '*'
+      kind: ClusterRole
+    - group: '*'
+      kind: ClusterRoleBinding
+    - group: '*'
+      kind: ValidatingWebhookConfiguration
+    - group: '*'
+      kind: MutatingWebhookConfiguration

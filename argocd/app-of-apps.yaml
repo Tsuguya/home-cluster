@@ -4,7 +4,7 @@ metadata:
   name: app-of-apps
   namespace: argocd
 spec:
-  project: default
+  project: platform
   source:
     repoURL: https://github.com/tsuguya/home-cluster.git
     targetRevision: main

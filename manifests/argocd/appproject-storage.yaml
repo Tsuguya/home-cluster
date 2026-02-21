@@ -6,10 +6,33 @@ metadata:
 spec:
   description: Storage components (rook-ceph, cnpg, qnap-csi)
   sourceRepos:
-    - '*'
+    - https://cloudnative-pg.github.io/charts
+    - https://github.com/qnap-dev/QNAP-CSI-PlugIn.git
+    - https://charts.rook.io/release
+    - https://github.com/Tsuguya/home-cluster.git
   destinations:
     - server: https://kubernetes.default.svc
-      namespace: '*'
+      namespace: cnpg-system
+    - server: https://kubernetes.default.svc
+      namespace: database
+    - server: https://kubernetes.default.svc
+      namespace: rook-ceph
+    - server: https://kubernetes.default.svc
+      namespace: trident
   clusterResourceWhitelist:
     - group: '*'
-      kind: '*'
+      kind: CustomResourceDefinition
+    - group: '*'
+      kind: ClusterRole
+    - group: '*'
+      kind: ClusterRoleBinding
+    - group: '*'
+      kind: ValidatingWebhookConfiguration
+    - group: '*'
+      kind: MutatingWebhookConfiguration
+    - group: '*'
+      kind: Namespace
+    - group: '*'
+      kind: StorageClass
+    - group: '*'
+      kind: CSIDriver

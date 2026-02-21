@@ -6,10 +6,15 @@ metadata:
 spec:
   description: Argo ecosystem (argo-events, argo-workflows)
   sourceRepos:
-    - '*'
+    - https://argoproj.github.io/argo-helm
+    - https://github.com/Tsuguya/home-cluster.git
   destinations:
     - server: https://kubernetes.default.svc
-      namespace: '*'
+      namespace: argo
   clusterResourceWhitelist:
     - group: '*'
-      kind: '*'
+      kind: CustomResourceDefinition
+    - group: '*'
+      kind: ClusterRole
+    - group: '*'
+      kind: ClusterRoleBinding

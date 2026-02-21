@@ -6,10 +6,25 @@ metadata:
 spec:
   description: Core platform components (ArgoCD, Cilium, metrics-server)
   sourceRepos:
-    - '*'
+    - https://argoproj.github.io/argo-helm
+    - https://helm.cilium.io
+    - https://kubernetes-sigs.github.io/metrics-server
+    - https://github.com/Tsuguya/home-cluster.git
   destinations:
     - server: https://kubernetes.default.svc
-      namespace: '*'
+      namespace: argocd
+    - server: https://kubernetes.default.svc
+      namespace: kube-system
   clusterResourceWhitelist:
     - group: '*'
-      kind: '*'
+      kind: CustomResourceDefinition
+    - group: '*'
+      kind: ClusterRole
+    - group: '*'
+      kind: ClusterRoleBinding
+    - group: '*'
+      kind: ValidatingWebhookConfiguration
+    - group: '*'
+      kind: MutatingWebhookConfiguration
+    - group: '*'
+      kind: APIService

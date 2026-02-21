@@ -6,10 +6,42 @@ metadata:
 spec:
   description: Networking components (cert-manager, external-dns, gateway)
   sourceRepos:
-    - '*'
+    - https://charts.jetstack.io
+    - https://kubernetes-sigs.github.io/external-dns
+    - https://github.com/Tsuguya/home-cluster.git
   destinations:
     - server: https://kubernetes.default.svc
-      namespace: '*'
+      namespace: argo
+    - server: https://kubernetes.default.svc
+      namespace: cert-manager
+    - server: https://kubernetes.default.svc
+      namespace: external-dns
+    - server: https://kubernetes.default.svc
+      namespace: gateway
+    - server: https://kubernetes.default.svc
+      namespace: kube-system
+    - server: https://kubernetes.default.svc
+      namespace: monitoring
+    - server: https://kubernetes.default.svc
+      namespace: rook-ceph
   clusterResourceWhitelist:
     - group: '*'
-      kind: '*'
+      kind: CustomResourceDefinition
+    - group: '*'
+      kind: ClusterRole
+    - group: '*'
+      kind: ClusterRoleBinding
+    - group: '*'
+      kind: ValidatingWebhookConfiguration
+    - group: '*'
+      kind: MutatingWebhookConfiguration
+    - group: '*'
+      kind: Namespace
+    - group: '*'
+      kind: ClusterIssuer
+    - group: '*'
+      kind: CiliumClusterwideNetworkPolicy
+    - group: '*'
+      kind: CiliumL2AnnouncementPolicy
+    - group: '*'
+      kind: CiliumLoadBalancerIPPool

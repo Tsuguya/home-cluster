@@ -44,7 +44,7 @@ spec:
             template: detect-helm
     - name: detect-in-cluster
       container:
-        image: ghcr.io/fairwindsops/pluto:v5.22.7
+        image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.22.7
         command: [pluto]
         args:
           - detect-all-in-cluster
@@ -54,7 +54,7 @@ spec:
           - wide
     - name: detect-helm
       container:
-        image: ghcr.io/fairwindsops/pluto:v5.22.7
+        image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.22.7
         command: [pluto]
         args:
           - detect-helm

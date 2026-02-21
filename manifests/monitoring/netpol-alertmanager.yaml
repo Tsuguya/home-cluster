@@ -18,9 +18,8 @@ spec:
             - port: "8080"
               protocol: TCP
   egress:
-    - toFQDNs:
-        - matchName: "discord.com"
-        - matchPattern: "*.discord.com"
+    - toCIDR:
+        - 0.0.0.0/0
       toPorts:
         - ports:
             - port: "443"

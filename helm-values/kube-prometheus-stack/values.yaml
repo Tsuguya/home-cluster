@@ -3,6 +3,12 @@ kubeProxy:
 
 prometheusOperator:
   logFormat: json
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
 
 prometheus:
   prometheusSpec:
@@ -22,7 +28,29 @@ prometheus:
             requests:
               storage: 20Gi
 
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
 grafana:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
   adminPassword: prom-operator # unused: login form disabled, SSO only. Pinned to prevent OutOfSync.
   grafana.ini:
     log:

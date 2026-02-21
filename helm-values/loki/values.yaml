@@ -2,6 +2,12 @@ deploymentMode: SingleBinary
 
 singleBinary:
   replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
   persistence:
     storageClass: ceph-block
     size: 10Gi
@@ -60,6 +66,12 @@ loki:
 
 gateway:
   enabled: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
   podSecurityContext:
     fsGroup: 101
     runAsNonRoot: true
@@ -87,6 +99,12 @@ resultsCache:
   enabled: false
 
 lokiCanary:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
   tolerations:
     - key: memory-constrained
       operator: Exists

@@ -1,2 +1,7 @@
-# Argo Events - minimal config
-# Controller only, no UI, no external DB
+controller:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi

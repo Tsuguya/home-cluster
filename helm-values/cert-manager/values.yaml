@@ -2,6 +2,13 @@ crds:
   enabled: true
   keep: true
 
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 128Mi
+
 config:
   apiVersion: controller.config.cert-manager.io/v1alpha1
   kind: ControllerConfiguration
@@ -22,6 +29,12 @@ containerSecurityContext:
       - ALL
 
 webhook:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
   securityContext:
     runAsNonRoot: true
     seccompProfile:
@@ -34,6 +47,12 @@ webhook:
         - ALL
 
 cainjector:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
   securityContext:
     runAsNonRoot: true
     seccompProfile:

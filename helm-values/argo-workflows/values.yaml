@@ -12,6 +12,12 @@ artifactRepository:
       key: AWS_SECRET_ACCESS_KEY
 
 controller:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
   logging:
     format: json
   securityContext:
@@ -49,6 +55,12 @@ controller:
         key: password
 
 server:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
   logging:
     format: json
   securityContext:

@@ -28,6 +28,12 @@ controller:
         secondsAfterFailure: 259200
       podGC:
         strategy: OnPodCompletion
+      hooks:
+        exit:
+          templateRef:
+            name: discord-notify
+            template: send
+          expression: workflow.status == "Failed" || workflow.status == "Error"
   persistence:
     archive: true
     postgresql:

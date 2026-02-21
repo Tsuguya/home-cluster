@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: discord-notify
+  namespace: argo
+spec:
+  templates:
+    - name: send
+      container:
+        image: curlimages/curl:8.12.1
+        command: [sh, -c]
+        args:
+          - |
+            curl -sfS -X POST "$DISCORD_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d '{"embeds":[{"title":"Workflow {{workflow.status}}: {{workflow.name}}","color":15298678,"fields":[{"name":"Namespace","value":"{{workflow.namespace}}","inline":true}]}]}'
+        env:
+          - name: DISCORD_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+                name: discord-webhook-argo
+                key: url

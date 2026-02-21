@@ -3,8 +3,6 @@ tempo:
   memBallastSizeMbs: 256
   retention: 168h
   receivers:
-    jaeger: null
-    opencensus: null
     otlp:
       protocols:
         grpc:

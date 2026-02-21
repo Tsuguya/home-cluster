@@ -59,6 +59,12 @@ grafana:
         memory: 64Mi
       limits:
         memory: 256Mi
+    dashboards:
+      skipReload: true
+      initDashboards: true
+    datasources:
+      skipReload: true
+      initDatasources: true
   resources:
     requests:
       cpu: 25m

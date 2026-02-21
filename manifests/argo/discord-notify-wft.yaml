@@ -13,7 +13,7 @@ spec:
           - |
             curl -sfS -X POST "$DISCORD_WEBHOOK_URL" \
               -H "Content-Type: application/json" \
-              -d '{"embeds":[{"title":"Workflow {{workflow.status}}: {{workflow.name}}","color":15298678,"fields":[{"name":"Namespace","value":"{{workflow.namespace}}","inline":true}]}]}'
+              -d '{"embeds":[{"title":"Workflow {{workflow.status}}: {{workflow.name}}","url":"https://argo.infra.tgy.io/workflows/{{workflow.namespace}}/{{workflow.name}}","color":15298678,"fields":[{"name":"Namespace","value":"{{workflow.namespace}}","inline":true}]}]}'
         env:
           - name: DISCORD_WEBHOOK_URL
             valueFrom:

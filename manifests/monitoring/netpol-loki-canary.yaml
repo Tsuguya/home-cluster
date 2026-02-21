@@ -8,11 +8,17 @@ spec:
     matchLabels:
       app.kubernetes.io/name: loki
       app.kubernetes.io/component: canary
+  ingress:
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "3500"
+              protocol: TCP
   ingressDeny:
     - fromEntities:
         - cluster
         - world
-        - host
         - remote-node
   egress:
     - toEndpoints:

@@ -7,11 +7,17 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: argo-workflows-workflow-controller
+  ingress:
+    - fromEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "6060"
+              protocol: TCP
   ingressDeny:
     - fromEntities:
         - cluster
         - world
-        - host
         - remote-node
   egress:
     - toEntities:

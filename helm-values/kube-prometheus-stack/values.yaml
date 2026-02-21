@@ -153,6 +153,16 @@ grafana:
           group_interval: 5m
           repeat_interval: 4h
   additionalDataSources:
+    - name: Tempo
+      uid: tempo
+      type: tempo
+      url: http://tempo.monitoring.svc:3200
+      access: proxy
+      isDefault: false
+      jsonData:
+        tracesToLogsV2:
+          datasourceUid: loki
+          filterByTraceID: true
     - name: Loki
       uid: loki
       type: loki
@@ -165,16 +175,6 @@ grafana:
             matcherRegex: '"trace_id":"(\w+)"'
             name: TraceID
             url: $${__value.raw}
-    - name: Tempo
-      uid: tempo
-      type: tempo
-      url: http://tempo.monitoring.svc:3200
-      access: proxy
-      isDefault: false
-      jsonData:
-        tracesToLogsV2:
-          datasourceUid: loki
-          filterByTraceID: true
 
 alertmanager:
   alertmanagerSpec:

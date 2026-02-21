@@ -33,6 +33,8 @@ grafana:
       type: postgres
       host: shared-pg-rw.database.svc:5432
       name: grafana
+    dashboards:
+      default_home_dashboard_path: /tmp/dashboards/pod-resources.json
     server:
       root_url: https://grafana.infra.tgy.io
     auth:

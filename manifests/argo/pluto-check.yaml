@@ -45,6 +45,7 @@ spec:
     - name: detect-in-cluster
       container:
         image: ghcr.io/fairwindsops/pluto:v5.22.7
+        command: [pluto]
         args:
           - detect-all-in-cluster
           - --target-versions
@@ -54,6 +55,7 @@ spec:
     - name: detect-helm
       container:
         image: ghcr.io/fairwindsops/pluto:v5.22.7
+        command: [pluto]
         args:
           - detect-helm
           - --target-versions

@@ -1,10 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: infra
+  name: networking
   namespace: argocd
 spec:
-  description: Infrastructure components (cert-manager, external-dns, 1password, gateway)
+  description: Networking components (cert-manager, external-dns, gateway)
   sourceRepos:
     - '*'
   destinations:

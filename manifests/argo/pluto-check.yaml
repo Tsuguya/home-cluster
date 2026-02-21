@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pluto-checker
+  namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pluto-checker
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pluto-checker
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pluto-checker
+subjects:
+  - kind: ServiceAccount
+    name: pluto-checker
+    namespace: argo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: pluto-check
+  namespace: argo
+spec:
+  activeDeadlineSeconds: 300
+  serviceAccountName: pluto-checker
+  entrypoint: main
+  templates:
+    - name: main
+      steps:
+        - - name: detect-in-cluster
+            template: detect-in-cluster
+          - name: detect-helm
+            template: detect-helm
+    - name: detect-in-cluster
+      container:
+        image: ghcr.io/fairwindsops/pluto:v5.22.7
+        args:
+          - detect-all-in-cluster
+          - --target-versions
+          - k8s=v1.36.0
+          - -o
+          - wide
+    - name: detect-helm
+      container:
+        image: ghcr.io/fairwindsops/pluto:v5.22.7
+        args:
+          - detect-helm
+          - --target-versions
+          - k8s=v1.36.0
+          - -o
+          - wide
+---
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: pluto-check
+  namespace: argo
+spec:
+  schedule: "0 10 * * 0"
+  timezone: Asia/Tokyo
+  concurrencyPolicy: Replace
+  workflowSpec:
+    workflowTemplateRef:
+      name: pluto-check

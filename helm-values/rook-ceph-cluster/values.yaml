@@ -1,3 +1,7 @@
+monitoring:
+  enabled: true
+  createPrometheusRules: true
+
 toolbox:
   enabled: true
 
@@ -22,10 +26,6 @@ cephClusterSpec:
   dashboard:
     enabled: true
     ssl: false
-
-  monitoring:
-    enabled: true
-    createPrometheusRules: true
 
   # --- Component placement ---
   placement:

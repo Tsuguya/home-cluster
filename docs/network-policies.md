@@ -48,7 +48,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **dex-server** | server → 5556/5557 | kube-apiserver, HTTPS 443 |
 | **redis** | server, repo-server, app-controller → 6379 | (none) |
 | **applicationset-controller** | (none) | kube-apiserver |
-| **notifications-controller** | (none) | kube-apiserver |
+| **notifications-controller** | (none) | kube-apiserver, HTTPS 443 |
 | **redis-secret-init** (Job) | (none) | kube-apiserver |
 | **cloudflared** | (none) | HTTPS 443, QUIC 7844, server:8080, eventsource (argo):12000 |
 

@@ -80,3 +80,83 @@ server:
     enabled: false
   grpcroute:
     enabled: false
+
+notifications:
+  secret:
+    create: false
+  notifiers:
+    service.webhook.discord: |
+      url: $url
+      headers:
+        - name: Content-Type
+          value: application/json
+  subscriptions:
+    - recipients:
+        - discord
+      triggers:
+        - on-sync-succeeded
+        - on-sync-failed
+        - on-health-degraded
+  triggers:
+    trigger.on-sync-succeeded: |
+      - description: Application syncing has succeeded
+        send:
+          - app-sync-succeeded
+        when: app.status.operationState.phase in ['Succeeded']
+    trigger.on-sync-failed: |
+      - description: Application syncing has failed
+        send:
+          - app-sync-failed
+        when: app.status.operationState.phase in ['Error', 'Failed']
+    trigger.on-health-degraded: |
+      - description: Application has degraded
+        send:
+          - app-health-degraded
+        when: app.status.health.status == 'Degraded'
+  templates:
+    template.app-sync-succeeded: |
+      webhook:
+        discord:
+          method: POST
+          body: |
+            {
+              "embeds": [{
+                "title": "{{.app.metadata.name}} synced",
+                "url": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}",
+                "color": 1620818,
+                "fields": [
+                  {"name": "Sync Status", "value": "{{.app.status.sync.status}}", "inline": true},
+                  {"name": "Revision", "value": "{{.app.status.sync.revision | truncate 7 }}", "inline": true}
+                ]
+              }]
+            }
+    template.app-sync-failed: |
+      webhook:
+        discord:
+          method: POST
+          body: |
+            {
+              "embeds": [{
+                "title": "{{.app.metadata.name}} sync failed",
+                "url": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}?operation=true",
+                "color": 15298678,
+                "fields": [
+                  {"name": "Error", "value": "{{.app.status.operationState.message | truncate 500 }}", "inline": false}
+                ]
+              }]
+            }
+    template.app-health-degraded: |
+      webhook:
+        discord:
+          method: POST
+          body: |
+            {
+              "embeds": [{
+                "title": "{{.app.metadata.name}} health degraded",
+                "url": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}",
+                "color": 16040976,
+                "fields": [
+                  {"name": "Health", "value": "{{.app.status.health.status}}", "inline": true}
+                ]
+              }]
+            }

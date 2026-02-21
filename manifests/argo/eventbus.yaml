@@ -7,3 +7,24 @@ spec:
   jetstream:
     version: latest
     replicas: 3
+    containerTemplate:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 128Mi
+    metricsContainerTemplate:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
+    reloaderContainerTemplate:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi

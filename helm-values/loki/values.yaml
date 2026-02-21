@@ -98,6 +98,14 @@ chunksCache:
 resultsCache:
   enabled: false
 
+sidecar:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
 lokiCanary:
   resources:
     requests:

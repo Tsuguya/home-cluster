@@ -70,6 +70,12 @@ spec:
     - name: detect-in-cluster
       container:
         image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.22.7
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
         command: [/pluto]
         args:
           - detect-all-in-cluster
@@ -81,6 +87,12 @@ spec:
     - name: detect-helm
       container:
         image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.22.7
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
         command: [/pluto]
         args:
           - detect-helm
@@ -93,6 +105,12 @@ spec:
       timeout: "30m"
       script:
         image: node:24-alpine
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
         command: [sh]
         env:
           - name: CLAUDE_CODE_OAUTH_TOKEN
@@ -270,6 +288,12 @@ spec:
     - name: fail-if-deprecated
       container:
         image: alpine:3.23
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 64Mi
         command: [sh, -c]
         args:
           - |

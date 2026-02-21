@@ -65,6 +65,12 @@ spec:
     - name: main
       container:
         image: ghcr.io/opentofu/opentofu:1.11.5
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
         command: [sh, -c]
         args:
           - |
@@ -119,6 +125,12 @@ spec:
     - name: main
       container:
         image: ghcr.io/opentofu/opentofu:1.11.5
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
         command: [sh, -c]
         args:
           - |

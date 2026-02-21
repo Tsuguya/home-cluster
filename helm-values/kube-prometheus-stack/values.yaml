@@ -3,6 +3,13 @@ kubeProxy:
 
 prometheusOperator:
   logFormat: json
+  prometheusConfigReloader:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 64Mi
   resources:
     requests:
       cpu: 10m
@@ -45,6 +52,13 @@ prometheus-node-exporter:
       memory: 64Mi
 
 grafana:
+  sidecar:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 64Mi
   resources:
     requests:
       cpu: 25m

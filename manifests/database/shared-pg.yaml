@@ -5,6 +5,12 @@ metadata:
   namespace: database
 spec:
   instances: 2
+  resources:
+    requests:
+      cpu: 10m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
   storage:
     storageClass: qnap-iscsi
     size: 10Gi

@@ -8,6 +8,12 @@ spec:
     - name: send
       container:
         image: curlimages/curl:8.18.0
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 64Mi
         command: [sh, -c]
         args:
           - |

@@ -4,6 +4,14 @@ metadata:
   name: github-webhook
   namespace: argo
 spec:
+  template:
+    container:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
   service:
     ports:
       - port: 12000
@@ -46,6 +54,13 @@ metadata:
 spec:
   template:
     serviceAccountName: workflow-executor
+    container:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
   dependencies:
     - name: push
       eventSourceName: github-webhook

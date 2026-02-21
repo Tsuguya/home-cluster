@@ -123,6 +123,12 @@ spec:
     - name: validate
       container:
         image: alpine:3.23
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
         command: [sh, -c]
         args:
           - |
@@ -222,6 +228,12 @@ spec:
           - name: worker-ips
       container:
         image: alpine:3.23
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
         command: [sh, -c]
         args:
           - |
@@ -312,6 +324,12 @@ spec:
         kubernetes.io/hostname: "{{inputs.parameters.upgraded-node}}"
       container:
         image: alpine:3.23
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
         command: [sh, -c]
         args:
           - |
@@ -373,6 +391,12 @@ spec:
           - name: worker-ips
       container:
         image: alpine:3.23
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
         command: [sh, -c]
         args:
           - |

@@ -31,6 +31,12 @@ spec:
     - name: main
       container:
         image: alpine:3.23
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
         command: [sh, -c]
         args:
           - |

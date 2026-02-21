@@ -32,6 +32,8 @@ securityContext:
 encryption:
   enabled: true
   type: wireguard
+  strictMode:
+    enabled: true
 
 gatewayAPI:
   enabled: true

@@ -11,7 +11,12 @@ spec:
         values:
           - tofu-cloudflare
           - upgrade-k8s
-  ingress: []
+  ingressDeny:
+    - fromEntities:
+        - cluster
+        - world
+        - host
+        - remote-node
   egress:
     - toEndpoints:
         - matchLabels:

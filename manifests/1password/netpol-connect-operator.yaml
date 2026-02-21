@@ -7,7 +7,12 @@ spec:
   endpointSelector:
     matchLabels:
       name: onepassword-connect
-  ingress: []
+  ingressDeny:
+    - fromEntities:
+        - cluster
+        - world
+        - host
+        - remote-node
   egress:
     - toEntities:
         - kube-apiserver

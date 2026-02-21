@@ -7,7 +7,12 @@ spec:
   endpointSelector:
     matchLabels:
       app: rook-ceph-mds
-  ingress: []
+  ingressDeny:
+    - fromEntities:
+        - cluster
+        - world
+        - host
+        - remote-node
   egress:
     - toEndpoints:
         - matchLabels:

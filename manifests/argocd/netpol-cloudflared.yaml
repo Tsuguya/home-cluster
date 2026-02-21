@@ -7,7 +7,12 @@ spec:
   endpointSelector:
     matchLabels:
       app: cloudflared
-  ingress: []
+  ingressDeny:
+    - fromEntities:
+        - cluster
+        - world
+        - host
+        - remote-node
   egress:
     - toCIDR:
         - 0.0.0.0/0

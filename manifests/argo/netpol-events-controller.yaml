@@ -7,7 +7,12 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: argo-events-controller-manager
-  ingress: []
+  ingressDeny:
+    - fromEntities:
+        - cluster
+        - world
+        - host
+        - remote-node
   egress:
     - toEntities:
         - kube-apiserver

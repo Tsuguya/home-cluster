@@ -17,3 +17,32 @@ subjects:
   - kind: ServiceAccount
     name: workflow-executor
     namespace: argo
+---
+# SSO admin SA needs to read artifact secret and watch pods for log/artifact access
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: argo-sso-admin-extras
+  namespace: argo
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["argo-artifacts"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argo-sso-admin-extras
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argo-sso-admin-extras
+subjects:
+  - kind: ServiceAccount
+    name: argo-workflows-sso-admin
+    namespace: argo

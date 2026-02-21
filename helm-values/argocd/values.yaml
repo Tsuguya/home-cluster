@@ -126,7 +126,7 @@ notifications:
                 "color": 1620818,
                 "fields": [
                   {"name": "Sync Status", "value": "{{.app.status.sync.status}}", "inline": true},
-                  {"name": "Revision", "value": "{{.app.status.sync.revision | truncate 7 }}", "inline": true}
+                  {"name": "Revision", "value": "{{.app.status.sync.revision | trunc 7 }}", "inline": true}
                 ]
               }]
             }
@@ -141,7 +141,7 @@ notifications:
                 "url": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}?operation=true",
                 "color": 15298678,
                 "fields": [
-                  {"name": "Error", "value": "{{.app.status.operationState.message | truncate 500 }}", "inline": false}
+                  {"name": "Error", "value": "{{.app.status.operationState.message | trunc 500 }}", "inline": false}
                 ]
               }]
             }

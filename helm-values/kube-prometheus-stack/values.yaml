@@ -62,9 +62,11 @@ grafana:
     dashboards:
       skipReload: true
       initDashboards: true
+      watchMethod: LIST
     datasources:
       skipReload: true
       initDatasources: true
+      watchMethod: LIST
   resources:
     requests:
       cpu: 25m

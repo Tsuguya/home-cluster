@@ -122,7 +122,7 @@ spec:
 
     - name: validate
       container:
-        image: alpine:3.21
+        image: alpine:3.23
         command: [sh, -c]
         args:
           - |
@@ -221,7 +221,7 @@ spec:
           - name: cp-ips
           - name: worker-ips
       container:
-        image: alpine:3.21
+        image: alpine:3.23
         command: [sh, -c]
         args:
           - |
@@ -311,7 +311,7 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: "{{inputs.parameters.upgraded-node}}"
       container:
-        image: alpine:3.21
+        image: alpine:3.23
         command: [sh, -c]
         args:
           - |
@@ -372,7 +372,7 @@ spec:
           - name: cp-ips
           - name: worker-ips
       container:
-        image: alpine:3.21
+        image: alpine:3.23
         command: [sh, -c]
         args:
           - |

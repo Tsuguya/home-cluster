@@ -51,6 +51,12 @@
 | canary (DS) | 10m / 32Mi | 64Mi | 低負荷 |
 | sidecar (sc-rules) | 10m / 32Mi | 128Mi | 低負荷（64Mi で OOMKill 発生） |
 
+### Tempo
+
+| Component | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|
+| tempo | 25m / 256Mi | 512Mi | 未計測（新規導入） |
+
 ### Alloy (DS)
 
 | Component | requests (cpu/mem) | limits (mem) | 実測 |

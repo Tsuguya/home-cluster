@@ -41,6 +41,13 @@ spec:
               protocol: TCP
     - toEndpoints:
         - matchLabels:
+            app.kubernetes.io/name: tempo
+      toPorts:
+        - ports:
+            - port: "3200"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
             cnpg.io/cluster: shared-pg
             io.kubernetes.pod.namespace: database
       toPorts:

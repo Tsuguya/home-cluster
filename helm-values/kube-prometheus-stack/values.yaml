@@ -144,6 +144,22 @@ grafana:
       url: http://loki-gateway.monitoring.svc:80
       access: proxy
       isDefault: false
+      jsonData:
+        derivedFields:
+          - datasourceUid: tempo
+            matcherRegex: '"trace_id":"(\w+)"'
+            name: TraceID
+            url: $${__value.raw}
+    - name: Tempo
+      uid: tempo
+      type: tempo
+      url: http://tempo.monitoring.svc:3200
+      access: proxy
+      isDefault: false
+      jsonData:
+        tracesToLogsV2:
+          datasourceUid: loki
+          filterByTraceID: true
 
 alertmanager:
   alertmanagerSpec:

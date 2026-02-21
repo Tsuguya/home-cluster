@@ -15,6 +15,9 @@ spec:
             app.kubernetes.io/name: loki
             app.kubernetes.io/component: single-binary
             io.kubernetes.pod.namespace: monitoring
+        - matchLabels:
+            app.kubernetes.io/name: tempo
+            io.kubernetes.pod.namespace: monitoring
         - matchExpressions:
             - key: workflows.argoproj.io/workflow
               operator: Exists

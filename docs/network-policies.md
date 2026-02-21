@@ -19,6 +19,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Prometheus (monitoring) | Ceph exporter (rook-ceph) | 9926 | Metrics scrape |
 | Prometheus (monitoring) | Ceph MGR (rook-ceph) | 9283 | Metrics scrape |
 | Loki (monitoring) | Ceph RGW (rook-ceph) | 8080 | S3 storage |
+| Tempo (monitoring) | Ceph RGW (rook-ceph) | 8080 | S3 storage |
 | Argo Workflows controller (argo) | shared-pg (database) | 5432 | Workflow archive |
 | Argo Workflows server (argo) | shared-pg (database) | 5432 | Workflow archive |
 | CloudNative-PG (cnpg-system) | shared-pg (database) | 8000 | Health probes |
@@ -64,19 +65,20 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
 | **workflow-pods** | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
 
-## monitoring (10 policies)
+## monitoring (11 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
 | **prometheus** | grafana → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, coredns (kube-system):9153, ceph exporter (rook-ceph):9926, ceph mgr (rook-ceph):9283, host/remote-node:10250/9100/2379/10257/10259/9965 |
 | **alertmanager** | prometheus → 9093/8080 | HTTPS 443 |
-| **grafana** | ingress → 3000; prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, shared-pg (database):5432, HTTPS 443 |
+| **grafana** | ingress → 3000; prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, tempo:3200, shared-pg (database):5432, HTTPS 443 |
 | **kube-state-metrics** | prometheus → 8080 | kube-apiserver |
 | **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | kube-apiserver |
 | **loki** | loki-gateway, loki-canary → 3100 | kube-apiserver, ceph-rgw (rook-ceph):8080, self:7946 (memberlist) |
 | **loki-gateway** | grafana, alloy, loki-canary → 8080 | loki:3100 |
 | **loki-canary** | (none) | loki-gateway:8080, loki:3100 |
 | **alloy** | (none) | kube-apiserver, loki-gateway:8080 |
+| **tempo** | grafana → 3200 | ceph-rgw (rook-ceph):8080 |
 | **prometheus-admission** (Job) | (none) | kube-apiserver |
 
 ## rook-ceph (14 policies)
@@ -87,7 +89,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; ingress → 7000 (dashboard); prometheus (monitoring) → 9283 | kube-apiserver, mon:3300/6789, mgr (self):6800, osd/mds/rgw:6800-6806 |
 | **osd** | osd (self), mgr, operator, mds, rgw, tools, csi-rbd-ctrlplugin → 6800-6806; host/remote-node → 6800-6806 | mon:3300/6789, mgr:6800, osd (self):6800-6806 |
 | **mds** | (none) | mon:3300/6789, mgr:6800, osd:6800-6806 |
-| **rgw** | operator, loki (monitoring), workflow-pods (argo), workflows-server (argo) → 8080 | mon:3300/6789, mgr:6800, osd:6800-6806 |
+| **rgw** | operator, loki (monitoring), tempo (monitoring), workflow-pods (argo), workflows-server (argo) → 8080 | mon:3300/6789, mgr:6800, osd:6800-6806 |
 | **operator** | (none) | kube-apiserver, mon:3300/6789, mgr:6800, osd:6800, rgw:8080 |
 | **detect-version** (Job) | (none) | kube-apiserver |
 | **exporter** | prometheus (monitoring) → 9926 | mgr:6800, mon:3300/6789 |

@@ -20,6 +20,7 @@ ArgoCD のみ TLS Passthrough（専用 argocd-gateway、ArgoCD 自身が TLS 終
 | PostgreSQL (RW) | shared-pg-rw.database.svc:5432 | CNPG managed, 2 instances |
 | PostgreSQL (RO) | shared-pg-ro.database.svc:5432 | Read replicas |
 | Loki | loki-gateway.monitoring.svc:80 | Log aggregation |
+| Tempo | tempo.monitoring.svc:3200 | Distributed tracing |
 | Prometheus | kube-prometheus-stack-prometheus.monitoring.svc:9090 | Metrics |
 
 ## Databases (shared-pg)

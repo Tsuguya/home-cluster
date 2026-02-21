@@ -34,6 +34,7 @@ encryption:
   type: wireguard
   strictMode:
     enabled: true
+    cidr: "10.244.0.0/16"
 
 gatewayAPI:
   enabled: true

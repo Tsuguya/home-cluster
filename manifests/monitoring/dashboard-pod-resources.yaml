@@ -48,6 +48,20 @@ data:
             "refresh": 2,
             "sort": 1,
             "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "current": {},
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "definition": "label_values(kube_node_info, node)",
+            "includeAll": true,
+            "label": "Node",
+            "multi": true,
+            "name": "node",
+            "query": {"query": "label_values(kube_node_info, node)", "refId": "A"},
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
           }
         ]
       },
@@ -447,6 +461,80 @@ data:
           ],
           "title": "Pod Resources",
           "type": "table"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 37},
+          "id": 103,
+          "title": "Top Consumers by Node",
+          "type": "row"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "continuous-GrYlRd"},
+              "decimals": 3,
+              "mappings": [],
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 10, "w": 12, "x": 0, "y": 38},
+          "id": 8,
+          "options": {
+            "displayMode": "gradient",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
+            "orientation": "horizontal",
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "showUnfilled": true,
+            "text": {}
+          },
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "prometheus"},
+              "expr": "topk(10, sum by (namespace, pod) (\n  rate(container_cpu_usage_seconds_total{container!=\"\", container!=\"POD\"}[5m])\n  * on(namespace, pod) group_left() kube_pod_info{node=~\"$node\"}\n))",
+              "instant": true,
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Top 10 CPU Consumers by Node ($node)",
+          "type": "bargauge"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "fieldConfig": {
+            "defaults": {
+              "color": {"mode": "continuous-GrYlRd"},
+              "mappings": [],
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {"h": 10, "w": 12, "x": 12, "y": 38},
+          "id": 9,
+          "options": {
+            "displayMode": "gradient",
+            "minVizHeight": 10,
+            "minVizWidth": 0,
+            "orientation": "horizontal",
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false},
+            "showUnfilled": true,
+            "text": {}
+          },
+          "targets": [
+            {
+              "datasource": {"type": "prometheus", "uid": "prometheus"},
+              "expr": "topk(10, sum by (namespace, pod) (\n  container_memory_working_set_bytes{container!=\"\", container!=\"POD\"}\n  * on(namespace, pod) group_left() kube_pod_info{node=~\"$node\"}\n))",
+              "instant": true,
+              "legendFormat": "{{namespace}} / {{pod}}",
+              "refId": "A"
+            }
+          ],
+          "title": "Top 10 Memory Consumers by Node ($node)",
+          "type": "bargauge"
         }
       ]
     }

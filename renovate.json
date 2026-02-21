@@ -21,9 +21,9 @@
       "groupName": "rook-ceph"
     },
     {
-      "description": "Automerge alpine minor updates",
-      "matchPackageNames": ["alpine"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "description": "Automerge Docker image minor updates",
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["minor"],
       "automerge": true
     },
     {

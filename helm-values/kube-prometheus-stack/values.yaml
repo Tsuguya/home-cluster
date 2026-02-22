@@ -112,20 +112,17 @@ grafana:
       enabled: true
     auth.generic_oauth:
       enabled: true
-      name: Google
-      scopes: openid profile email
-      auth_url: https://accounts.google.com/o/oauth2/v2/auth
-      token_url: https://oauth2.googleapis.com/token
-      api_url: https://openidconnect.googleapis.com/v1/userinfo
-      email_attribute_path: email
-      login_attribute_path: email
-      name_attribute_path: name
-      allowed_domains: tgy.io
+      name: Kanidm
+      scopes: openid profile email groups
+      auth_url: https://idm.infra.tgy.io/oauth2/authorise
+      token_url: https://idm.infra.tgy.io/oauth2/token
+      api_url: https://idm.infra.tgy.io/oauth2/openid/grafana/userinfo
+      use_pkce: true
+      use_refresh_token: true
+      login_attribute_path: preferred_username
       allow_sign_up: true
       auto_login: true
       role_attribute_path: "'Admin'"
-      org_mapping: "*:1:Admin"
-      skip_org_role_sync: false
   envValueFrom:
     GF_DATABASE_USER:
       secretKeyRef:
@@ -137,11 +134,11 @@ grafana:
         key: password
     GF_AUTH_GENERIC_OAUTH_CLIENT_ID:
       secretKeyRef:
-        name: google-oauth
+        name: kanidm-grafana-oauth
         key: clientID
     GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET:
       secretKeyRef:
-        name: google-oauth
+        name: kanidm-grafana-oauth
         key: clientSecret
     GF_DISCORD_WEBHOOK_URL:
       secretKeyRef:

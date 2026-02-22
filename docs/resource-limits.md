@@ -1,4 +1,4 @@
-# Resource Requests and Limits
+# リソース設定
 
 ## 方針
 
@@ -13,7 +13,7 @@
 
 ### ArgoCD
 
-| Component | requests (cpu/mem) | limits (mem) | 実測 |
+| コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
 | controller | 50m / 512Mi | 1536Mi | 3-39m / 295-473Mi |
 | server | 10m / 64Mi | 256Mi | 3m / 38Mi |
@@ -25,7 +25,7 @@
 
 ### Cilium
 
-| Component | requests (cpu/mem) | limits (mem) | 実測 |
+| コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
 | agent (DS) | 50m / 128Mi | 512Mi | 37-77m / 142-185Mi |
 | operator | 10m / 64Mi | 256Mi | 5m / 40Mi |
@@ -36,7 +36,7 @@
 
 ### cert-manager
 
-| Component | requests (cpu/mem) | limits (mem) | 実測 |
+| コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
 | controller | 10m / 32Mi | 128Mi | 低負荷 |
 | webhook | 10m / 32Mi | 64Mi | 低負荷 |
@@ -44,7 +44,7 @@
 
 ### Loki
 
-| Component | requests (cpu/mem) | limits (mem) | 実測 |
+| コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
 | singleBinary | 25m / 256Mi | 512Mi | 20-24m / 259Mi |
 | gateway (nginx) | 10m / 32Mi | 64Mi | 低負荷 |
@@ -53,19 +53,19 @@
 
 ### Tempo
 
-| Component | requests (cpu/mem) | limits (mem) | 実測 |
+| コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
 | tempo | 25m / 256Mi | 512Mi | 未計測（新規導入） |
 
 ### Alloy (DS)
 
-| Component | requests (cpu/mem) | limits (mem) | 実測 |
+| コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
 | alloy | 25m / 128Mi | 512Mi | 21-29m / 87-315Mi |
 
 ### kube-prometheus-stack
 
-| Component | requests (cpu/mem) | limits (mem) | 実測 |
+| コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
 | prometheus | 200m / 1Gi | 2Gi | 93-117m / 1225-1738Mi |
 | alertmanager | 50m / 128Mi | 256Mi | 2m / 35Mi |
@@ -78,7 +78,7 @@
 
 ### その他
 
-| Service | Component | requests (cpu/mem) | limits (mem) | 実測 |
+| サービス | コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|---|
 | external-dns | | 10m / 32Mi | 128Mi | 低負荷 |
 | metrics-server | | 10m / 32Mi | 128Mi | 低負荷 |
@@ -94,7 +94,7 @@
 
 ### Argo Events
 
-| Component | requests (cpu/mem) | limits (mem) | 実測 |
+| コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
 | EventBus (JetStream) main | 10m / 32Mi | 128Mi | 8-13m / 17-26Mi |
 | EventBus metrics | 10m / 32Mi | 64Mi | 低負荷 |
@@ -104,13 +104,13 @@
 
 ### CNPG
 
-| Component | requests (cpu/mem) | limits (mem) | 実測 |
+| コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
 | shared-pg | 10m / 128Mi | 512Mi | 3-24m / 96-124Mi |
 
 ## WorkflowTemplate コンテナ
 
-| Template | Container | requests (cpu/mem) | limits (mem) |
+| テンプレート | コンテナ | requests (cpu/mem) | limits (mem) |
 |---|---|---|---|
 | tofu-cloudflare | main (opentofu) | 50m / 128Mi | 512Mi |
 | tofu-cloudflare-plan | main (opentofu) | 50m / 128Mi | 512Mi |
@@ -129,13 +129,13 @@
 Chart が resources をハードコード (cpu limit 20m) しており values で上書き不可。
 Helm source をやめ rendered manifests + Kustomize patch で CPU limit を除去（`kustomize/qnap-csi/`）。
 
-| Component | requests (cpu/mem) | limits (mem) | 実測 |
+| コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
 | trident-operator | 10m / 40Mi | 80Mi | 1m / 77Mi |
 
 ## OOMKill 調整履歴
 
-| 日付 | Component | 変更前 | 変更後 | 原因 |
+| 日付 | コンポーネント | 変更前 | 変更後 | 原因 |
 |---|---|---|---|---|
 | 2026-02-22 | argocd repo-server | 512Mi | 1Gi | helm template rendering で大量メモリ使用 |
 | 2026-02-22 | loki sidecar (sc-rules) | 64Mi | 128Mi | 起動時メモリ超過 |

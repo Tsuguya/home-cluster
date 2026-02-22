@@ -1,4 +1,4 @@
-# Known Issues
+# 既知の問題
 
 ## Grafana datasource の循環参照（初回構築時）
 
@@ -23,34 +23,34 @@ Tempo → tracesToLogsV2.datasourceUid: loki   (Loki は先に作成されるの
 
 **補足**: `derivedFields` はフロントエンド機能のため、実際には validate されず問題なく起動する可能性もある。Grafana の将来バージョンで provisioning 時の循環参照が解消される可能性あり。
 
-## Grafana dashboards with expected "No data" panels
+## Grafana ダッシュボードで "No data" になるパネル
 
-Some panels in kube-prometheus-stack and Cilium dashboards show "No data" by design in this single-cluster setup. These are not bugs.
+kube-prometheus-stack と Cilium のダッシュボードには、シングルクラスタ環境では "No data" になるパネルがある。これらはバグではない。
 
-### Panels that only appear when errors/events occur
+### エラー・イベント発生時のみ表示されるパネル
 
-| Dashboard | Panel | Reason |
+| ダッシュボード | パネル | 理由 |
 |---|---|---|
-| Kubernetes / Kubelet | Storage Operation Error Rate | `storage_operation_errors_total` only exists when errors occur |
-| Hubble / Network Overview | Missing ICMP Echo Reply | No ICMP traffic in cluster |
-| Hubble / DNS Overview | Missing DNS responses | No unanswered DNS queries |
+| Kubernetes / Kubelet | Storage Operation Error Rate | `storage_operation_errors_total` はエラー発生時のみ存在 |
+| Hubble / Network Overview | Missing ICMP Echo Reply | クラスタ内に ICMP トラフィックがない |
+| Hubble / DNS Overview | Missing DNS responses | 未応答の DNS クエリがない |
 
-### Panels that require specific conditions
+### 特定条件が必要なパネル
 
-| Dashboard | Panel | Reason |
+| ダッシュボード | パネル | 理由 |
 |---|---|---|
-| Hubble L7 HTTP Metrics by Workload | CPU Usage by Source | `source_workload` is empty because L7 HTTP traffic only comes from Gateway (external), not from pods |
-| Kubernetes / Compute Resources / Multi-Cluster | All panels | Single-cluster setup; dashboard cannot be individually disabled in kube-prometheus-stack |
+| Hubble L7 HTTP Metrics by Workload | CPU Usage by Source | L7 HTTP トラフィックは Gateway（外部）からのみ来るため `source_workload` が空 |
+| Kubernetes / Compute Resources / Multi-Cluster | 全パネル | シングルクラスタ環境。kube-prometheus-stack では個別に無効化できない |
 
-## Prometheus cluster label in single-cluster setup
+## Prometheus の cluster ラベル（シングルクラスタ環境）
 
-`prometheusSpec.externalLabels.cluster` is set but only applies to remote write, federation, and alertmanager — NOT to local PromQL queries or TSDB storage.
+`prometheusSpec.externalLabels.cluster` は remote write、federation、alertmanager にのみ適用される。ローカルの PromQL クエリや TSDB ストレージには影響しない。
 
-**Do NOT use `defaultRules.additionalRuleLabels.cluster`** to add a cluster label to recording rules. This creates a mismatch: recording rules get `cluster=home-cluster` but raw scraped metrics have no `cluster` label. Dashboard panels that join recording rules with raw metrics (e.g. CPU Quota, Memory Quota, Network Usage) will return no data.
+**`defaultRules.additionalRuleLabels.cluster` を使ってはいけない。** recording rule に cluster ラベルを追加すると、recording rule は `cluster=home-cluster` を持つが生メトリクスには `cluster` ラベルがないため不整合が起きる。recording rule と生メトリクスを join するダッシュボードパネル（CPU Quota, Memory Quota, Network Usage 等）が No data になる。
 
-In a single-cluster setup, leave the `cluster` label absent from all metrics. Grafana variables resolve to empty, and `cluster=""` matches all metrics consistently.
+シングルクラスタ環境では全メトリクスから `cluster` ラベルを除外する。Grafana 変数は空に解決され、`cluster=""` で全メトリクスに一貫してマッチする。
 
-If multi-cluster or Thanos/Mimir is needed in the future, add `cluster` to ALL metrics at scrape time via ServiceMonitor `metricRelabelings` on every scrape target — not just recording rules.
+将来マルチクラスタや Thanos/Mimir が必要になった場合は、recording rule だけでなく全スクレイプターゲットの ServiceMonitor `metricRelabelings` で `cluster` を付与すること。
 
 ## QNAP CSI (trident-operator) CPU limit ハードコード
 

@@ -1,20 +1,20 @@
-# SSO (Single Sign-On)
+# SSO (シングルサインオン)
 
 全サービスが Kanidm (self-hosted IdP) で認証する。
 
 ## 構成
 
-| Service | Auth Method | IdP | Secret | Config |
+| サービス | 認証方式 | IdP | Secret | 設定ファイル |
 |---|---|---|---|---|
-| ArgoCD | Built-in OIDC (PKCE) | Kanidm (public client) | なし | `helm-values/argocd/values.yaml` |
-| Grafana | generic_oauth | Kanidm (confidential) | kanidm-grafana-oauth (monitoring) | `helm-values/kube-prometheus-stack/values.yaml` |
-| Argo Workflows | OIDC | Kanidm (confidential) | kanidm-argo-workflows-oauth (argo) | `helm-values/argo-workflows/values.yaml` |
+| ArgoCD | Built-in OIDC (PKCE) | Kanidm (パブリック) | なし | `helm-values/argocd/values.yaml` |
+| Grafana | generic_oauth | Kanidm (コンフィデンシャル) | kanidm-grafana-oauth (monitoring) | `helm-values/kube-prometheus-stack/values.yaml` |
+| Argo Workflows | OIDC | Kanidm (コンフィデンシャル) | kanidm-argo-workflows-oauth (argo) | `helm-values/argo-workflows/values.yaml` |
 
-ArgoCD は Kanidm public client (PKCE S256) を使用するため、clientSecret 不要。
+ArgoCD は Kanidm パブリッククライアント (PKCE S256) を使用するため、clientSecret 不要。
 
 ## Kanidm クライアント設定
 
-### ArgoCD (public client)
+### ArgoCD (パブリッククライアント)
 
 ```bash
 kanidm system oauth2 create-public argocd "ArgoCD" https://argocd.infra.tgy.io --url https://idm.infra.tgy.io
@@ -31,7 +31,7 @@ kanidm system oauth2 prefer-short-username argocd --url https://idm.infra.tgy.io
 kanidm system oauth2 enable-localhost-redirects argocd --url https://idm.infra.tgy.io
 ```
 
-### Grafana (confidential client)
+### Grafana (コンフィデンシャルクライアント)
 
 ```bash
 kanidm system oauth2 create grafana "Grafana" https://grafana.infra.tgy.io --url https://idm.infra.tgy.io
@@ -48,7 +48,7 @@ kanidm system oauth2 prefer-short-username grafana --url https://idm.infra.tgy.i
 kanidm system oauth2 show-basic-secret grafana --url https://idm.infra.tgy.io
 ```
 
-Custom claim でグループ→Grafana ロールのマッピングを設定:
+カスタムクレームでグループ → Grafana ロールのマッピングを設定:
 
 ```bash
 kanidm system oauth2 update-claim-map grafana grafana_role grafana_users Admin --url https://idm.infra.tgy.io
@@ -60,7 +60,7 @@ Grafana 側は `role_attribute_path: grafana_role` でこの値を参照する�
 
 clientSecret は 1Password (kanidm-grafana-oauth) に保存し、OnePasswordItem 経由でデプロイ。
 
-### Argo Workflows (confidential client)
+### Argo Workflows (コンフィデンシャルクライアント)
 
 ```bash
 kanidm system oauth2 create argo-workflows "Argo Workflows" https://argo.infra.tgy.io --url https://idm.infra.tgy.io
@@ -82,24 +82,24 @@ kanidm system oauth2 show-basic-secret argo-workflows --url https://idm.infra.tg
 Argo Workflows は PKCE 未サポートのため `warning-insecure-client-disable-pkce` が必要。
 clientSecret は 1Password (kanidm-argo-workflows-oauth) に保存し、OnePasswordItem 経由でデプロイ。
 
-## 1Password Items
+## 1Password アイテム
 
-| Item | Secret Name | Namespaces | Keys |
+| アイテム | Secret 名 | Namespace | キー |
 |---|---|---|---|
 | kanidm-grafana-oauth | kanidm-grafana-oauth | monitoring | clientID, clientSecret |
 | kanidm-argo-workflows-oauth | kanidm-argo-workflows-oauth | argo | clientID, clientSecret |
 
-ArgoCD は public client のため 1Password item 不要。
+ArgoCD はパブリッククライアントのため 1Password アイテム不要。
 
 ## 新サービスに Kanidm SSO を追加する手順
 
 ### 1. Kanidm でクライアント作成
 
 ```bash
-# Confidential client (clientSecret あり)
+# コンフィデンシャルクライアント (clientSecret あり)
 kanidm system oauth2 create <client_name> "<Display Name>" https://<service>.infra.tgy.io --url https://idm.infra.tgy.io
 
-# または Public client (PKCE のみ、clientSecret なし)
+# またはパブリッククライアント (PKCE のみ、clientSecret なし)
 kanidm system oauth2 create-public <client_name> "<Display Name>" https://<service>.infra.tgy.io --url https://idm.infra.tgy.io
 ```
 
@@ -113,13 +113,13 @@ kanidm system oauth2 update-scope-map <client_name> <group> openid profile email
 kanidm system oauth2 prefer-short-username <client_name> --url https://idm.infra.tgy.io
 ```
 
-### 3. Confidential client の場合: Secret をデプロイ
+### 3. コンフィデンシャルクライアントの場合: Secret をデプロイ
 
 ```bash
 kanidm system oauth2 show-basic-secret <client_name> --url https://idm.infra.tgy.io
 ```
 
-1Password に API Credential として保存し、`manifests/secrets/` に OnePasswordItem を作成。
+1Password に API Credential として保存し、`manifests/secrets/` に OnePasswordItem を作成する。
 
 ### 4. CNP に Kanidm egress を追加
 
@@ -138,7 +138,7 @@ kanidm system oauth2 show-basic-secret <client_name> --url https://idm.infra.tgy
 
 ## Kanidm エンドポイント
 
-| Endpoint | URL |
+| エンドポイント | URL |
 |---|---|
 | Issuer | `https://idm.infra.tgy.io/oauth2/openid/<client_name>` |
 | Authorization | `https://idm.infra.tgy.io/ui/oauth2` |
@@ -147,8 +147,8 @@ kanidm system oauth2 show-basic-secret <client_name> --url https://idm.infra.tgy
 
 ## 注意事項
 
-- Kanidm は PKCE S256 を要求する。ArgoCD は PKCE + clientSecret の同時使用に問題がある ([#23773](https://github.com/argoproj/argo-cd/issues/23773)) ため public client を使用
-- Argo Workflows は PKCE 未サポート（`golang.org/x/oauth2` の標準 `AuthCodeURL` を PKCE オプションなしで使用）のため confidential client + `warning-insecure-client-disable-pkce` が必要
+- Kanidm は PKCE S256 を要求する。ArgoCD は PKCE + clientSecret の同時使用に問題がある ([#23773](https://github.com/argoproj/argo-cd/issues/23773)) ためパブリッククライアントを使用
+- Argo Workflows は PKCE 未サポート（`golang.org/x/oauth2` の標準 `AuthCodeURL` を PKCE オプションなしで使用）のためコンフィデンシャルクライアント + `warning-insecure-client-disable-pkce` が必要
 - Kanidm の `prefer-short-username` でユーザー名を短縮形にする（RBAC マッチに影響）
 - Cilium Gateway bug ([#41970](https://github.com/cilium/cilium/issues/41970)) により、クロスネームスペース HTTP が L7 proxy で 403 になる場合がある。Kanidm は CoreDNS rewrite で Service に直接接続する構成が安定する
 - OAuth プロバイダを切り替える場合、Grafana は一時的に `oauth_allow_insecure_email_lookup: true` が必要（既存ユーザーの auth_id 再紐付け）

@@ -114,7 +114,7 @@ grafana:
       enabled: true
       name: Kanidm
       scopes: openid profile email groups
-      auth_url: https://idm.infra.tgy.io/oauth2/authorise
+      auth_url: https://idm.infra.tgy.io/ui/oauth2
       token_url: https://idm.infra.tgy.io/oauth2/token
       api_url: https://idm.infra.tgy.io/oauth2/openid/grafana/userinfo
       use_pkce: true

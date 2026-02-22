@@ -6,10 +6,12 @@ R2 オフサイトバックアップからの復旧手順。
 
 | 対象 | 方式 | スケジュール | 保持期間 |
 |------|------|-------------|---------|
-| PostgreSQL (shared-pg) | CNPG barman → R2 | WAL: リアルタイム / base backup: 毎日 3:00 JST | 14日 |
-| etcd | talosctl snapshot → R2 | 毎日 4:00 JST | 14日 |
+| PostgreSQL (shared-pg) | CNPG barman → R2 | WAL: リアルタイム / base backup: 毎日 3:00 JST | CNPG: 7日 / R2: 14日 |
+| etcd | talosctl snapshot → R2 | 毎日 4:00 JST | R2: 14日 |
 
 バケット: `s3://home-cluster-backup/` (Cloudflare R2, APAC)
+
+PostgreSQL は二段階の保持: CNPG が 7日で古いバックアップカタログを整理し、R2 ライフサイクルが 14日でオブジェクトを最終削除する。
 
 ## PostgreSQL 復旧
 

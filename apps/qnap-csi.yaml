@@ -6,17 +6,9 @@ metadata:
 spec:
   project: storage
   sources:
-    - repoURL: https://github.com/qnap-dev/QNAP-CSI-PlugIn.git
-      targetRevision: v1.6.0
-      path: Helm/trident
-      helm:
-        releaseName: qnap-trident
-        kubeVersion: "1.32.0"
-        valueFiles:
-          - $values/helm-values/qnap-csi/values.yaml
     - repoURL: https://github.com/Tsuguya/home-cluster.git
       targetRevision: main
-      ref: values
+      path: kustomize/qnap-csi
     - repoURL: https://github.com/Tsuguya/home-cluster.git
       targetRevision: main
       path: manifests/trident
@@ -26,12 +18,6 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: trident
-  ignoreDifferences:
-    - group: apps
-      kind: Deployment
-      name: trident-operator
-      jsonPointers:
-        - /spec/template/spec/containers/0/resources
   syncPolicy:
     automated:
       prune: true

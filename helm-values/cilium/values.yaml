@@ -75,6 +75,8 @@ hubble:
       - flow
     serviceMonitor:
       enabled: true
+      labels:
+        release: kube-prometheus-stack
     dashboards:
       enabled: true
   relay:

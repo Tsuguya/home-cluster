@@ -119,7 +119,9 @@ grafana:
       api_url: https://idm.infra.tgy.io/oauth2/openid/grafana/userinfo
       use_pkce: true
       use_refresh_token: true
+      email_attribute_path: email
       login_attribute_path: preferred_username
+      name_attribute_path: name
       allow_sign_up: true
       auto_login: true
       role_attribute_path: "'Admin'"

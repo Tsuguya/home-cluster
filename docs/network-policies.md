@@ -36,8 +36,6 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Argo Workflows server (argo) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | oauth2-proxy-hubble (oauth2-proxy) | Hubble UI (kube-system) | 8081 | Reverse proxy upstream |
 | oauth2-proxy-hubble (oauth2-proxy) | Kanidm (kanidm) | 8443 | OIDC token exchange |
-| oauth2-proxy-ceph (oauth2-proxy) | Ceph MGR (rook-ceph) | 7000 | Reverse proxy upstream |
-| oauth2-proxy-ceph (oauth2-proxy) | Kanidm (kanidm) | 8443 | OIDC token exchange |
 | shared-pg (database) | Cloudflare R2 (external) | 443 | CNPG barman backup/WAL archiving |
 
 ## Excluded Pods (hostNetwork: true)
@@ -100,7 +98,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Component | Ingress | Egress |
 |---|---|---|
 | **mon** | all ceph daemons, exporter, crashcollector, CSI ctrlplugins → 3300/6789; remote-node → 3300/6789 | mon (self):3300/6789, mgr:6800 |
-| **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; oauth2-proxy-ceph (oauth2-proxy) → 7000 (dashboard); prometheus (monitoring) → 9283 | kube-apiserver, mon:3300/6789, mgr (self):6800, osd/mds/rgw:6800-6806 |
+| **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; prometheus (monitoring) → 9283 | kube-apiserver, mon:3300/6789, mgr (self):6800, osd/mds/rgw:6800-6806 |
 | **osd** | osd (self), mgr, operator, mds, rgw, tools, csi-rbd-ctrlplugin → 6800-6806; host/remote-node → 6800-6806 | mon:3300/6789, mgr:6800, osd (self):6800-6806 |
 | **mds** | (none) | mon:3300/6789, mgr:6800, osd:6800-6806 |
 | **rgw** | operator, loki (monitoring), tempo (monitoring), workflow-pods (argo), workflows-server (argo) → 8080 | mon:3300/6789, mgr:6800, osd:6800-6806 |
@@ -162,14 +160,13 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443; argocd-server (argocd) → 8443; argo-workflows-server (argo) → 8443; oauth2-proxy-hubble/ceph (oauth2-proxy) → 8443 | kube-apiserver |
+| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443; argocd-server (argocd) → 8443; argo-workflows-server (argo) → 8443; oauth2-proxy-hubble (oauth2-proxy) → 8443 | kube-apiserver |
 
-## oauth2-proxy (2 policies)
+## oauth2-proxy (1 policy)
 
 | Component | Ingress | Egress |
 |---|---|---|
 | **oauth2-proxy-hubble** | ingress → 4180 | hubble-ui (kube-system):8081, kanidm (kanidm):8443 |
-| **oauth2-proxy-ceph** | ingress → 4180 | rook-ceph-mgr (rook-ceph):7000, kanidm (kanidm):8443 |
 
 ## trident (2 policies)
 

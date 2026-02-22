@@ -39,14 +39,6 @@ spec:
               protocol: TCP
     - fromEndpoints:
         - matchLabels:
-            app.kubernetes.io/instance: oauth2-proxy-ceph
-            io.kubernetes.pod.namespace: oauth2-proxy
-      toPorts:
-        - ports:
-            - port: "7000"
-              protocol: TCP
-    - fromEndpoints:
-        - matchLabels:
             app.kubernetes.io/name: prometheus
             io.kubernetes.pod.namespace: monitoring
       toPorts:

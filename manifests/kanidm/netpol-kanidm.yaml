@@ -1,0 +1,15 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kanidm
+  namespace: kanidm
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kanidm
+  ingress:
+    - fromEntities:
+        - ingress
+  egress:
+    - toEntities:
+        - kube-apiserver

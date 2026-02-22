@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kanidm
+  namespace: kanidm
+  labels:
+    app.kubernetes.io/name: kanidm
+spec:
+  selector:
+    app.kubernetes.io/name: kanidm
+  ports:
+    - port: 443
+      targetPort: 8443
+      protocol: TCP

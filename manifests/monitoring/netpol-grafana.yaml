@@ -57,6 +57,12 @@ spec:
         - ports:
             - port: "5432"
               protocol: TCP
+    - toEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
     - toCIDR:
         - 0.0.0.0/0
       toPorts:

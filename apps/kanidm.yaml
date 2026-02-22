@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kanidm
+  namespace: argocd
+spec:
+  project: security
+  source:
+    repoURL: https://github.com/Tsuguya/home-cluster.git
+    targetRevision: main
+    path: manifests/kanidm
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kanidm
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

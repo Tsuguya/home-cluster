@@ -1,0 +1,21 @@
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: kanidm
+  namespace: kanidm
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: kanidm-gateway
+      namespace: kanidm
+      sectionName: passthrough
+  hostnames:
+    - idm.infra.tgy.io
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: kanidm
+          port: 443
+          weight: 1

@@ -20,6 +20,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|---|
 | Grafana (monitoring) | shared-pg (database) | 5432 | Dashboard state |
 | Prometheus (monitoring) | CoreDNS (kube-system) | 9153 | Metrics scrape |
+| Prometheus (monitoring) | Tetragon operator (kube-system) | 2113 | Metrics scrape |
 | Prometheus (monitoring) | Ceph exporter (rook-ceph) | 9926 | Metrics scrape |
 | Prometheus (monitoring) | Ceph MGR (rook-ceph) | 9283 | Metrics scrape |
 | Loki (monitoring) | Ceph RGW (rook-ceph) | 8080 | S3 storage |
@@ -78,7 +79,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **prometheus** | grafana, tempo → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, ceph exporter (rook-ceph):9926, ceph mgr (rook-ceph):9283, host/remote-node:10250/9100/2379/2381/10257/10259/9965 |
+| **prometheus** | grafana, tempo → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, tetragon-operator (kube-system):2113, ceph exporter (rook-ceph):9926, ceph mgr (rook-ceph):9283, host/remote-node:10250/9100/2379/2381/10257/10259/9965 |
 | **alertmanager** | prometheus → 9093/8080 | HTTPS 443 |
 | **grafana** | ingress → 3000 (L7 HTTP); prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, tempo:3200, shared-pg (database):5432, kanidm (kanidm):8443, HTTPS 443 |
 | **kube-state-metrics** | prometheus → 8080 | kube-apiserver |
@@ -118,7 +119,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **hubble-ui** | ingress/host → 8081 (L7 HTTP) | kube-apiserver, hubble-relay:4245 |
 | **metrics-server** | host/remote-node/kube-apiserver → 10250 | kube-apiserver, host/remote-node:10250 |
 | **reloader** | (none) | kube-apiserver |
-| **tetragon-operator** | (none) | kube-apiserver |
+| **tetragon-operator** | prometheus (monitoring) → 2113 | kube-apiserver |
 
 ## database (1 policy)
 

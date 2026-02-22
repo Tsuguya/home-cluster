@@ -67,6 +67,14 @@ spec:
               protocol: TCP
     - toEndpoints:
         - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            app.kubernetes.io/name: tetragon-operator
+      toPorts:
+        - ports:
+            - port: "2113"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
             app: rook-ceph-exporter
             io.kubernetes.pod.namespace: rook-ceph
       toPorts:

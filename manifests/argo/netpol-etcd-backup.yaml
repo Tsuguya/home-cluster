@@ -16,6 +16,9 @@ spec:
         - kube-apiserver
     - toFQDNs:
         - matchPattern: "*.r2.cloudflarestorage.com"
+        - matchName: "github.com"
+        - matchPattern: "*.githubusercontent.com"
+        - matchName: "dl.min.io"
       toPorts:
         - ports:
             - port: "443"

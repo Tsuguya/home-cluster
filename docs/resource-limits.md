@@ -15,7 +15,7 @@
 
 | Component | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
-| controller | 50m / 384Mi | 768Mi | 3-39m / 295-473Mi |
+| controller | 50m / 512Mi | 1536Mi | 3-39m / 295-473Mi |
 | server | 10m / 64Mi | 256Mi | 3m / 38Mi |
 | repo-server | 10m / 128Mi | 1Gi | 1m / 54Mi（helm template でスパイク） |
 | redis | 10m / 64Mi | 256Mi | 14m / 83Mi |
@@ -137,3 +137,4 @@
 | 2026-02-22 | argocd repo-server | 512Mi | 1Gi | helm template rendering で大量メモリ使用 |
 | 2026-02-22 | loki sidecar (sc-rules) | 64Mi | 128Mi | 起動時メモリ超過 |
 | 2026-02-22 | grafana sidecar (sc-dashboard/datasources) | 64Mi | 256Mi | 起動時メモリ超過 |
+| 2026-02-22 | argocd controller | 768Mi | 1536Mi | 18回 OOMKill、全 Application の state キャッシュでメモリ不足 |

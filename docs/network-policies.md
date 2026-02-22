@@ -2,9 +2,9 @@
 
 All policies are CiliumNetworkPolicy (CNP) and CiliumClusterwideNetworkPolicy (CCNP). Pods with `hostNetwork: true` are not subject to network policies and are excluded.
 
-**注意事項:**
-- TLS passthrough (TLSRoute) を使うサービスの ingress に L7 HTTP ルール (`rules.http`) を付けてはいけない。Cilium が暗号化トラフィックを HTTP として解析しようとし、接続が壊れる。
-- `ingressDeny` の `cluster` entity には `host` / `remote-node` が含まれる。deny は allow より優先されるため、hostNetwork Pod からのアクセスも拒否される。`ingressDeny` より ingress allow のみ（デフォルト deny）を推奨。
+**Caveats:**
+- Do NOT add L7 HTTP rules (`rules.http`) to ingress of services using TLS passthrough (TLSRoute). Cilium attempts to parse encrypted traffic as HTTP, breaking the connection.
+- The `cluster` entity in `ingressDeny` includes `host` and `remote-node`. Since deny rules take precedence over allow rules, this also blocks access from hostNetwork pods. Prefer ingress allow-only policies (implicit default deny) over explicit `ingressDeny`.
 
 ## Cluster-Wide Policies (CCNP)
 

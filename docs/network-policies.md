@@ -33,6 +33,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Grafana (monitoring) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | ArgoCD server (argocd) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | Argo Workflows server (argo) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
+| shared-pg (database) | Cloudflare R2 (external) | 443 | CNPG barman backup/WAL archiving |
 
 ## Excluded Pods (hostNetwork: true)
 
@@ -59,7 +60,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **redis-secret-init** (Job) | (none) | kube-apiserver |
 | **cloudflared** | (none) | HTTPS 443, QUIC 7844, server:8080, eventsource (argo):12000 |
 
-## argo (7 policies)
+## argo (8 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
@@ -69,7 +70,8 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **sensor** (tofu-cloudflare, upgrade-k8s) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **events-controller** | (none) | kube-apiserver, eventbus:8222 |
 | **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
-| **workflow-pods** | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
+| **workflow-pods** (backup-workflow除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
+| **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver, *.r2.cloudflarestorage.com:443, CP nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
 
 ## monitoring (11 policies)
 
@@ -119,7 +121,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo) → 5432; self → 5432/8000 (replication); cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000 |
+| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo) → 5432; self → 5432/8000 (replication); cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000, *.r2.cloudflarestorage.com:443 (backup) |
 
 ## cert-manager (4 policies)
 

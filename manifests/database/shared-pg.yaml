@@ -24,6 +24,22 @@ spec:
         - "CREATE ROLE argo LOGIN;"
         - "CREATE DATABASE grafana OWNER grafana;"
         - "CREATE DATABASE argo OWNER argo;"
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://home-cluster-backup/cnpg/
+      endpointURL: https://b0832b1c20a7cada26af0ac45862ce80.r2.cloudflarestorage.com
+      s3Credentials:
+        accessKeyId:
+          name: r2-backup-credentials
+          key: credential
+        secretAccessKey:
+          name: r2-backup-credentials
+          key: password
+      wal:
+        compression: gzip
+      data:
+        compression: gzip
+    retentionPolicy: "7d"
   managed:
     roles:
       - name: grafana

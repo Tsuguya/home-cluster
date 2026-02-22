@@ -8,6 +8,8 @@ spec:
     matchExpressions:
       - key: workflows.argoproj.io/workflow
         operator: Exists
+      - key: backup-workflow
+        operator: DoesNotExist
   ingressDeny:
     - fromEntities:
         - cluster

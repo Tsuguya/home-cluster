@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: etcd-backup-executor
+  namespace: argo
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: etcd-backup-executor
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-edit
+subjects:
+  - kind: ServiceAccount
+    name: etcd-backup-executor
+    namespace: argo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: etcd-backup
+  namespace: argo
+spec:
+  activeDeadlineSeconds: 300
+  serviceAccountName: etcd-backup-executor
+  entrypoint: main
+  volumes:
+    - name: talosconfig
+      secret:
+        secretName: talosconfig
+        defaultMode: 0400
+  templates:
+    - name: main
+      metadata:
+        labels:
+          backup-workflow: "true"
+      container:
+        image: alpine:3.23
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+        command: [sh, -c]
+        args:
+          - |
+            set -euo pipefail
+
+            TALOS_VERSION="v1.12.4"
+            echo "=== Installing talosctl ${TALOS_VERSION} and mc ==="
+            wget -qO /tmp/talosctl "https://github.com/siderolabs/talos/releases/download/${TALOS_VERSION}/talosctl-linux-amd64" \
+              && chmod +x /tmp/talosctl
+            wget -qO /tmp/mc "https://dl.min.io/client/mc/release/linux-amd64/mc" \
+              && chmod +x /tmp/mc
+
+            echo "=== Taking etcd snapshot ==="
+            TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
+            /tmp/talosctl etcd snapshot /tmp/etcd-snapshot.db
+
+            SNAPSHOT_SIZE=$(wc -c < /tmp/etcd-snapshot.db)
+            echo "Snapshot size: ${SNAPSHOT_SIZE} bytes"
+
+            echo "=== Uploading to R2 ==="
+            /tmp/mc alias set r2 "${R2_ENDPOINT}" "${AWS_ACCESS_KEY_ID}" "${AWS_SECRET_ACCESS_KEY}"
+            /tmp/mc cp /tmp/etcd-snapshot.db "r2/home-cluster-backup/etcd/${TIMESTAMP}.db"
+
+            echo "=== Done ==="
+            echo "Uploaded: etcd/${TIMESTAMP}.db (${SNAPSHOT_SIZE} bytes)"
+        env:
+          - name: TALOSCONFIG
+            value: /etc/talos/config
+          - name: R2_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                name: r2-backup-credentials
+                key: endpoint
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: r2-backup-credentials
+                key: credential
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: r2-backup-credentials
+                key: password
+        volumeMounts:
+          - name: talosconfig
+            mountPath: /etc/talos
+            readOnly: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: etcd-backup
+  namespace: argo
+spec:
+  schedule: "0 4 * * *"
+  timezone: Asia/Tokyo
+  concurrencyPolicy: Replace
+  workflowSpec:
+    workflowTemplateRef:
+      name: etcd-backup

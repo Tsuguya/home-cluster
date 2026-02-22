@@ -1,0 +1,38 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: etcd-backup
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      backup-workflow: "true"
+  ingressDeny:
+    - fromEntities:
+        - cluster
+        - world
+  egress:
+    - toEntities:
+        - kube-apiserver
+    - toFQDNs:
+        - matchPattern: "*.r2.cloudflarestorage.com"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toCIDR:
+        - 192.168.0.230/32
+        - 192.168.0.231/32
+        - 192.168.0.232/32
+      toPorts:
+        - ports:
+            - port: "50000"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rook-ceph-rgw
+            io.kubernetes.pod.namespace: rook-ceph
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

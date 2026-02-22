@@ -21,6 +21,12 @@ tempo:
         dimensions:
           - http.method
           - http.status_code
+  overrides:
+    defaults:
+      metrics_generator:
+        processors:
+          - service-graphs
+          - span-metrics
   storage:
     trace:
       backend: s3

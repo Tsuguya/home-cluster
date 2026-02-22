@@ -3,7 +3,6 @@ kind: ServiceAccount
 metadata:
   name: etcd-backup-executor
   namespace: argo
-automountServiceAccountToken: false
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

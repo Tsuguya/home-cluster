@@ -51,3 +51,23 @@ Some panels in kube-prometheus-stack and Cilium dashboards show "No data" by des
 In a single-cluster setup, leave the `cluster` label absent from all metrics. Grafana variables resolve to empty, and `cluster=""` matches all metrics consistently.
 
 If multi-cluster or Thanos/Mimir is needed in the future, add `cluster` to ALL metrics at scrape time via ServiceMonitor `metricRelabelings` on every scrape target — not just recording rules.
+
+## QNAP CSI (trident-operator) CPU limit ハードコード
+
+QNAP CSI Helm chart (v1.6.0) は `bundle.yaml` テンプレート内で `resources.limits.cpu: 20m` をハードコードしており、values で上書きできない。この制限により CPUThrottlingHigh アラートが発生する。
+
+**対策**: Helm source をやめ、`helm template` でレンダリングした manifests を `kustomize/qnap-csi/` に配置。Kustomize JSON patch で CPU limit を除去。
+
+```
+kustomize/qnap-csi/
+├── kustomization.yaml              # JSON patch: limits.cpu を除去
+├── upstream.yaml                   # helm template 出力 (v1.6.0)
+└── crds/tridentorchestrator_crd.yaml
+```
+
+**アップグレード手順**:
+
+1. 新バージョンの chart を clone
+2. `helm template qnap-trident <chart-path> -n trident -f <values> --kube-version 1.32.0` で再レンダリング
+3. `upstream.yaml` を差し替え、CRD に変更があれば `crds/` も更新
+4. push → ArgoCD sync（Kustomize patch が自動適用される）

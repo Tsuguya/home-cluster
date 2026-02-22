@@ -74,12 +74,12 @@ server:
     - sso
   sso:
     enabled: true
-    issuer: https://accounts.google.com
+    issuer: https://idm.infra.tgy.io/oauth2/openid/argo-workflows
     clientId:
-      name: google-oauth
+      name: kanidm-argo-workflows-oauth
       key: clientID
     clientSecret:
-      name: google-oauth
+      name: kanidm-argo-workflows-oauth
       key: clientSecret
     redirectUrl: https://argo.infra.tgy.io/oauth2/callback
     scopes:

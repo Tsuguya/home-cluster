@@ -98,7 +98,6 @@ rook-ceph 稼働後、OBC が バケット作成 + S3 credentials Secret を各 
 
 | Item | Deployed Namespaces | Keys | 用途 |
 |---|---|---|---|
-| google-oauth | monitoring, argo | clientID, clientSecret | Google OIDC SSO (Argo Workflows) |
 | kanidm-grafana-oauth | monitoring | clientID, clientSecret | Kanidm OIDC (Grafana) |
 | github-repo-creds | argocd | url, type, password | ArgoCD private repo 認証 |
 
@@ -148,3 +147,8 @@ Kanidm pod が Running になった後:
 4. Grafana の kanidm-grafana-oauth を 1Password に保存:
    → 1Password に API Credential (clientID + clientSecret) を作成
    → `manifests/secrets/kanidm-grafana-oauth.yaml` の itemPath を更新
+
+5. Argo Workflows の kanidm-argo-workflows-oauth を 1Password に保存:
+   → `docs/sso.md` の Argo Workflows セクションの手順で Kanidm クライアント作成
+   → clientSecret を取得し、1Password に API Credential (clientID + clientSecret) を作成
+   → `manifests/secrets/argo-kanidm-oauth.yaml` の itemPath を更新

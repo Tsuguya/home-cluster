@@ -26,6 +26,14 @@ spec:
         - ports:
             - port: "8443"
               protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: argo-workflows-server
+            io.kubernetes.pod.namespace: argo
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP
   egress:
     - toEntities:
         - kube-apiserver

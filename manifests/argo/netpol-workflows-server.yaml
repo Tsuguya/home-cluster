@@ -39,11 +39,13 @@ spec:
         - ports:
             - port: "5432"
               protocol: TCP
-    - toCIDR:
-        - 0.0.0.0/0
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: kanidm
+            io.kubernetes.pod.namespace: kanidm
       toPorts:
         - ports:
-            - port: "443"
+            - port: "8443"
               protocol: TCP
     - toEndpoints:
         - matchLabels:

@@ -32,6 +32,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Argo Workflows server (argo) | Ceph RGW (rook-ceph) | 8080 | Archived log retrieval |
 | Grafana (monitoring) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | ArgoCD server (argocd) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
+| Argo Workflows server (argo) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 
 ## Excluded Pods (hostNetwork: true)
 
@@ -62,7 +63,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **workflows-server** | ingress → 2746 (L7 HTTP); sensors (tofu-cloudflare, upgrade-k8s), workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, HTTPS 443, ceph-rgw (rook-ceph):8080 |
+| **workflows-server** | ingress → 2746 (L7 HTTP); sensors (tofu-cloudflare, upgrade-k8s), workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, kanidm (kanidm):8443, ceph-rgw (rook-ceph):8080 |
 | **workflows-controller** | (none) | kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
 | **sensor** (tofu-cloudflare, upgrade-k8s) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
@@ -151,7 +152,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443; argocd-server (argocd) → 8443 | kube-apiserver |
+| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443; argocd-server (argocd) → 8443; argo-workflows-server (argo) → 8443 | kube-apiserver |
 
 ## trident (2 policies)
 

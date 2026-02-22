@@ -75,7 +75,7 @@ data:
       "templating": {
         "list": [
           {
-            "allValue": ".*",
+            "allValue": ".+",
             "current": {},
             "datasource": {"type": "loki", "uid": "loki"},
             "definition": "label_values(namespace)",
@@ -88,7 +88,7 @@ data:
             "type": "query"
           },
           {
-            "allValue": ".*",
+            "allValue": ".+",
             "current": {},
             "datasource": {"type": "loki", "uid": "loki"},
             "definition": "label_values({namespace=~\"$namespace\"}, pod)",
@@ -101,7 +101,7 @@ data:
             "type": "query"
           },
           {
-            "allValue": ".*",
+            "allValue": ".+",
             "current": {},
             "datasource": {"type": "loki", "uid": "loki"},
             "definition": "label_values({namespace=~\"$namespace\", pod=~\"$pod\"}, container)",

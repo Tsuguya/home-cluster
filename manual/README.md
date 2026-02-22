@@ -144,11 +144,17 @@ Kanidm pod が Running になった後:
 3. ユーザー・グループ作成、OAuth2 クライアント設定:
    → `docs/sso.md` の手順に従う
 
-4. Grafana の kanidm-grafana-oauth を 1Password に保存:
+4. Grafana の custom claim 設定:
+   ```bash
+   kanidm system oauth2 update-claim-map grafana grafana_role grafana_users Admin --url https://idm.infra.tgy.io
+   kanidm system oauth2 update-claim-map-join grafana grafana_role csv --url https://idm.infra.tgy.io
+   ```
+
+5. Grafana の kanidm-grafana-oauth を 1Password に保存:
    → 1Password に API Credential (clientID + clientSecret) を作成
    → `manifests/secrets/kanidm-grafana-oauth.yaml` の itemPath を更新
 
-5. Argo Workflows の kanidm-argo-workflows-oauth を 1Password に保存:
+6. Argo Workflows の kanidm-argo-workflows-oauth を 1Password に保存:
    → `docs/sso.md` の Argo Workflows セクションの手順で Kanidm クライアント作成
    → clientSecret を取得し、1Password に API Credential (clientID + clientSecret) を作成
    → `manifests/secrets/argo-kanidm-oauth.yaml` の itemPath を更新

@@ -124,8 +124,7 @@ grafana:
       name_attribute_path: name
       allow_sign_up: true
       auto_login: true
-      role_attribute_path: "'Admin'"
-      skip_org_role_sync: true
+      role_attribute_path: grafana_role
   envValueFrom:
     GF_DATABASE_USER:
       secretKeyRef:

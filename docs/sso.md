@@ -48,6 +48,16 @@ kanidm system oauth2 prefer-short-username grafana --url https://idm.infra.tgy.i
 kanidm system oauth2 show-basic-secret grafana --url https://idm.infra.tgy.io
 ```
 
+Custom claim でグループ→Grafana ロールのマッピングを設定:
+
+```bash
+kanidm system oauth2 update-claim-map grafana grafana_role grafana_users Admin --url https://idm.infra.tgy.io
+kanidm system oauth2 update-claim-map-join grafana grafana_role csv --url https://idm.infra.tgy.io
+```
+
+ID トークンに `"grafana_role": "Admin"` が含まれるようになる（`grafana_users` グループのメンバーのみ）。
+Grafana 側は `role_attribute_path: grafana_role` でこの値を参照する。
+
 clientSecret は 1Password (kanidm-grafana-oauth) に保存し、OnePasswordItem 経由でデプロイ。
 
 ### Argo Workflows (confidential client)

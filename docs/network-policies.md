@@ -30,7 +30,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Cloudflared (argocd) | EventSource (argo) | 12000 | GitHub webhook relay |
 | Workflow pods (argo) | Ceph RGW (rook-ceph) | 8080 | Artifact/log storage |
 | Argo Workflows server (argo) | Ceph RGW (rook-ceph) | 8080 | Archived log retrieval |
-| Grafana (monitoring) | Kanidm Gateway (kanidm) | 443 | OIDC token exchange (via ingress entity) |
+| Grafana (monitoring) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 
 ## Excluded Pods (hostNetwork: true)
 
@@ -76,7 +76,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **prometheus** | grafana, tempo → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, ceph exporter (rook-ceph):9926, ceph mgr (rook-ceph):9283, host/remote-node:10250/9100/2379/2381/10257/10259/9965 |
 | **alertmanager** | prometheus → 9093/8080 | HTTPS 443 |
-| **grafana** | ingress → 3000 (L7 HTTP); prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, tempo:3200, shared-pg (database):5432, ingress:443 (Kanidm OIDC), HTTPS 443 |
+| **grafana** | ingress → 3000 (L7 HTTP); prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, tempo:3200, shared-pg (database):5432, kanidm (kanidm):8443, HTTPS 443 |
 | **kube-state-metrics** | prometheus → 8080 | kube-apiserver |
 | **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | kube-apiserver |
 | **loki** | loki-gateway, loki-canary → 3100 | kube-apiserver, ceph-rgw (rook-ceph):8080, self:7946 (memberlist) |
@@ -151,7 +151,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **kanidm** | ingress → 8443 (TLS Passthrough) | kube-apiserver |
+| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443 | kube-apiserver |
 
 ## trident (2 policies)
 

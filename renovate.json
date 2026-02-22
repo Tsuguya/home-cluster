@@ -7,17 +7,33 @@
     "managerFilePatterns": ["/apps/.+\\.yaml$/"]
   },
   "kubernetes": {
-    "managerFilePatterns": ["/manifests/.+\\.yaml$/"]
+    "managerFilePatterns": ["/manifests/.+\\.yaml$/", "/kustomize/.+\\.yaml$/"]
   },
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/apps/qnap-csi\\.yaml$"],
+      "managerFilePatterns": ["/kustomize/qnap-csi/upstream\\.yaml$"],
       "matchStrings": [
-        "repoURL: https://github\\.com/qnap-dev/QNAP-CSI-PlugIn\\.git\\s+targetRevision: (?<currentValue>[^\\s]+)"
+        "# upstream: qnap-dev/QNAP-CSI-PlugIn@(?<currentValue>v\\S+)"
       ],
       "datasourceTemplate": "github-tags",
       "packageNameTemplate": "qnap-dev/QNAP-CSI-PlugIn"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/kustomize/qnap-csi/upstream\\.yaml$"],
+      "matchStrings": [
+        "--qts-cgi-image=(?<depName>[^:]+):(?<currentValue>v\\S+)"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/kustomize/qnap-csi/upstream\\.yaml$"],
+      "matchStrings": [
+        "tridentImage: (?<depName>[^:]+):(?<currentValue>v\\S+)"
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
   "packageRules": [
@@ -41,6 +57,11 @@
       "description": "Do not automerge critical infrastructure",
       "matchPackageNames": ["cilium", "rook-ceph", "rook-ceph-cluster", "tetragon"],
       "automerge": false
+    },
+    {
+      "description": "Group QNAP CSI packages (chart version + all images)",
+      "matchPackagePatterns": ["qnap-dev/QNAP-CSI-PlugIn", "qnapsystem/"],
+      "groupName": "qnap-csi"
     }
   ]
 }

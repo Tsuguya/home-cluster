@@ -9,6 +9,7 @@ spec:
     - https://argoproj.github.io/argo-helm
     - https://helm.cilium.io
     - https://kubernetes-sigs.github.io/metrics-server
+    - https://stakater.github.io/stakater-charts
     - https://github.com/Tsuguya/home-cluster.git
   destinations:
     - server: https://kubernetes.default.svc

@@ -108,7 +108,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **csi-cephfs-ctrlplugin** | (none) | kube-apiserver, mon:3300/6789 |
 | **csi-controller-manager** | host → 8081 | kube-apiserver |
 
-## kube-system (4 policies)
+## kube-system (5 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
@@ -116,6 +116,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **hubble-relay** | host → 4222; hubble-ui → 4245 | host/remote-node/kube-apiserver:4244 |
 | **hubble-ui** | ingress/host → 8081 (L7 HTTP) | kube-apiserver, hubble-relay:4245 |
 | **metrics-server** | host/remote-node/kube-apiserver → 10250 | kube-apiserver, host/remote-node:10250 |
+| **reloader** | (none) | kube-apiserver |
 
 ## database (1 policy)
 

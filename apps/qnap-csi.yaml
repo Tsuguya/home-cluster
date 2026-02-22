@@ -26,6 +26,12 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: trident
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      name: trident-operator
+      jsonPointers:
+        - /spec/template/spec/containers/0/resources
   syncPolicy:
     automated:
       prune: true

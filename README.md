@@ -13,6 +13,7 @@ ArgoCD GitOps で管理するホーム Kubernetes クラスタの構成リポジ
 | Monitoring | Prometheus, Grafana, Loki, Tempo, Alloy |
 | Certificates | cert-manager (Let's Encrypt) |
 | DNS | external-dns (Cloudflare) |
+| IdP | Kanidm |
 | Secrets | 1Password Operator |
 | Database | CloudNativePG |
 | CI/CD | Argo Workflows, Argo Events |

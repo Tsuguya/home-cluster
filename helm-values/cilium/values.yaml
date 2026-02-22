@@ -78,6 +78,9 @@ hubble:
       enabled: true
       labels:
         release: kube-prometheus-stack
+      relabelings:
+        - targetLabel: cluster
+          replacement: home-cluster
     dashboards:
       enabled: true
   relay:

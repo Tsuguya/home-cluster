@@ -32,6 +32,8 @@ prometheusOperator:
 
 prometheus:
   prometheusSpec:
+    externalLabels:
+      cluster: home-cluster
     logFormat: json
     enableRemoteWriteReceiver: true
     retention: 14d

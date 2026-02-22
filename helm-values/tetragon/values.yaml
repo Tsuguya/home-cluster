@@ -1,0 +1,48 @@
+extraHostPathMounts:
+  - name: sys-kernel-tracing
+    mountPath: /sys/kernel/tracing
+
+tetragon:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+  exportDenyList: |-
+    {"health_check":true}
+    {"namespace":["","cilium","kube-system"]}
+  prometheus:
+    serviceMonitor:
+      enabled: true
+      extraLabels:
+        release: kube-prometheus-stack
+
+export:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+  securityContext:
+    runAsUser: 65532
+    runAsGroup: 65532
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+tetragonOperator:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+  prometheus:
+    serviceMonitor:
+      enabled: true
+      extraLabels:
+        release: kube-prometheus-stack

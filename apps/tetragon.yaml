@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tetragon
+  namespace: argocd
+spec:
+  project: platform
+  sources:
+    - repoURL: https://helm.cilium.io
+      chart: tetragon
+      targetRevision: "1.6.0"
+      helm:
+        releaseName: tetragon
+        valueFiles:
+          - $values/helm-values/tetragon/values.yaml
+    - repoURL: https://github.com/Tsuguya/home-cluster.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

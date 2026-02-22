@@ -39,7 +39,7 @@
     },
     {
       "description": "Do not automerge critical infrastructure",
-      "matchPackageNames": ["cilium", "rook-ceph", "rook-ceph-cluster"],
+      "matchPackageNames": ["cilium", "rook-ceph", "rook-ceph-cluster", "tetragon"],
       "automerge": false
     }
   ]

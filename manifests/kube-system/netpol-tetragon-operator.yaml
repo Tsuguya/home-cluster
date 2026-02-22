@@ -1,0 +1,12 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: tetragon-operator
+  namespace: kube-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: tetragon-operator
+  egress:
+    - toEntities:
+        - kube-apiserver

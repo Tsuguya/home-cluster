@@ -41,6 +41,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | monitoring | node-exporter | Host metrics collection |
 | kube-system | Cilium agent, kube-proxy | CNI / networking |
+| kube-system | Tetragon agent | eBPF runtime security (hostNetwork DaemonSet) |
 | kube-system | kube-apiserver, etcd, scheduler, controller-manager | Control plane static pods |
 | rook-ceph | CSI nodeplugin (RBD, CephFS) | Block device / mount on host |
 | trident | trident-node-linux | CSI node plugin |
@@ -108,7 +109,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **csi-cephfs-ctrlplugin** | (none) | kube-apiserver, mon:3300/6789 |
 | **csi-controller-manager** | host → 8081 | kube-apiserver |
 
-## kube-system (5 policies)
+## kube-system (6 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
@@ -117,6 +118,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **hubble-ui** | ingress/host → 8081 (L7 HTTP) | kube-apiserver, hubble-relay:4245 |
 | **metrics-server** | host/remote-node/kube-apiserver → 10250 | kube-apiserver, host/remote-node:10250 |
 | **reloader** | (none) | kube-apiserver |
+| **tetragon-operator** | (none) | kube-apiserver |
 
 ## database (1 policy)
 

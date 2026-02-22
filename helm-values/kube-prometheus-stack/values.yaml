@@ -175,6 +175,13 @@ grafana:
         tracesToLogsV2:
           datasourceUid: loki
           filterByTraceID: true
+          filterBySpanID: true
+          spanStartTimeShift: "-5m"
+          spanEndTimeShift: "5m"
+        lokiSearch:
+          datasourceUid: loki
+        nodeGraph:
+          enabled: true
 
 alertmanager:
   alertmanagerSpec:

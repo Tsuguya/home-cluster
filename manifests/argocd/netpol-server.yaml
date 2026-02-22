@@ -14,9 +14,6 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
-          rules:
-            http:
-              - {}
     - fromEndpoints:
         - matchLabels:
             app: cloudflared
@@ -24,9 +21,6 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
-          rules:
-            http:
-              - {}
   egress:
     - toEntities:
         - kube-apiserver

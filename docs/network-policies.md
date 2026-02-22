@@ -43,7 +43,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **server** | ingress, cloudflared → 8080 (L7 HTTP) | kube-apiserver, repo-server:8081, dex:5556/5557, redis:6379 |
+| **server** | ingress, cloudflared → 8080 | kube-apiserver, repo-server:8081, dex:5556/5557, redis:6379 |
 | **application-controller** | (none) | kube-apiserver, repo-server:8081, redis:6379 |
 | **repo-server** | server, app-controller → 8081 | HTTPS 443, redis:6379 |
 | **dex-server** | server → 5556/5557 | kube-apiserver, HTTPS 443 |

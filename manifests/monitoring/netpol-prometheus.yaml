@@ -92,6 +92,8 @@ spec:
               protocol: TCP
             - port: "2379"
               protocol: TCP
+            - port: "2381"
+              protocol: TCP
             - port: "10257"
               protocol: TCP
             - port: "10259"

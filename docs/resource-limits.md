@@ -124,11 +124,14 @@
 | node-shutdown | resolve-nodes | 10m / 16Mi | 64Mi |
 | node-shutdown | shutdown-nodes (talosctl) | 10m / 32Mi | 64Mi |
 
-## 未設定
+### QNAP CSI (trident)
 
-| Service | 理由 |
-|---|---|
-| QNAP CSI (trident) | chart が resources 設定をサポートしていない |
+Chart が resources をハードコード (cpu limit 20m) しており values で上書き不可。
+Helm source をやめ rendered manifests + Kustomize patch で CPU limit を除去（`kustomize/qnap-csi/`）。
+
+| Component | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|
+| trident-operator | 10m / 40Mi | 80Mi | 1m / 77Mi |
 
 ## OOMKill 調整履歴
 

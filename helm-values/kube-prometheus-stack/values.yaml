@@ -182,6 +182,8 @@ grafana:
           datasourceUid: loki
         nodeGraph:
           enabled: true
+        serviceMap:
+          datasourceUid: prometheus
 
 alertmanager:
   alertmanagerSpec:

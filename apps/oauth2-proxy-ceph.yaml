@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: oauth2-proxy-ceph
+  namespace: argocd
+spec:
+  project: security
+  sources:
+    - repoURL: https://oauth2-proxy.github.io/manifests
+      chart: oauth2-proxy
+      targetRevision: "10.1.4"
+      helm:
+        releaseName: oauth2-proxy-ceph
+        valueFiles:
+          - $values/helm-values/oauth2-proxy-ceph/values.yaml
+    - repoURL: https://github.com/Tsuguya/home-cluster.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: oauth2-proxy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

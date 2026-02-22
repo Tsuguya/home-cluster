@@ -8,16 +8,20 @@ spec:
     matchLabels:
       k8s-app: hubble-ui
   ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/instance: oauth2-proxy-hubble
+            io.kubernetes.pod.namespace: oauth2-proxy
+      toPorts:
+        - ports:
+            - port: "8081"
+              protocol: TCP
     - fromEntities:
-        - ingress
         - host
       toPorts:
         - ports:
             - port: "8081"
               protocol: TCP
-          rules:
-            http:
-              - {}
   egress:
     - toEntities:
         - kube-apiserver

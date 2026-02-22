@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: oauth2-proxy-config
+  namespace: argocd
+spec:
+  project: security
+  source:
+    repoURL: https://github.com/Tsuguya/home-cluster.git
+    targetRevision: main
+    path: manifests/oauth2-proxy
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: oauth2-proxy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

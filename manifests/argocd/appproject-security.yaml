@@ -7,6 +7,7 @@ spec:
   description: Secret management (1password, secrets)
   sourceRepos:
     - https://1password.github.io/connect-helm-charts
+    - https://oauth2-proxy.github.io/manifests
     - https://github.com/Tsuguya/home-cluster.git
   destinations:
     - server: https://kubernetes.default.svc

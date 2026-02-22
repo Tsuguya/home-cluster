@@ -9,6 +9,8 @@
 | ArgoCD | Built-in OIDC (PKCE) | Kanidm (パブリック) | なし | `helm-values/argocd/values.yaml` |
 | Grafana | generic_oauth | Kanidm (コンフィデンシャル) | kanidm-grafana-oauth (monitoring) | `helm-values/kube-prometheus-stack/values.yaml` |
 | Argo Workflows | OIDC | Kanidm (コンフィデンシャル) | kanidm-argo-workflows-oauth (argo) | `helm-values/argo-workflows/values.yaml` |
+| Hubble UI | oauth2-proxy (OIDC) | Kanidm (コンフィデンシャル) | oauth2-proxy-hubble-oauth (oauth2-proxy) | `helm-values/oauth2-proxy-hubble/values.yaml` |
+| Ceph Dashboard | oauth2-proxy (OIDC) | Kanidm (コンフィデンシャル) | oauth2-proxy-ceph-oauth (oauth2-proxy) | `helm-values/oauth2-proxy-ceph/values.yaml` |
 
 ArgoCD は Kanidm パブリッククライアント (PKCE S256) を使用するため、clientSecret 不要。
 
@@ -82,14 +84,60 @@ kanidm system oauth2 show-basic-secret argo-workflows --url https://idm.infra.tg
 Argo Workflows は PKCE 未サポートのため `warning-insecure-client-disable-pkce` が必要。
 clientSecret は 1Password (kanidm-argo-workflows-oauth) に保存し、OnePasswordItem 経由でデプロイ。
 
+### Hubble UI (oauth2-proxy, コンフィデンシャルクライアント)
+
+```bash
+kanidm system oauth2 create oauth2-proxy-hubble "Hubble UI" https://hubble.infra.tgy.io --url https://idm.infra.tgy.io
+
+kanidm system oauth2 add-redirect-url oauth2-proxy-hubble https://hubble.infra.tgy.io/oauth2/callback --url https://idm.infra.tgy.io
+
+kanidm group create hubble_users --url https://idm.infra.tgy.io
+kanidm group add-members hubble_users tsuguya --url https://idm.infra.tgy.io
+
+kanidm system oauth2 update-scope-map oauth2-proxy-hubble hubble_users openid profile email --url https://idm.infra.tgy.io
+
+kanidm system oauth2 prefer-short-username oauth2-proxy-hubble --url https://idm.infra.tgy.io
+
+kanidm system oauth2 show-basic-secret oauth2-proxy-hubble --url https://idm.infra.tgy.io
+```
+
+oauth2-proxy 経由で認証。clientSecret + cookieSecret を 1Password (oauth2-proxy-hubble-oauth) に保存。
+
+### Ceph Dashboard (oauth2-proxy, コンフィデンシャルクライアント)
+
+```bash
+kanidm system oauth2 create oauth2-proxy-ceph "Ceph Dashboard" https://ceph.infra.tgy.io --url https://idm.infra.tgy.io
+
+kanidm system oauth2 add-redirect-url oauth2-proxy-ceph https://ceph.infra.tgy.io/oauth2/callback --url https://idm.infra.tgy.io
+
+kanidm group create ceph_users --url https://idm.infra.tgy.io
+kanidm group add-members ceph_users tsuguya --url https://idm.infra.tgy.io
+
+kanidm system oauth2 update-scope-map oauth2-proxy-ceph ceph_users openid profile email --url https://idm.infra.tgy.io
+
+kanidm system oauth2 prefer-short-username oauth2-proxy-ceph --url https://idm.infra.tgy.io
+
+kanidm system oauth2 show-basic-secret oauth2-proxy-ceph --url https://idm.infra.tgy.io
+```
+
+oauth2-proxy 経由で認証。Ceph Dashboard のビルトイン認証は無効化する:
+```bash
+kubectl exec -n rook-ceph deploy/rook-ceph-tools -- ceph config set mgr mgr/dashboard/DISABLE_AUTH true
+```
+
+clientSecret + cookieSecret を 1Password (oauth2-proxy-ceph-oauth) に保存。
+
 ## 1Password アイテム
 
 | アイテム | Secret 名 | Namespace | キー |
 |---|---|---|---|
 | kanidm-grafana-oauth | kanidm-grafana-oauth | monitoring | clientID, clientSecret |
 | kanidm-argo-workflows-oauth | kanidm-argo-workflows-oauth | argo | clientID, clientSecret |
+| oauth2-proxy-hubble-oauth | oauth2-proxy-hubble-oauth | oauth2-proxy | client-id, client-secret, cookie-secret |
+| oauth2-proxy-ceph-oauth | oauth2-proxy-ceph-oauth | oauth2-proxy | client-id, client-secret, cookie-secret |
 
 ArgoCD はパブリッククライアントのため 1Password アイテム不要。
+oauth2-proxy の Secret キーは chart の `existingSecret` が期待する `client-id`, `client-secret`, `cookie-secret`。
 
 ## 新サービスに Kanidm SSO を追加する手順
 

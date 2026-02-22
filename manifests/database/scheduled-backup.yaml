@@ -4,7 +4,7 @@ metadata:
   name: shared-pg-backup
   namespace: database
 spec:
-  schedule: "CRON_TZ=Asia/Tokyo 0 3 * * *"
+  schedule: "0 18 * * *" # 03:00 JST
   backupOwnerReference: self
   cluster:
     name: shared-pg

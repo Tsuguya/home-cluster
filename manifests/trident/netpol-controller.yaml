@@ -13,12 +13,8 @@ spec:
         - remote-node
       toPorts:
         - ports:
-            - port: "34571"
+            - port: "8443"
               protocol: TCP
-  ingressDeny:
-    - fromEntities:
-        - cluster
-        - world
   egress:
     - toEntities:
         - kube-apiserver

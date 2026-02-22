@@ -18,6 +18,14 @@ spec:
         - ports:
             - port: "8443"
               protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: argocd-server
+            io.kubernetes.pod.namespace: argocd
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP
   egress:
     - toEntities:
         - kube-apiserver

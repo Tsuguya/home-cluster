@@ -33,12 +33,11 @@ spec:
               protocol: TCP
     - toEndpoints:
         - matchLabels:
-            app.kubernetes.io/name: argocd-dex-server
+            app.kubernetes.io/name: kanidm
+            io.kubernetes.pod.namespace: kanidm
       toPorts:
         - ports:
-            - port: "5556"
-              protocol: TCP
-            - port: "5557"
+            - port: "8443"
               protocol: TCP
     - toEndpoints:
         - matchLabels:

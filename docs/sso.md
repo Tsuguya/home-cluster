@@ -1,78 +1,119 @@
 # SSO (Single Sign-On)
 
-Google OIDC で統一。各サービスが直接 Google に認証する。
+Kanidm (self-hosted IdP) と Google OIDC の併用構成。Kanidm 移行済みサービスは Kanidm に直接認証する。
 
 ## 構成
 
-| Service | Auth Method | Secret | Config |
-|---|---|---|---|
-| ArgoCD | Dex (Google connector) | argocd-google-oauth (argocd) | `helm-values/argocd/values.yaml` |
-| Grafana | generic_oauth (Google) | google-oauth (monitoring) | `helm-values/kube-prometheus-stack/values.yaml` |
-| Argo Workflows | OIDC (Google) | google-oauth (argo) | `helm-values/argo-workflows/values.yaml` |
+| Service | Auth Method | IdP | Secret | Config |
+|---|---|---|---|---|
+| ArgoCD | Built-in OIDC (PKCE) | Kanidm (public client) | なし | `helm-values/argocd/values.yaml` |
+| Grafana | generic_oauth | Kanidm | kanidm-grafana-oauth (monitoring) | `helm-values/kube-prometheus-stack/values.yaml` |
+| Argo Workflows | OIDC (Google) | Google | google-oauth (argo) | `helm-values/argo-workflows/values.yaml` |
 
-ArgoCD のみ Dex 経由（ArgoCD 組み込み）。Grafana と Argo Workflows は Google OIDC に直接接続。
+ArgoCD は Kanidm public client (PKCE S256) を使用するため、clientSecret 不要。
+
+## Kanidm クライアント設定
+
+### ArgoCD (public client)
+
+```bash
+kanidm system oauth2 create-public argocd "ArgoCD" https://argocd.infra.tgy.io --url https://idm.infra.tgy.io
+
+kanidm system oauth2 add-redirect-url argocd https://argocd.infra.tgy.io/auth/callback --url https://idm.infra.tgy.io
+
+kanidm group create argocd_users --url https://idm.infra.tgy.io
+kanidm group add-members argocd_users tsuguya --url https://idm.infra.tgy.io
+
+kanidm system oauth2 update-scope-map argocd argocd_users openid profile email --url https://idm.infra.tgy.io
+
+kanidm system oauth2 prefer-short-username argocd --url https://idm.infra.tgy.io
+```
+
+### Grafana (confidential client)
+
+```bash
+kanidm system oauth2 create grafana "Grafana" https://grafana.infra.tgy.io --url https://idm.infra.tgy.io
+
+kanidm system oauth2 add-redirect-url grafana https://grafana.infra.tgy.io/login/generic_oauth --url https://idm.infra.tgy.io
+
+kanidm group create grafana_users --url https://idm.infra.tgy.io
+kanidm group add-members grafana_users tsuguya --url https://idm.infra.tgy.io
+
+kanidm system oauth2 update-scope-map grafana grafana_users openid profile email --url https://idm.infra.tgy.io
+
+kanidm system oauth2 prefer-short-username grafana --url https://idm.infra.tgy.io
+
+kanidm system oauth2 show-basic-secret grafana --url https://idm.infra.tgy.io
+```
+
+clientSecret は 1Password (kanidm-grafana-oauth) に保存し、OnePasswordItem 経由でデプロイ。
 
 ## 1Password Items
 
 | Item | Secret Name | Namespaces | Keys |
 |---|---|---|---|
-| google-oauth | argocd-google-oauth | argocd | clientID, clientSecret |
 | google-oauth | google-oauth | monitoring, argo | clientID, clientSecret |
+| kanidm-grafana-oauth | kanidm-grafana-oauth | monitoring | clientID, clientSecret |
 
-全サービスで同じ 1Password item（google-oauth）を共用。Secret 名のみ ArgoCD は `argocd-google-oauth`。
+ArgoCD は public client のため 1Password item 不要。
 
-## 新サービスに SSO を追加する手順
+## 新サービスに Kanidm SSO を追加する手順
 
-### 1. Google Cloud Console で設定
+### 1. Kanidm でクライアント作成
 
-- [Credentials](https://console.cloud.google.com/apis/credentials) で既存の OAuth クライアントにリダイレクト URI を追加
-- 既存の `google-oauth` クライアントを共用できる（ArgoCD 以外）
-- 新しいクライアントが必要な場合は 1Password に保存
+```bash
+# Confidential client (clientSecret あり)
+kanidm system oauth2 create <client_name> "<Display Name>" https://<service>.infra.tgy.io --url https://idm.infra.tgy.io
 
-### 2. 1Password Item を必要な namespace にデプロイ
-
-既存の `google-oauth` を使う場合:
-
-```yaml
-# manifests/infra/google-oauth-<namespace>.yaml
-apiVersion: onepassword.com/v1
-kind: OnePasswordItem
-metadata:
-  name: google-oauth
-  namespace: <namespace>
-spec:
-  itemPath: "vaults/home-cluster/items/xc4g6jfzyxeuwxrrlp2phuekka"
+# または Public client (PKCE のみ、clientSecret なし)
+kanidm system oauth2 create-public <client_name> "<Display Name>" https://<service>.infra.tgy.io --url https://idm.infra.tgy.io
 ```
 
-### 3. サービスの SSO 設定
+### 2. リダイレクト URL とスコープマップ
 
-Google OIDC エンドポイント:
+```bash
+kanidm system oauth2 add-redirect-url <client_name> https://<service>.infra.tgy.io/<callback_path> --url https://idm.infra.tgy.io
 
-| Endpoint | URL |
-|---|---|
-| Authorization | `https://accounts.google.com/o/oauth2/v2/auth` |
-| Token | `https://oauth2.googleapis.com/token` |
-| Userinfo | `https://openidconnect.googleapis.com/v1/userinfo` |
-| Issuer | `https://accounts.google.com` |
+kanidm system oauth2 update-scope-map <client_name> <group> openid profile email --url https://idm.infra.tgy.io
 
-Scopes: `openid profile email`
+kanidm system oauth2 prefer-short-username <client_name> --url https://idm.infra.tgy.io
+```
 
-### 4. CNP に HTTPS egress を追加
+### 3. Confidential client の場合: Secret をデプロイ
 
-Google エンドポイントへのアクセスに HTTPS 443 の egress が必要:
+```bash
+kanidm system oauth2 show-basic-secret <client_name> --url https://idm.infra.tgy.io
+```
+
+1Password に API Credential として保存し、`manifests/secrets/` に OnePasswordItem を作成。
+
+### 4. CNP に Kanidm egress を追加
 
 ```yaml
-- toCIDR:
-    - 0.0.0.0/0
+- toEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: kanidm
+        io.kubernetes.pod.namespace: kanidm
   toPorts:
     - ports:
-        - port: "443"
+        - port: "8443"
           protocol: TCP
 ```
 
+`manifests/kanidm/netpol-kanidm.yaml` にも対応する ingress ルールを追加すること。
+
+## Kanidm エンドポイント
+
+| Endpoint | URL |
+|---|---|
+| Issuer | `https://idm.infra.tgy.io/oauth2/openid/<client_name>` |
+| Authorization | `https://idm.infra.tgy.io/ui/oauth2` |
+| Token | `https://idm.infra.tgy.io/oauth2/token` |
+| Userinfo | `https://idm.infra.tgy.io/oauth2/openid/<client_name>/userinfo` |
+
 ## 注意事項
 
-- Google の access token は opaque (JWT ではない)。Grafana では `email_attribute_path: email` を明示的に設定すること
+- Kanidm は PKCE S256 を要求する。ArgoCD は PKCE + clientSecret の同時使用に問題がある ([#23773](https://github.com/argoproj/argo-cd/issues/23773)) ため public client を使用
+- Kanidm の `prefer-short-username` でユーザー名を短縮形にする（RBAC マッチに影響）
+- Cilium Gateway bug ([#41970](https://github.com/cilium/cilium/issues/41970)) により、クロスネームスペース HTTP が L7 proxy で 403 になる場合がある。Kanidm は CoreDNS rewrite で Service に直接接続する構成が安定する
 - OAuth プロバイダを切り替える場合、Grafana は一時的に `oauth_allow_insecure_email_lookup: true` が必要（既存ユーザーの auth_id 再紐付け）
-- `allowed_domains: tgy.io` で組織外ユーザーのログインを制限
-- Cilium Gateway bug ([#41970](https://github.com/cilium/cilium/issues/41970)) により、クロスネームスペースの HTTP 通信が L7 proxy で 403 になる場合がある。SSO は外部 IdP に直接接続する構成が安定する

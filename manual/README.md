@@ -98,10 +98,9 @@ rook-ceph 稼働後、OBC が バケット作成 + S3 credentials Secret を各 
 
 | Item | Deployed Namespaces | Keys | 用途 |
 |---|---|---|---|
-| google-oauth | argocd¹, monitoring, argo | clientID, clientSecret | Google OIDC SSO |
+| google-oauth | monitoring, argo | clientID, clientSecret | Google OIDC SSO (Argo Workflows) |
+| kanidm-grafana-oauth | monitoring | clientID, clientSecret | Kanidm OIDC (Grafana) |
 | github-repo-creds | argocd | url, type, password | ArgoCD private repo 認証 |
-
-¹ ArgoCD namespace では Secret 名が `argocd-google-oauth` になる
 
 #### データベース
 
@@ -128,4 +127,24 @@ rook-ceph 稼働後、OBC が バケット作成 + S3 credentials Secret を各 
 
 ### 構築後に作成（クラスタ内サービスに依存）
 
-なし。S3 ストレージ (Loki / Argo Workflows) は OBC で自動管理。
+#### Kanidm 初期設定
+
+Kanidm pod が Running になった後:
+
+1. admin / idm_admin のパスワード復旧:
+   ```bash
+   kubectl -n kanidm exec -it deploy/kanidm -- kanidmd recover-account admin -c /config/server.toml
+   kubectl -n kanidm exec -it deploy/kanidm -- kanidmd recover-account idm_admin -c /config/server.toml
+   ```
+
+2. kanidm CLI でログイン:
+   ```bash
+   kanidm login --name idm_admin --url https://idm.infra.tgy.io
+   ```
+
+3. ユーザー・グループ作成、OAuth2 クライアント設定:
+   → `docs/sso.md` の手順に従う
+
+4. Grafana の kanidm-grafana-oauth を 1Password に保存:
+   → 1Password に API Credential (clientID + clientSecret) を作成
+   → `manifests/secrets/kanidm-grafana-oauth.yaml` の itemPath を更新

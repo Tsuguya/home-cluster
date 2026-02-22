@@ -33,19 +33,15 @@ configs:
           - "*"
     admin.enabled: "false"
     url: https://argocd.infra.tgy.io
-    dex.config: |
-      connectors:
-        - type: oidc
-          id: google
-          name: Google
-          config:
-            issuer: https://accounts.google.com
-            clientID: $GOOGLE_CLIENT_ID
-            clientSecret: $GOOGLE_CLIENT_SECRET
-            requestedScopes:
-              - openid
-              - profile
-              - email
+    oidc.config: |
+      name: Kanidm
+      issuer: https://idm.infra.tgy.io/oauth2/openid/argocd
+      clientID: argocd
+      enablePKCEAuthentication: true
+      requestedScopes:
+        - openid
+        - profile
+        - email
   rbac:
     policy.csv: |
       p, role:owner, applications, *, */*, allow
@@ -74,23 +70,7 @@ configs:
     server.insecure: "false"
 
 dex:
-  resources:
-    requests:
-      cpu: 10m
-      memory: 32Mi
-    limits:
-      memory: 128Mi
-  env:
-    - name: GOOGLE_CLIENT_ID
-      valueFrom:
-        secretKeyRef:
-          name: argocd-google-oauth
-          key: clientID
-    - name: GOOGLE_CLIENT_SECRET
-      valueFrom:
-        secretKeyRef:
-          name: argocd-google-oauth
-          key: clientSecret
+  enabled: false
 
 repoServer:
   resources:

@@ -31,6 +31,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Workflow pods (argo) | Ceph RGW (rook-ceph) | 8080 | Artifact/log storage |
 | Argo Workflows server (argo) | Ceph RGW (rook-ceph) | 8080 | Archived log retrieval |
 | Grafana (monitoring) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
+| ArgoCD server (argocd) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 
 ## Excluded Pods (hostNetwork: true)
 
@@ -44,14 +45,13 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 ---
 
-## argocd (9 policies)
+## argocd (8 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **server** | ingress, cloudflared → 8080 | kube-apiserver, repo-server:8081, dex:5556/5557, redis:6379 |
+| **server** | ingress, cloudflared → 8080 | kube-apiserver, repo-server:8081, kanidm (kanidm):8443, redis:6379 |
 | **application-controller** | (none) | kube-apiserver, repo-server:8081, redis:6379 |
 | **repo-server** | server, app-controller → 8081 | HTTPS 443, redis:6379 |
-| **dex-server** | server → 5556/5557 | kube-apiserver, HTTPS 443 |
 | **redis** | server, repo-server, app-controller → 6379 | (none) |
 | **applicationset-controller** | (none) | kube-apiserver |
 | **notifications-controller** | (none) | kube-apiserver, HTTPS 443 |
@@ -151,7 +151,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443 | kube-apiserver |
+| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443; argocd-server (argocd) → 8443 | kube-apiserver |
 
 ## trident (2 policies)
 

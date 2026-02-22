@@ -10,7 +10,7 @@ ArgoCD GitOps で管理するホーム Kubernetes クラスタの構成リポジ
 | CNI | Cilium (kube-proxy replacement) |
 | GitOps | ArgoCD |
 | Storage | Rook Ceph, QNAP CSI |
-| Monitoring | Prometheus, Grafana, Loki, Alloy |
+| Monitoring | Prometheus, Grafana, Loki, Tempo, Alloy |
 | Certificates | cert-manager (Let's Encrypt) |
 | DNS | external-dns (Cloudflare) |
 | Secrets | 1Password Operator |
@@ -43,3 +43,5 @@ manual/        # Manual bootstrap steps
 - [サービス一覧](docs/services.md) — 外部/内部エンドポイント
 - [SSO設定](docs/sso.md) — Google OIDC 設定・新サービス追加手順
 - [ネットワークポリシー](docs/network-policies.md) — CNP/CCNP 全ポリシー一覧
+- [リソース設定](docs/resource-limits.md) — requests/limits 一覧と実測値
+- [既知の問題](docs/known-issues.md) — 初回構築時の注意点など

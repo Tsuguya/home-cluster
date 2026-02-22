@@ -43,6 +43,9 @@ spec:
         - ports:
             - port: "7000"
               protocol: TCP
+          rules:
+            http:
+              - {}
     - fromEndpoints:
         - matchLabels:
             app.kubernetes.io/name: prometheus

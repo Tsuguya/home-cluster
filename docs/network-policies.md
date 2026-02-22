@@ -43,7 +43,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **server** | ingress, cloudflared → 8080 | kube-apiserver, repo-server:8081, dex:5556/5557, redis:6379 |
+| **server** | ingress, cloudflared → 8080 (L7 HTTP) | kube-apiserver, repo-server:8081, dex:5556/5557, redis:6379 |
 | **application-controller** | (none) | kube-apiserver, repo-server:8081, redis:6379 |
 | **repo-server** | server, app-controller → 8081 | HTTPS 443, redis:6379 |
 | **dex-server** | server → 5556/5557 | kube-apiserver, HTTPS 443 |
@@ -57,7 +57,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **workflows-server** | ingress → 2746; sensors (tofu-cloudflare, upgrade-k8s), workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, HTTPS 443, ceph-rgw (rook-ceph):8080 |
+| **workflows-server** | ingress → 2746 (L7 HTTP); sensors (tofu-cloudflare, upgrade-k8s), workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, HTTPS 443, ceph-rgw (rook-ceph):8080 |
 | **workflows-controller** | (none) | kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
 | **sensor** (tofu-cloudflare, upgrade-k8s) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
@@ -71,7 +71,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **prometheus** | grafana, tempo → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, ceph exporter (rook-ceph):9926, ceph mgr (rook-ceph):9283, host/remote-node:10250/9100/2379/2381/10257/10259/9965 |
 | **alertmanager** | prometheus → 9093/8080 | HTTPS 443 |
-| **grafana** | ingress → 3000; prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, tempo:3200, shared-pg (database):5432, HTTPS 443 |
+| **grafana** | ingress → 3000 (L7 HTTP); prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, tempo:3200, shared-pg (database):5432, HTTPS 443 |
 | **kube-state-metrics** | prometheus → 8080 | kube-apiserver |
 | **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | kube-apiserver |
 | **loki** | loki-gateway, loki-canary → 3100 | kube-apiserver, ceph-rgw (rook-ceph):8080, self:7946 (memberlist) |
@@ -86,7 +86,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Component | Ingress | Egress |
 |---|---|---|
 | **mon** | all ceph daemons, exporter, crashcollector, CSI ctrlplugins → 3300/6789; remote-node → 3300/6789 | mon (self):3300/6789, mgr:6800 |
-| **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; ingress → 7000 (dashboard); prometheus (monitoring) → 9283 | kube-apiserver, mon:3300/6789, mgr (self):6800, osd/mds/rgw:6800-6806 |
+| **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; ingress → 7000 (dashboard, L7 HTTP); prometheus (monitoring) → 9283 | kube-apiserver, mon:3300/6789, mgr (self):6800, osd/mds/rgw:6800-6806 |
 | **osd** | osd (self), mgr, operator, mds, rgw, tools, csi-rbd-ctrlplugin → 6800-6806; host/remote-node → 6800-6806 | mon:3300/6789, mgr:6800, osd (self):6800-6806 |
 | **mds** | (none) | mon:3300/6789, mgr:6800, osd:6800-6806 |
 | **rgw** | operator, loki (monitoring), tempo (monitoring), workflow-pods (argo), workflows-server (argo) → 8080 | mon:3300/6789, mgr:6800, osd:6800-6806 |
@@ -106,7 +106,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **coredns** | cluster/host/remote-node → 53; prometheus (monitoring) → 9153 | host:53 (upstream), kube-apiserver |
 | **hubble-relay** | host → 4222; hubble-ui → 4245 | host/remote-node/kube-apiserver:4244 |
-| **hubble-ui** | ingress/host → 8081 | kube-apiserver, hubble-relay:4245 |
+| **hubble-ui** | ingress/host → 8081 (L7 HTTP) | kube-apiserver, hubble-relay:4245 |
 | **metrics-server** | host/remote-node/kube-apiserver → 10250 | kube-apiserver, host/remote-node:10250 |
 
 ## database (1 policy)

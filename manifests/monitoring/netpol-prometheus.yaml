@@ -52,6 +52,13 @@ spec:
               protocol: TCP
     - toEndpoints:
         - matchLabels:
+            app.kubernetes.io/name: tempo
+      toPorts:
+        - ports:
+            - port: "3200"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
             io.kubernetes.pod.namespace: kube-system
             k8s-app: kube-dns
       toPorts:

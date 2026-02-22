@@ -27,6 +27,8 @@ kanidm group add-members argocd_users tsuguya --url https://idm.infra.tgy.io
 kanidm system oauth2 update-scope-map argocd argocd_users openid profile email --url https://idm.infra.tgy.io
 
 kanidm system oauth2 prefer-short-username argocd --url https://idm.infra.tgy.io
+
+kanidm system oauth2 enable-localhost-redirects argocd --url https://idm.infra.tgy.io
 ```
 
 ### Grafana (confidential client)

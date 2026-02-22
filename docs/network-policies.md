@@ -146,5 +146,5 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **controller** | (none) | kube-apiserver, 192.168.0.240:8080 (QNAP NAS) |
+| **controller** | host/remote-node → 34571 (CSI node registration) | kube-apiserver, 192.168.0.240:8080 (QNAP NAS) |
 | **operator** | (none) | kube-apiserver |

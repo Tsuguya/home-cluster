@@ -7,6 +7,14 @@ spec:
   endpointSelector:
     matchLabels:
       app: controller.csi.trident.qnap.io
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "34571"
+              protocol: TCP
   ingressDeny:
     - fromEntities:
         - cluster

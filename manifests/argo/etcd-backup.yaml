@@ -59,7 +59,7 @@ spec:
 
             echo "=== Taking etcd snapshot ==="
             TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
-            /tmp/talosctl etcd snapshot /tmp/etcd-snapshot.db
+            /tmp/talosctl -n 192.168.0.230 etcd snapshot /tmp/etcd-snapshot.db
 
             SNAPSHOT_SIZE=$(wc -c < /tmp/etcd-snapshot.db)
             echo "Snapshot size: ${SNAPSHOT_SIZE} bytes"

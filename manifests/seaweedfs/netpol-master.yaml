@@ -46,3 +46,23 @@ spec:
               protocol: TCP
             - port: "19333"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: seaweedfs
+            app.kubernetes.io/component: volume
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+            - port: "18080"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: seaweedfs
+            app.kubernetes.io/component: filer
+      toPorts:
+        - ports:
+            - port: "8888"
+              protocol: TCP
+            - port: "18888"
+              protocol: TCP

@@ -1,0 +1,313 @@
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: privileges-raise
+spec:
+  kprobes:
+    - call: "security_capset"
+      syscall: false
+      message: "Process changed its capabilities using capset system call"
+      args:
+        - index: 0
+          type: "nop"
+        - index: 1
+          type: "cred"
+        - index: 2
+          type: "cap_effective"
+        - index: 3
+          type: "cap_inheritable"
+        - index: 4
+          type: "cap_permitted"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 2
+              operator: "NotEqual"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 3
+              operator: "NotEqual"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 4
+              operator: "NotEqual"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "create_user_ns"
+      syscall: false
+      message: "Unprivileged process created a user namespace"
+      args:
+        - index: 0
+          type: "nop"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchCapabilities:
+            - type: Effective
+              operator: NotIn
+              values:
+                - "CAP_SYS_ADMIN"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "__sys_setuid"
+      syscall: false
+      message: "Privileged operation setuid to root"
+      args:
+        - index: 0
+          type: "int"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "__sys_setgid"
+      syscall: false
+      message: "Privileged operation setgid to root"
+      args:
+        - index: 0
+          type: "int"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "__sys_setreuid"
+      syscall: false
+      message: "Privileged operation setreuid to root"
+      args:
+        - index: 0
+          type: "int"
+        - index: 1
+          type: "int"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 1
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "__sys_setregid"
+      syscall: false
+      message: "Privileged operation setregid to root"
+      args:
+        - index: 0
+          type: "int"
+        - index: 1
+          type: "int"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 1
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "__sys_setresuid"
+      syscall: false
+      message: "Privileged operation setresuid to root"
+      args:
+        - index: 0
+          type: "int"
+        - index: 1
+          type: "int"
+        - index: 2
+          type: "int"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 1
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 2
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "__sys_setresgid"
+      syscall: false
+      message: "Privileged operation setresgid to root"
+      args:
+        - index: 0
+          type: "int"
+        - index: 1
+          type: "int"
+        - index: 2
+          type: "int"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 1
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 2
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "__sys_setfsuid"
+      syscall: false
+      message: "Privileged operation setfsuid to root"
+      args:
+        - index: 0
+          type: "int"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "__sys_setfsgid"
+      syscall: false
+      message: "Privileged operation setfsgid to root"
+      args:
+        - index: 0
+          type: "int"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "0"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"

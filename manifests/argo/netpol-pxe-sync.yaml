@@ -18,6 +18,7 @@ spec:
         - matchName: "github.com"
         - matchPattern: "*.github.com"
         - matchPattern: "*.githubusercontent.com"
+        - matchPattern: "*.alpinelinux.org"
       toPorts:
         - ports:
             - port: "443"

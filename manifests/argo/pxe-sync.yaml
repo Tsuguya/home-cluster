@@ -68,17 +68,15 @@ spec:
             set -euo pipefail
 
             echo "=== Fetching latest release from Tsuguya/talos-custom-build ==="
-            apk add --no-cache curl jq
-
-            TAG=$(curl -sf https://api.github.com/repos/Tsuguya/talos-custom-build/releases/latest | jq -r '.tag_name')
+            TAG=$(wget -qO- https://api.github.com/repos/Tsuguya/talos-custom-build/releases/latest | grep -o '"tag_name":[^,]*' | grep -o '"[^"]*"$' | tr -d '"')
             echo "Latest release: ${TAG}"
 
             ASSETS_DIR=/pxe/assets
             echo "=== Downloading vmlinuz-amd64 ==="
-            curl -sfL "https://github.com/Tsuguya/talos-custom-build/releases/download/${TAG}/vmlinuz-amd64" -o "${ASSETS_DIR}/vmlinuz.tmp"
+            wget -qO "${ASSETS_DIR}/vmlinuz.tmp" "https://github.com/Tsuguya/talos-custom-build/releases/download/${TAG}/vmlinuz-amd64"
 
             echo "=== Downloading initramfs-amd64.xz ==="
-            curl -sfL "https://github.com/Tsuguya/talos-custom-build/releases/download/${TAG}/initramfs-amd64.xz" -o "${ASSETS_DIR}/initramfs.xz.tmp"
+            wget -qO "${ASSETS_DIR}/initramfs.xz.tmp" "https://github.com/Tsuguya/talos-custom-build/releases/download/${TAG}/initramfs-amd64.xz"
 
             echo "=== Atomic replace ==="
             mv "${ASSETS_DIR}/vmlinuz.tmp" "${ASSETS_DIR}/vmlinuz"
@@ -111,14 +109,14 @@ spec:
             SOPS_VERSION="v3.12.1"
 
             echo "=== Installing tools ==="
-            apk add --no-cache git curl
+            apk add --no-cache git
 
             echo "=== Installing talhelper ${TALHELPER_VERSION} ==="
-            curl -sfL "https://github.com/budimanjojo/talhelper/releases/download/${TALHELPER_VERSION}/talhelper_linux_amd64.tar.gz" | tar xz -C /tmp
+            wget -qO- "https://github.com/budimanjojo/talhelper/releases/download/${TALHELPER_VERSION}/talhelper_linux_amd64.tar.gz" | tar xz -C /tmp
             chmod +x /tmp/talhelper
 
             echo "=== Installing sops ${SOPS_VERSION} ==="
-            curl -sfL "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64" -o /tmp/sops
+            wget -qO /tmp/sops "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64"
             chmod +x /tmp/sops
 
             export PATH="/tmp:${PATH}"

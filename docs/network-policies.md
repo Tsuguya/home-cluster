@@ -76,7 +76,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s, pxe-sync) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
 | **workflow-pods** (backup-workflow, pxe-sync除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
 | **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver, *.r2.cloudflarestorage.com + github.com + *.githubusercontent.com + dl.min.io :443, CP nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
-| **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + *.githubusercontent.com + *.github.com :443, QNAP NAS (192.168.0.241):2049 (NFS) |
+| **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + *.github.com + *.githubusercontent.com + *.alpinelinux.org :443, QNAP NAS (192.168.0.241):2049 (NFS) |
 
 ## monitoring (11 policies)
 

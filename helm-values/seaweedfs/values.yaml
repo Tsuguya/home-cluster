@@ -38,6 +38,12 @@ master:
     capabilities:
       drop:
         - ALL
+  extraVolumes: |
+    - name: tmp
+      emptyDir: {}
+  extraVolumeMounts: |
+    - name: tmp
+      mountPath: /tmp
 
 volume:
   replicas: 1
@@ -75,6 +81,12 @@ volume:
     capabilities:
       drop:
         - ALL
+  extraVolumes: |
+    - name: tmp
+      emptyDir: {}
+  extraVolumeMounts: |
+    - name: tmp
+      mountPath: /tmp
 
 filer:
   replicas: 1
@@ -122,6 +134,12 @@ filer:
     WEED_LEVELDB2_ENABLED: "true"
     WEED_FILER_OPTIONS_RECURSIVE_DELETE: "false"
     WEED_FILER_BUCKETS_FOLDER: "/buckets"
+  extraVolumes: |
+    - name: tmp
+      emptyDir: {}
+  extraVolumeMounts: |
+    - name: tmp
+      mountPath: /tmp
 
 s3:
   enabled: false

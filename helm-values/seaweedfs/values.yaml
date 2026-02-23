@@ -7,9 +7,7 @@ master:
   replicas: 3
   defaultReplication: "000"
   data:
-    type: "persistentVolumeClaim"
-    size: "1Gi"
-    storageClass: "qnap-iscsi"
+    type: "emptyDir"
   logs:
     type: "emptyDir"
   resources:

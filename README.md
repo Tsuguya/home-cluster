@@ -9,7 +9,7 @@ ArgoCD GitOps で管理するホーム Kubernetes クラスタの構成リポジ
 | OS | Talos Linux |
 | CNI | Cilium (kube-proxy replacement) |
 | GitOps | ArgoCD |
-| Storage | Rook Ceph, QNAP CSI |
+| Storage | SeaweedFS, QNAP CSI |
 | Monitoring | Prometheus, Grafana, Loki, Tempo, Alloy |
 | Certificates | cert-manager (Let's Encrypt) |
 | DNS | external-dns (Cloudflare) |

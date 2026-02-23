@@ -26,6 +26,7 @@ master:
       operator: Exists
       effect: NoSchedule
   podSecurityContext:
+    enabled: true
     runAsNonRoot: true
     runAsUser: 1000
     runAsGroup: 1000
@@ -33,6 +34,7 @@ master:
     seccompProfile:
       type: RuntimeDefault
   containerSecurityContext:
+    enabled: true
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
     capabilities:
@@ -61,6 +63,7 @@ volume:
       operator: Exists
       effect: NoSchedule
   podSecurityContext:
+    enabled: true
     runAsNonRoot: true
     runAsUser: 1000
     runAsGroup: 1000
@@ -68,6 +71,7 @@ volume:
     seccompProfile:
       type: RuntimeDefault
   containerSecurityContext:
+    enabled: true
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
     capabilities:
@@ -93,6 +97,7 @@ filer:
       operator: Exists
       effect: NoSchedule
   podSecurityContext:
+    enabled: true
     runAsNonRoot: true
     runAsUser: 1000
     runAsGroup: 1000
@@ -100,6 +105,7 @@ filer:
     seccompProfile:
       type: RuntimeDefault
   containerSecurityContext:
+    enabled: true
     readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
     capabilities:

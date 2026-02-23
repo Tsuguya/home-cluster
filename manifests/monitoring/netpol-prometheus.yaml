@@ -100,3 +100,5 @@ spec:
               protocol: TCP
             - port: "9965"
               protocol: TCP
+            - port: "2112"
+              protocol: TCP

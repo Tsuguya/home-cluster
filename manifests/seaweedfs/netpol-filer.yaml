@@ -34,6 +34,9 @@ spec:
             app.kubernetes.io/name: seaweedfs
             app.kubernetes.io/component: filer
         - matchLabels:
+            app.kubernetes.io/name: seaweedfs
+            app.kubernetes.io/component: master
+        - matchLabels:
             batch.kubernetes.io/job-name: seaweedfs-bucket-hook
         - matchLabels:
             app.kubernetes.io/instance: oauth2-proxy-seaweedfs

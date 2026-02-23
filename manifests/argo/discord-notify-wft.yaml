@@ -64,4 +64,4 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: discord-webhook-argo
-                key: credential
+                key: url

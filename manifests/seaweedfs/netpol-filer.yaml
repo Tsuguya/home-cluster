@@ -33,6 +33,8 @@ spec:
         - matchLabels:
             app.kubernetes.io/name: seaweedfs
             app.kubernetes.io/component: filer
+        - matchLabels:
+            batch.kubernetes.io/job-name: seaweedfs-bucket-hook
       toPorts:
         - ports:
             - port: "8888"

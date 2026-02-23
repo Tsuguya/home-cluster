@@ -34,6 +34,7 @@ controller:
         secondsAfterFailure: 259200
       podGC:
         strategy: OnPodCompletion
+        deleteDelayDuration: 300s
       hooks:
         exit:
           templateRef:

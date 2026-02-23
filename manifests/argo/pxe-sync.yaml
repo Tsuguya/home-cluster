@@ -39,7 +39,7 @@ spec:
     - name: pxe
       nfs:
         server: 192.168.0.241
-        path: /share/CACHEDEV1_DATA/Container/pxe
+        path: /Container/pxe
   templates:
     - name: main
       steps:

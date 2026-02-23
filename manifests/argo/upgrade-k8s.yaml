@@ -102,13 +102,11 @@ spec:
                   value: "{{steps.validate.outputs.parameters.talos-version}}"
                 - name: nodes-json
                   value: "{{steps.validate.outputs.parameters.nodes-json}}"
-        - - name: verify-and-notify
-            template: verify-and-notify
+        - - name: verify
+            template: verify
             when: "{{steps.validate.outputs.parameters.should-upgrade}} == true"
             arguments:
               parameters:
-                - name: old-version
-                  value: "{{steps.validate.outputs.parameters.old-version}}"
                 - name: new-version
                   value: "{{steps.validate.outputs.parameters.new-version}}"
                 - name: talos-version
@@ -380,10 +378,9 @@ spec:
             mountPath: /etc/talos
             readOnly: true
 
-    - name: verify-and-notify
+    - name: verify
       inputs:
         parameters:
-          - name: old-version
           - name: new-version
           - name: talos-version
           - name: nodes-json
@@ -403,7 +400,6 @@ spec:
             set -euo pipefail
             apk add --no-cache curl jq > /dev/null
 
-            OLD_VER="{{inputs.parameters.old-version}}"
             NEW_VER="{{inputs.parameters.new-version}}"
             TALOS_VER="{{inputs.parameters.talos-version}}"
             CP_IPS="{{inputs.parameters.cp-ips}}"
@@ -430,41 +426,9 @@ spec:
             done
             UPGRADED_COUNT=$(kubectl get nodes -o json | jq "[.items[] | select(.status.nodeInfo.kubeletVersion == \"v${NEW_VER}\")] | length")
             echo "Upgraded: ${UPGRADED_COUNT}/${NODE_COUNT}"
-
-            echo "=== Sending Discord notification ==="
-            TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
-            PAYLOAD=$(jq -n \
-              --arg old "$OLD_VER" \
-              --arg new "$NEW_VER" \
-              --arg count "${UPGRADED_COUNT}/${NODE_COUNT}" \
-              --arg ts "$TIMESTAMP" \
-              '{
-                username: "K8s Upgrade Bot",
-                embeds: [{
-                  title: "Kubernetes Patch Upgrade Complete",
-                  description: ("v" + $old + " \u2192 v" + $new),
-                  color: 65280,
-                  fields: [
-                    { name: "Cluster", value: "home-cluster", inline: true },
-                    { name: "Status", value: "Success", inline: true },
-                    { name: "Nodes Upgraded", value: $count, inline: true }
-                  ],
-                  timestamp: $ts
-                }]
-              }')
-            curl -sf -X POST \
-              -H "Content-Type: application/json" \
-              "${DISCORD_WEBHOOK_URL}" \
-              -d "$PAYLOAD"
-            echo "Upgrade complete: v${OLD_VER} -> v${NEW_VER}"
         env:
           - name: TALOSCONFIG
             value: /etc/talos/config
-          - name: DISCORD_WEBHOOK_URL
-            valueFrom:
-              secretKeyRef:
-                name: discord-webhook-argo
-                key: credential
         volumeMounts:
           - name: talosconfig
             mountPath: /etc/talos

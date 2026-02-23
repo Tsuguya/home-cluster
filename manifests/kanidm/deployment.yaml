@@ -93,7 +93,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: ceph-block
+  storageClassName: qnap-iscsi
   resources:
     requests:
       storage: 1Gi

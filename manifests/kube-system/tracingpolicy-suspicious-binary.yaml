@@ -1,0 +1,119 @@
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: suspicious-binary
+spec:
+  kprobes:
+    - call: "security_bprm_check"
+      syscall: false
+      message: "Shell executed in container"
+      args:
+        - index: 0
+          type: "linux_binprm"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "/bin/sh"
+                - "/bin/bash"
+                - "/bin/dash"
+                - "/bin/zsh"
+                - "/usr/bin/sh"
+                - "/usr/bin/bash"
+                - "/usr/bin/dash"
+                - "/usr/bin/zsh"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "security_bprm_check"
+      syscall: false
+      message: "Network tool executed in container"
+      args:
+        - index: 0
+          type: "linux_binprm"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "/usr/bin/curl"
+                - "/usr/bin/wget"
+                - "/usr/bin/nc"
+                - "/usr/bin/ncat"
+                - "/usr/bin/nmap"
+                - "/usr/bin/socat"
+                - "/usr/bin/telnet"
+                - "/usr/bin/ssh"
+                - "/usr/bin/scp"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "security_bprm_check"
+      syscall: false
+      message: "Package manager executed in container"
+      args:
+        - index: 0
+          type: "linux_binprm"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "/usr/bin/apt"
+                - "/usr/bin/apt-get"
+                - "/usr/bin/dpkg"
+                - "/usr/bin/yum"
+                - "/usr/bin/dnf"
+                - "/usr/bin/rpm"
+                - "/sbin/apk"
+                - "/usr/bin/pip"
+                - "/usr/bin/pip3"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"
+
+    - call: "security_bprm_check"
+      syscall: false
+      message: "Debug/introspection tool executed in container"
+      args:
+        - index: 0
+          type: "linux_binprm"
+      selectors:
+        - matchNamespaces:
+            - namespace: Pid
+              operator: NotIn
+              values:
+                - "host_ns"
+          matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "/usr/bin/gdb"
+                - "/usr/bin/strace"
+                - "/usr/bin/ltrace"
+                - "/usr/bin/tcpdump"
+                - "/usr/sbin/tcpdump"
+                - "/usr/bin/nsenter"
+                - "/usr/bin/mount"
+                - "/usr/sbin/mount"
+          matchActions:
+            - action: Post
+              rateLimit: "1m"

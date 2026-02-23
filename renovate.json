@@ -62,6 +62,11 @@
       "description": "Group QNAP CSI packages (chart version + all images)",
       "matchPackagePatterns": ["qnap-dev/QNAP-CSI-PlugIn", "qnapsystem/"],
       "groupName": "qnap-csi"
+    },
+    {
+      "description": "Group seaweedfs packages",
+      "matchPackagePatterns": ["seaweedfs"],
+      "groupName": "seaweedfs"
     }
   ]
 }

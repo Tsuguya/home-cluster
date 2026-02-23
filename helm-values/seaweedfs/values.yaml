@@ -1,0 +1,123 @@
+global:
+  monitoring:
+    enabled: true
+  automountServiceAccountToken: false
+
+master:
+  replicas: 3
+  defaultReplication: "000"
+  data:
+    type: "persistentVolumeClaim"
+    size: "1Gi"
+    storageClass: "qnap-iscsi"
+  logs:
+    type: "emptyDir"
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+  tolerations: |
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: memory-constrained
+      operator: Exists
+      effect: NoSchedule
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+volume:
+  replicas: 1
+  dataDirs:
+    - name: data
+      type: "persistentVolumeClaim"
+      size: "50Gi"
+      storageClass: "qnap-iscsi"
+      maxVolumes: 0
+  idx: {}
+  logs:
+    type: "emptyDir"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+  tolerations: |
+    - key: memory-constrained
+      operator: Exists
+      effect: NoSchedule
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+filer:
+  replicas: 1
+  data:
+    type: "persistentVolumeClaim"
+    size: "5Gi"
+    storageClass: "qnap-iscsi"
+  logs:
+    type: "emptyDir"
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+  tolerations: |
+    - key: memory-constrained
+      operator: Exists
+      effect: NoSchedule
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+  s3:
+    enabled: true
+    port: 8333
+    enableAuth: true
+    existingConfigSecret: seaweedfs-s3-config
+    createBuckets:
+      - name: loki-storage
+      - name: tempo-storage
+      - name: argo-artifacts
+  extraEnvironmentVars:
+    WEED_LEVELDB2_ENABLED: "true"
+    WEED_FILER_OPTIONS_RECURSIVE_DELETE: "false"
+    WEED_FILER_BUCKETS_FOLDER: "/buckets"
+
+s3:
+  enabled: false

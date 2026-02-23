@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: seaweedfs-config
+  namespace: argocd
+spec:
+  project: storage
+  source:
+    repoURL: https://github.com/Tsuguya/home-cluster.git
+    targetRevision: main
+    path: manifests/seaweedfs
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: seaweedfs
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

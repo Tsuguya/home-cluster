@@ -1,0 +1,66 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: seaweedfs-filer
+  namespace: seaweedfs
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: seaweedfs
+      app.kubernetes.io/component: filer
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: loki
+            app.kubernetes.io/component: single-binary
+            io.kubernetes.pod.namespace: monitoring
+        - matchLabels:
+            app.kubernetes.io/name: tempo
+            io.kubernetes.pod.namespace: monitoring
+        - matchExpressions:
+            - key: workflows.argoproj.io/workflow
+              operator: Exists
+          matchLabels:
+            io.kubernetes.pod.namespace: argo
+        - matchLabels:
+            app.kubernetes.io/name: argo-workflows-server
+            io.kubernetes.pod.namespace: argo
+      toPorts:
+        - ports:
+            - port: "8333"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: seaweedfs
+            app.kubernetes.io/component: filer
+      toPorts:
+        - ports:
+            - port: "8888"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: seaweedfs
+            app.kubernetes.io/component: master
+      toPorts:
+        - ports:
+            - port: "9333"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: seaweedfs
+            app.kubernetes.io/component: volume
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: seaweedfs
+            app.kubernetes.io/component: filer
+      toPorts:
+        - ports:
+            - port: "8888"
+              protocol: TCP
+            - port: "18888"
+              protocol: TCP

@@ -25,6 +25,14 @@ spec:
               protocol: TCP
             - port: "19333"
               protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: prometheus
+            io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "9327"
+              protocol: TCP
   egress:
     - toEndpoints:
         - matchLabels:

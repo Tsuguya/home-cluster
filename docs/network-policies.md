@@ -64,18 +64,19 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **redis-secret-init** (Job) | (none) | kube-apiserver |
 | **cloudflared** | (none) | HTTPS 443, QUIC 7844, server:8080, eventsource (argo):12000 |
 
-## argo (8 policies)
+## argo (9 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **workflows-server** | ingress → 2746 (L7 HTTP); sensors (tofu-cloudflare, upgrade-k8s), workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, kanidm (kanidm):8443, ceph-rgw (rook-ceph):8080 |
+| **workflows-server** | ingress → 2746 (L7 HTTP); sensors (tofu-cloudflare, upgrade-k8s, pxe-sync), workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, kanidm (kanidm):8443, ceph-rgw (rook-ceph):8080 |
 | **workflows-controller** | (none) | kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
-| **sensor** (tofu-cloudflare, upgrade-k8s) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
+| **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **events-controller** | (none) | kube-apiserver, eventbus:8222 |
-| **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
-| **workflow-pods** (backup-workflow除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
+| **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s, pxe-sync) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
+| **workflow-pods** (backup-workflow, pxe-sync除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
 | **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver, *.r2.cloudflarestorage.com + github.com + *.githubusercontent.com + dl.min.io :443, CP nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
+| **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + *.githubusercontent.com + *.github.com :443, QNAP NAS (192.168.0.241):2049 (NFS) |
 
 ## monitoring (11 policies)
 

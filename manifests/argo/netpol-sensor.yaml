@@ -11,6 +11,7 @@ spec:
         values:
           - tofu-cloudflare
           - upgrade-k8s
+          - pxe-sync
   ingressDeny:
     - fromEntities:
         - cluster

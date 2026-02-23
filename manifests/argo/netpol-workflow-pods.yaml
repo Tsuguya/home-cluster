@@ -10,6 +10,8 @@ spec:
         operator: Exists
       - key: backup-workflow
         operator: DoesNotExist
+      - key: pxe-sync
+        operator: DoesNotExist
   ingressDeny:
     - fromEntities:
         - cluster

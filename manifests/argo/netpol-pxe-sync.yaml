@@ -1,0 +1,30 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: pxe-sync
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      pxe-sync: "true"
+  ingressDeny:
+    - fromEntities:
+        - cluster
+        - world
+  egress:
+    - toEntities:
+        - kube-apiserver
+    - toFQDNs:
+        - matchName: "github.com"
+        - matchPattern: "*.github.com"
+        - matchPattern: "*.githubusercontent.com"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toCIDR:
+        - 192.168.0.241/32
+      toPorts:
+        - ports:
+            - port: "2049"
+              protocol: TCP

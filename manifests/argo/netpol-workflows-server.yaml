@@ -23,6 +23,8 @@ spec:
         - matchLabels:
             sensor-name: upgrade-k8s
         - matchLabels:
+            sensor-name: pxe-sync
+        - matchLabels:
             app.kubernetes.io/name: argo-workflows-workflow-controller
       toPorts:
         - ports:

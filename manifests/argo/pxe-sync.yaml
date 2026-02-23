@@ -1,0 +1,167 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pxe-sync-executor
+  namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pxe-sync-executor
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-edit
+subjects:
+  - kind: ServiceAccount
+    name: pxe-sync-executor
+    namespace: argo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: pxe-sync
+  namespace: argo
+spec:
+  activeDeadlineSeconds: 600
+  serviceAccountName: pxe-sync-executor
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: mode
+        default: both
+        enum:
+          - update-assets
+          - sync-configs
+          - both
+  volumes:
+    - name: pxe
+      nfs:
+        server: 192.168.0.241
+        path: /share/CACHEDEV1_DATA/Container/pxe
+  templates:
+    - name: main
+      steps:
+        - - name: update-assets
+            template: update-assets
+            when: "'{{workflow.parameters.mode}}' == 'update-assets' || '{{workflow.parameters.mode}}' == 'both'"
+        - - name: sync-configs
+            template: sync-configs
+            when: "'{{workflow.parameters.mode}}' == 'sync-configs' || '{{workflow.parameters.mode}}' == 'both'"
+
+    - name: update-assets
+      metadata:
+        labels:
+          pxe-sync: "true"
+      container:
+        image: alpine:3.23
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+        command: [sh, -c]
+        args:
+          - |
+            set -euo pipefail
+
+            echo "=== Fetching latest release from Tsuguya/talos-custom-build ==="
+            apk add --no-cache curl jq
+
+            TAG=$(curl -sf https://api.github.com/repos/Tsuguya/talos-custom-build/releases/latest | jq -r '.tag_name')
+            echo "Latest release: ${TAG}"
+
+            ASSETS_DIR=/pxe/assets
+            echo "=== Downloading vmlinuz-amd64 ==="
+            curl -sfL "https://github.com/Tsuguya/talos-custom-build/releases/download/${TAG}/vmlinuz-amd64" -o "${ASSETS_DIR}/vmlinuz.tmp"
+
+            echo "=== Downloading initramfs-amd64.xz ==="
+            curl -sfL "https://github.com/Tsuguya/talos-custom-build/releases/download/${TAG}/initramfs-amd64.xz" -o "${ASSETS_DIR}/initramfs.xz.tmp"
+
+            echo "=== Atomic replace ==="
+            mv "${ASSETS_DIR}/vmlinuz.tmp" "${ASSETS_DIR}/vmlinuz"
+            mv "${ASSETS_DIR}/initramfs.xz.tmp" "${ASSETS_DIR}/initramfs.xz"
+
+            echo "=== Done: assets updated to ${TAG} ==="
+            ls -lh "${ASSETS_DIR}/"
+        volumeMounts:
+          - name: pxe
+            mountPath: /pxe
+
+    - name: sync-configs
+      metadata:
+        labels:
+          pxe-sync: "true"
+      container:
+        image: alpine:3.23
+        resources:
+          requests:
+            cpu: 10m
+            memory: 128Mi
+          limits:
+            memory: 512Mi
+        command: [sh, -c]
+        args:
+          - |
+            set -euo pipefail
+
+            TALHELPER_VERSION="v3.1.5"
+            SOPS_VERSION="v3.12.1"
+
+            echo "=== Installing tools ==="
+            apk add --no-cache git curl
+
+            echo "=== Installing talhelper ${TALHELPER_VERSION} ==="
+            curl -sfL "https://github.com/budimanjojo/talhelper/releases/download/${TALHELPER_VERSION}/talhelper_linux_amd64.tar.gz" | tar xz -C /tmp
+            chmod +x /tmp/talhelper
+
+            echo "=== Installing sops ${SOPS_VERSION} ==="
+            curl -sfL "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64" -o /tmp/sops
+            chmod +x /tmp/sops
+
+            export PATH="/tmp:${PATH}"
+
+            echo "=== Cloning home-infra ==="
+            git clone --depth 1 https://github.com/Tsuguya/home-infra.git /tmp/home-infra
+            cd /tmp/home-infra
+
+            echo "=== Running talhelper genconfig ==="
+            talhelper genconfig --no-gitignore
+
+            echo "=== Mapping configs to MAC addresses ==="
+            CONFIG_DIR=/pxe/config
+            CLUSTER_DIR=/tmp/home-infra/clusterconfig
+
+            map_config() {
+              mac="$1"
+              hostname="$2"
+              src="${CLUSTER_DIR}/home-cluster-${hostname}.yaml"
+              dst="${CONFIG_DIR}/${mac}.yaml"
+              if [ -f "$src" ]; then
+                cp "$src" "$dst"
+                echo "Synced: ${hostname} -> ${mac}.yaml"
+              else
+                echo "WARNING: $src not found" >&2
+              fi
+            }
+
+            map_config "58-47-ca-76-07-c4" "cp-01.cluster.home.tgy.io"
+            map_config "58-47-ca-76-09-95" "cp-02.cluster.home.tgy.io"
+            map_config "58-47-ca-76-08-d2" "cp-03.cluster.home.tgy.io"
+            map_config "7c-83-34-be-c0-b4" "wn-01.cluster.home.tgy.io"
+            map_config "68-1d-ef-36-c6-e3" "wn-02.cluster.home.tgy.io"
+            map_config "58-47-ca-73-ce-2a" "wn-03.cluster.home.tgy.io"
+
+            echo "=== Done ==="
+            ls -lh "${CONFIG_DIR}/"
+        env:
+          - name: SOPS_AGE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: sops-age-key
+                key: credential
+        volumeMounts:
+          - name: pxe
+            mountPath: /pxe

@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: pxe-sync
+  namespace: argo
+spec:
+  template:
+    serviceAccountName: workflow-executor
+    container:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
+  dependencies:
+    - name: push
+      eventSourceName: github-webhook
+      eventName: home-infra
+      filters:
+        script: |-
+          if event.body == nil or event.body.ref ~= "refs/heads/main" then
+            return false
+          end
+          if event.body.commits == nil then
+            return false
+          end
+          for _, c in ipairs(event.body.commits) do
+            for _, list in ipairs({c.added or {}, c.modified or {}}) do
+              for _, f in ipairs(list) do
+                if f == "talconfig.yaml" or f == "talsecret.sops.yaml" then
+                  return true
+                end
+              end
+            end
+          end
+          return false
+  triggers:
+    - template:
+        name: pxe-sync-configs
+        conditions: "push"
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: pxe-sync-configs-
+                namespace: argo
+              spec:
+                workflowTemplateRef:
+                  name: pxe-sync
+                arguments:
+                  parameters:
+                    - name: mode
+                      value: sync-configs

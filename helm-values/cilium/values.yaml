@@ -70,7 +70,7 @@ hubble:
   metrics:
     enabled:
       - dns:query;ignoreAAAA;labelsContext=source_namespace,destination_namespace
-      - drop:labelsContext=source_namespace,destination_namespace
+      - drop:labelsContext=source_namespace,destination_namespace,source_workload,destination_workload
       - tcp:labelsContext=source_namespace,destination_namespace
       - flow:labelsContext=source_namespace,destination_namespace
       - httpV2:labelsContext=source_namespace,destination_namespace,source_workload,destination_workload

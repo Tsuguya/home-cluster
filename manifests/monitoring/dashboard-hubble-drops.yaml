@@ -1,0 +1,237 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-hubble-drops
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  hubble-drops.json: |
+    {
+      "annotations": {"list": []},
+      "editable": true,
+      "graphTooltip": 1,
+      "links": [],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["cilium", "hubble", "network", "security"],
+      "time": {"from": "now-1h", "to": "now"},
+      "timezone": "browser",
+      "title": "Hubble Drop Analysis",
+      "uid": "hubble-drop-analysis",
+      "templating": {
+        "list": [
+          {
+            "current": {"selected": true, "text": "All", "value": "$__all"},
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "definition": "label_values(hubble_drop_total, source_namespace)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "name": "source_namespace",
+            "label": "Source Namespace",
+            "query": {"query": "label_values(hubble_drop_total, source_namespace)"},
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "current": {"selected": true, "text": "All", "value": "$__all"},
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "definition": "label_values(hubble_drop_total, destination_namespace)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "name": "destination_namespace",
+            "label": "Destination Namespace",
+            "query": {"query": "label_values(hubble_drop_total, destination_namespace)"},
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "current": {"selected": true, "text": "All", "value": "$__all"},
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "definition": "label_values(hubble_drop_total, reason)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "name": "reason",
+            "label": "Reason",
+            "query": {"query": "label_values(hubble_drop_total, reason)"},
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Drop Rate",
+          "gridPos": {"h": 8, "w": 4, "x": 0, "y": 0},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum(rate(hubble_drop_total{source_namespace=~\"$source_namespace\",destination_namespace=~\"$destination_namespace\",reason=~\"$reason\"}[$__rate_interval]))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "pps",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 1},
+                  {"color": "red", "value": 10}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"]},
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 2,
+          "type": "piechart",
+          "title": "Drop Reasons",
+          "gridPos": {"h": 8, "w": 8, "x": 4, "y": 0},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum by (reason) (rate(hubble_drop_total{source_namespace=~\"$source_namespace\",destination_namespace=~\"$destination_namespace\",reason=~\"$reason\"}[$__rate_interval]))",
+              "refId": "A",
+              "legendFormat": "{{reason}}"
+            }
+          ],
+          "fieldConfig": {"defaults": {}, "overrides": []},
+          "options": {
+            "legend": {"displayMode": "table", "placement": "right", "values": ["percent", "value"]},
+            "pieType": "donut",
+            "reduceOptions": {"calcs": ["lastNotNull"]}
+          }
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "Drops Over Time",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum by (reason) (rate(hubble_drop_total{source_namespace=~\"$source_namespace\",destination_namespace=~\"$destination_namespace\",reason=~\"$reason\"}[$__rate_interval]))",
+              "refId": "A",
+              "legendFormat": "{{reason}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"fillOpacity": 20, "stacking": {"mode": "normal"}},
+              "unit": "pps"
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        },
+        {
+          "id": 4,
+          "type": "table",
+          "title": "Top Drop Flows",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "topk(20, sum by (source_namespace, source_workload, destination_namespace, destination_workload, reason) (rate(hubble_drop_total{source_namespace=~\"$source_namespace\",destination_namespace=~\"$destination_namespace\",reason=~\"$reason\"}[$__rate_interval])))",
+              "refId": "A",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {
+                "matcher": {"id": "byName", "options": "Value"},
+                "properties": [
+                  {"id": "displayName", "value": "Drops/sec"},
+                  {"id": "unit", "value": "pps"},
+                  {"id": "custom.cellOptions", "value": {"type": "color-background"}},
+                  {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "transparent", "value": null}, {"color": "yellow", "value": 0.1}, {"color": "red", "value": 1}]}}
+                ]
+              },
+              {
+                "matcher": {"id": "byName", "options": "Time"},
+                "properties": [{"id": "custom.hidden", "value": true}]
+              }
+            ]
+          },
+          "transformations": [
+            {"id": "sortBy", "options": {"fields": [{"desc": true, "displayName": "Value"}]}}
+          ],
+          "options": {
+            "sortBy": [{"displayName": "Value", "desc": true}],
+            "footer": {"enablePagination": true}
+          }
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "Drops by Source Namespace",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum by (source_namespace) (rate(hubble_drop_total{source_namespace=~\"$source_namespace\",destination_namespace=~\"$destination_namespace\",reason=~\"$reason\"}[$__rate_interval]))",
+              "refId": "A",
+              "legendFormat": "{{source_namespace}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"fillOpacity": 20},
+              "unit": "pps"
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Drops by Destination Namespace",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum by (destination_namespace) (rate(hubble_drop_total{source_namespace=~\"$source_namespace\",destination_namespace=~\"$destination_namespace\",reason=~\"$reason\"}[$__rate_interval]))",
+              "refId": "A",
+              "legendFormat": "{{destination_namespace}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"fillOpacity": 20},
+              "unit": "pps"
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        }
+      ]
+    }

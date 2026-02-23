@@ -23,6 +23,14 @@ spec:
         - ports:
             - port: "443"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rook-ceph-rgw
+            io.kubernetes.pod.namespace: rook-ceph
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
     - toCIDR:
         - 192.168.0.241/32
       toPorts:

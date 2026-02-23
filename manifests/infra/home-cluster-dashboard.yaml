@@ -93,11 +93,11 @@ data:
           },
           "gridPos": { "h": 4, "w": 6, "x": 12, "y": 12 },
           "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] }, "textMode": "value_and_name" },
-          "title": "Ceph Storage",
+          "title": "SeaweedFS Volume",
           "type": "stat",
           "targets": [
-            { "expr": "ceph_cluster_total_used_bytes", "legendFormat": "Used", "refId": "A" },
-            { "expr": "ceph_cluster_total_bytes", "legendFormat": "Total", "refId": "B" }
+            { "expr": "sum(seaweedfs_volumeServer_total_disk_size)", "legendFormat": "Used", "refId": "A" },
+            { "expr": "sum(seaweedfs_volumeServer_max_volume_count) * 30 * 1024 * 1024 * 1024", "legendFormat": "Max Volumes (est.)", "refId": "B" }
           ]
         },
         {
@@ -155,10 +155,10 @@ data:
           "datasource": { "type": "loki" },
           "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
           "options": { "showTime": true, "sortOrder": "Descending", "enableLogDetails": true, "dedupStrategy": "none", "wrapLogMessage": true },
-          "title": "Rook Operator Events (CRD changes, key operations)",
+          "title": "SeaweedFS Logs",
           "type": "logs",
           "targets": [
-            { "expr": "{namespace=\"rook-ceph\", container=\"rook-ceph-operator\"} |~ \"(?i)(objectstoreuser|object-user|user created|user deleted|reconcil|secret|key)\"", "refId": "A" }
+            { "expr": "{namespace=\"seaweedfs\"} |~ \"(?i)(error|warn|fail|panic)\"", "refId": "A" }
           ]
         }
       ],

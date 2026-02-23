@@ -87,8 +87,9 @@
 | argo-workflows | controller | 10m / 64Mi | 256Mi | 2m / 19Mi |
 | argo-workflows | server | 10m / 64Mi | 256Mi | 1m / 21Mi |
 | argo-events | controller | 10m / 64Mi | 256Mi | 2m / 27Mi |
-| rook-ceph | operator | 100m / 128Mi | 512Mi | 71-111m / 67-88Mi |
-| rook-ceph-cluster | osd/mon/mgr/mds/rgw | (別途設定済み) | | |
+| seaweedfs | master ×3 | 25m / 64Mi | 256Mi | 未計測 |
+| seaweedfs | volume | 50m / 128Mi | 512Mi | 未計測 |
+| seaweedfs | filer | 25m / 128Mi | 512Mi | 未計測 |
 
 ## CRD マニフェスト
 

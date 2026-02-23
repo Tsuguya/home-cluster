@@ -21,17 +21,16 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Grafana (monitoring) | shared-pg (database) | 5432 | Dashboard state |
 | Prometheus (monitoring) | CoreDNS (kube-system) | 9153 | Metrics scrape |
 | Prometheus (monitoring) | Tetragon operator (kube-system) | 2113 | Metrics scrape |
-| Prometheus (monitoring) | Ceph exporter (rook-ceph) | 9926 | Metrics scrape |
-| Prometheus (monitoring) | Ceph MGR (rook-ceph) | 9283 | Metrics scrape |
-| Loki (monitoring) | Ceph RGW (rook-ceph) | 8080 | S3 storage |
-| Tempo (monitoring) | Ceph RGW (rook-ceph) | 8080 | S3 storage |
+| Prometheus (monitoring) | SeaweedFS (seaweedfs) | 9327 | Metrics scrape |
+| Loki (monitoring) | SeaweedFS filer (seaweedfs) | 8333 | S3 storage |
+| Tempo (monitoring) | SeaweedFS filer (seaweedfs) | 8333 | S3 storage |
 | Argo Workflows controller (argo) | shared-pg (database) | 5432 | Workflow archive |
 | Argo Workflows server (argo) | shared-pg (database) | 5432 | Workflow archive |
 | CloudNative-PG (cnpg-system) | shared-pg (database) | 8000 | Health probes |
 | Cloudflared (argocd) | EventSource (argo) | 12000 | GitHub webhook relay |
-| Workflow pods (argo) | Ceph RGW (rook-ceph) | 8080 | Artifact/log storage |
-| PXE sync pods (argo) | Ceph RGW (rook-ceph) | 8080 | Artifact/log storage |
-| Argo Workflows server (argo) | Ceph RGW (rook-ceph) | 8080 | Archived log retrieval |
+| Workflow pods (argo) | SeaweedFS filer (seaweedfs) | 8333 | Artifact/log storage |
+| PXE sync pods (argo) | SeaweedFS filer (seaweedfs) | 8333 | Artifact/log storage |
+| Argo Workflows server (argo) | SeaweedFS filer (seaweedfs) | 8333 | Archived log retrieval |
 | Grafana (monitoring) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | ArgoCD server (argocd) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | Argo Workflows server (argo) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
@@ -47,7 +46,6 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | kube-system | Cilium agent, kube-proxy | CNI / networking |
 | kube-system | Tetragon agent | eBPF runtime security (hostNetwork DaemonSet) |
 | kube-system | kube-apiserver, etcd, scheduler, controller-manager | Control plane static pods |
-| rook-ceph | CSI nodeplugin (RBD, CephFS) | Block device / mount on host |
 | trident | trident-node-linux | CSI node plugin |
 
 ---
@@ -69,50 +67,40 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **workflows-server** | ingress → 2746 (L7 HTTP); sensors (tofu-cloudflare, upgrade-k8s, pxe-sync), workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, kanidm (kanidm):8443, ceph-rgw (rook-ceph):8080 |
+| **workflows-server** | ingress → 2746 (L7 HTTP); sensors (tofu-cloudflare, upgrade-k8s, pxe-sync), workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, kanidm (kanidm):8443, seaweedfs-filer (seaweedfs):8333 |
 | **workflows-controller** | (none) | kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
 | **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **events-controller** | (none) | kube-apiserver, eventbus:8222 |
 | **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s, pxe-sync) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
-| **workflow-pods** (backup-workflow, pxe-sync除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
-| **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver, *.r2.cloudflarestorage.com + github.com + *.githubusercontent.com + dl.min.io :443, CP nodes:50000 (Talos apid), ceph-rgw (rook-ceph):8080 |
-| **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + *.github.com + *.githubusercontent.com + *.alpinelinux.org :443, ceph-rgw (rook-ceph):8080, QNAP NAS (192.168.0.241):2049 (NFS) |
+| **workflow-pods** (backup-workflow, pxe-sync除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
+| **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver, *.r2.cloudflarestorage.com + github.com + *.githubusercontent.com + dl.min.io :443, CP nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
+| **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + *.github.com + *.githubusercontent.com + *.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.0.241):2049 (NFS) |
 
 ## monitoring (11 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **prometheus** | grafana, tempo → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, tetragon-operator (kube-system):2113, ceph exporter (rook-ceph):9926, ceph mgr (rook-ceph):9283, host/remote-node:10250/9100/2379/2381/10257/10259/9965 |
+| **prometheus** | grafana, tempo → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, tetragon-operator (kube-system):2113, seaweedfs (seaweedfs):9327, host/remote-node:10250/9100/2379/2381/10257/10259/9965 |
 | **alertmanager** | prometheus → 9093/8080 | HTTPS 443 |
 | **grafana** | ingress → 3000 (L7 HTTP); prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, tempo:3200, shared-pg (database):5432, kanidm (kanidm):8443, HTTPS 443 |
 | **kube-state-metrics** | prometheus → 8080 | kube-apiserver |
 | **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | kube-apiserver |
-| **loki** | loki-gateway, loki-canary → 3100 | kube-apiserver, ceph-rgw (rook-ceph):8080, self:7946 (memberlist) |
+| **loki** | loki-gateway, loki-canary → 3100 | kube-apiserver, seaweedfs-filer (seaweedfs):8333, self:7946 (memberlist) |
 | **loki-gateway** | grafana, alloy, loki-canary → 8080 | loki:3100 |
 | **loki-canary** | (none) | loki-gateway:8080, loki:3100 |
 | **alloy** | (none) | kube-apiserver, loki-gateway:8080 |
-| **tempo** | grafana, prometheus → 3200 | ceph-rgw (rook-ceph):8080, prometheus:9090 (metrics remote_write) |
+| **tempo** | grafana, prometheus → 3200 | seaweedfs-filer (seaweedfs):8333, prometheus:9090 (metrics remote_write) |
 | **prometheus-admission** (Job) | (none) | kube-apiserver |
 
-## rook-ceph (14 policies)
+## seaweedfs (4 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **mon** | all ceph daemons, exporter, crashcollector, CSI ctrlplugins → 3300/6789; remote-node → 3300/6789 | mon (self):3300/6789, mgr:6800 |
-| **mgr** | all ceph daemons, csi-rbd-ctrlplugin, remote-node → 6800; prometheus (monitoring) → 9283 | kube-apiserver, mon:3300/6789, mgr (self):6800, osd/mds/rgw:6800-6806 |
-| **osd** | osd (self), mgr, operator, mds, rgw, tools, csi-rbd-ctrlplugin → 6800-6806; host/remote-node → 6800-6806 | mon:3300/6789, mgr:6800, osd (self):6800-6806 |
-| **mds** | (none) | mon:3300/6789, mgr:6800, osd:6800-6806 |
-| **rgw** | operator, loki (monitoring), tempo (monitoring), workflow-pods (argo), workflows-server (argo), pxe-sync (argo) → 8080 | mon:3300/6789, mgr:6800, osd:6800-6806 |
-| **operator** | (none) | kube-apiserver, mon:3300/6789, mgr:6800, osd:6800, rgw:8080 |
-| **detect-version** (Job) | (none) | kube-apiserver |
-| **exporter** | prometheus (monitoring) → 9926 | mgr:6800, mon:3300/6789 |
-| **crashcollector** | (none) | mon:3300/6789, mgr:6800 |
-| **tools** | (none) | mon:3300/6789, mgr:6800, osd:6800-6806 |
-| **osd-prepare** | (none) | kube-apiserver, mon:3300/6789 |
-| **csi-rbd-ctrlplugin** | (none) | kube-apiserver, mon:3300/6789, mgr:6800, osd:6800 |
-| **csi-cephfs-ctrlplugin** | (none) | kube-apiserver, mon:3300/6789 |
-| **csi-controller-manager** | host → 8081 | kube-apiserver |
+| **master** | master/volume/filer/bucket-hook → 9333/19333; prometheus (monitoring) → 9327 | master (self):9333/19333, volume:8080/18080, filer:8888/18888 |
+| **volume** | master/filer → 8080/18080; prometheus (monitoring) → 9327 | master:9333/19333, volume (self):8080/18080 |
+| **filer** | loki (monitoring), tempo (monitoring), workflow-pods (argo), workflows-server (argo), etcd-backup (argo), pxe-sync (argo) → 8333; master/volume/bucket-hook → 8888/18888; prometheus (monitoring) → 9327 | master:9333/19333, volume:8080/18080, filer (self):8888/18888 |
+| **bucket-hook** (Job) | (none) | master:9333, filer:8888 |
 
 ## kube-system (6 policies)
 

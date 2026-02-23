@@ -62,10 +62,9 @@ egress:
 変更後は以下を確認:
 1. `kubectl get pods -A` — 全 Pod が Running
 2. `hubble observe --verdict DROPPED` — 意図しない drop がないこと
-3. ノードリブート後も正常復帰すること（rook-ceph の Error Pod はリブート後に残るので手動削除）
+3. ノードリブート後も正常復帰すること
 
 ## 注意事項
 
 - push は即座に本番反映される。変更内容をよく確認してから push
 - Cilium Gateway bug (#41970): HTTPRoute が付いた Service は `world` identity になり L7 proxy で 403 になる。クロスネームスペース HTTP は避ける
-- rook-ceph の Pod はリブート後に Error/Completed で残骸が残る（自動 GC なし）

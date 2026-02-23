@@ -22,7 +22,6 @@ kubectl get pods -A --no-headers | grep -v Running | grep -v Completed
 ```
 
 異常な Pod（Error, CrashLoopBackOff, Pending 等）を一覧表示。
-rook-ceph の Error/Completed Pod はリブート後の残骸の可能性がある。
 
 ## 3. Hubble drop 確認
 

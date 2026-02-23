@@ -71,12 +71,11 @@ OnePasswordItem は専用の `secrets` ArgoCD Application で管理され、他 
 ## 以降は自動
 
 上記 4 ステップ完了後、ArgoCD が app-of-apps 経由で全サービスを自動デプロイする:
-cert-manager, external-dns, rook-ceph, CNPG, Grafana, Loki, Argo Workflows 等。
+cert-manager, external-dns, SeaweedFS, CNPG, Grafana, Loki, Argo Workflows 等。
 
 DNS レコードも external-dns が Gateway の HTTPRoute / TLSRoute から自動作成する（Cloudflare）。
 
-S3 ストレージ（Loki、Argo Workflows）は OBC (ObjectBucketClaim) で自動管理される。
-rook-ceph 稼働後、OBC が バケット作成 + S3 credentials Secret を各 namespace に自動生成するため手動操作不要。
+S3 ストレージ（Loki、Tempo、Argo Workflows）は SeaweedFS が提供し、クレデンシャルは 1Password → OnePasswordItem で各 namespace にデプロイ。
 
 ---
 

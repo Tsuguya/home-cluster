@@ -43,11 +43,6 @@
       "automerge": true
     },
     {
-      "description": "Group rook-ceph packages",
-      "matchPackagePatterns": ["rook-ceph"],
-      "groupName": "rook-ceph"
-    },
-    {
       "description": "Automerge Docker image minor updates",
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["minor"],
@@ -55,7 +50,7 @@
     },
     {
       "description": "Do not automerge critical infrastructure",
-      "matchPackageNames": ["cilium", "rook-ceph", "rook-ceph-cluster", "tetragon"],
+      "matchPackageNames": ["cilium", "tetragon"],
       "automerge": false
     },
     {

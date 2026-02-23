@@ -10,6 +10,7 @@
 | Grafana | generic_oauth | Kanidm (コンフィデンシャル) | kanidm-grafana-oauth (monitoring) | `helm-values/kube-prometheus-stack/values.yaml` |
 | Argo Workflows | OIDC | Kanidm (コンフィデンシャル) | kanidm-argo-workflows-oauth (argo) | `helm-values/argo-workflows/values.yaml` |
 | Hubble UI | oauth2-proxy (OIDC) | Kanidm (コンフィデンシャル) | oauth2-proxy-hubble-oauth (oauth2-proxy) | `helm-values/oauth2-proxy-hubble/values.yaml` |
+| SeaweedFS UI | oauth2-proxy (OIDC) | Kanidm (コンフィデンシャル) | oauth2-proxy-seaweedfs-oauth (oauth2-proxy) | `helm-values/oauth2-proxy-seaweedfs/values.yaml` |
 
 ArgoCD は Kanidm パブリッククライアント (PKCE S256) を使用するため、clientSecret 不要。
 
@@ -102,6 +103,25 @@ kanidm system oauth2 show-basic-secret oauth2-proxy-hubble --url https://idm.inf
 
 oauth2-proxy 経由で認証。clientSecret + cookieSecret を 1Password (oauth2-proxy-hubble-oauth) に保存。
 
+### SeaweedFS UI (oauth2-proxy, コンフィデンシャルクライアント)
+
+```bash
+kanidm system oauth2 create oauth2-proxy-seaweedfs "SeaweedFS UI" https://seaweedfs.infra.tgy.io --url https://idm.infra.tgy.io
+
+kanidm system oauth2 add-redirect-url oauth2-proxy-seaweedfs https://seaweedfs.infra.tgy.io/oauth2/callback --url https://idm.infra.tgy.io
+
+kanidm group create seaweedfs_users --url https://idm.infra.tgy.io
+kanidm group add-members seaweedfs_users tsuguya --url https://idm.infra.tgy.io
+
+kanidm system oauth2 update-scope-map oauth2-proxy-seaweedfs seaweedfs_users openid profile email --url https://idm.infra.tgy.io
+
+kanidm system oauth2 prefer-short-username oauth2-proxy-seaweedfs --url https://idm.infra.tgy.io
+
+kanidm system oauth2 show-basic-secret oauth2-proxy-seaweedfs --url https://idm.infra.tgy.io
+```
+
+oauth2-proxy 経由で認証。clientSecret + cookieSecret を 1Password (oauth2-proxy-seaweedfs-oauth) に保存。
+
 ## 1Password アイテム
 
 | アイテム | Secret 名 | Namespace | キー |
@@ -109,6 +129,7 @@ oauth2-proxy 経由で認証。clientSecret + cookieSecret を 1Password (oauth2
 | kanidm-grafana-oauth | kanidm-grafana-oauth | monitoring | clientID, clientSecret |
 | kanidm-argo-workflows-oauth | kanidm-argo-workflows-oauth | argo | clientID, clientSecret |
 | oauth2-proxy-hubble-oauth | oauth2-proxy-hubble-oauth | oauth2-proxy | client-id, client-secret, cookie-secret |
+| oauth2-proxy-seaweedfs-oauth | oauth2-proxy-seaweedfs-oauth | oauth2-proxy | client-id, client-secret, cookie-secret |
 
 ArgoCD はパブリッククライアントのため 1Password アイテム不要。
 oauth2-proxy の Secret キーは chart の `existingSecret` が期待する `client-id`, `client-secret`, `cookie-secret`。

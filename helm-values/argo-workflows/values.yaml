@@ -1,7 +1,7 @@
 artifactRepository:
   archiveLogs: true
   s3:
-    endpoint: rook-ceph-rgw-ceph-objectstore.rook-ceph:80
+    endpoint: seaweedfs-filer.seaweedfs:8333
     insecure: true
     bucket: argo-artifacts
     accessKeySecret:

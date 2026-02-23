@@ -1,8 +1,0 @@
-apiVersion: objectbucket.io/v1alpha1
-kind: ObjectBucketClaim
-metadata:
-  name: tempo-storage
-  namespace: monitoring
-spec:
-  bucketName: tempo-storage
-  storageClassName: ceph-bucket

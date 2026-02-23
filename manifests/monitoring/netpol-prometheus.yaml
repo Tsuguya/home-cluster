@@ -75,19 +75,11 @@ spec:
               protocol: TCP
     - toEndpoints:
         - matchLabels:
-            app: rook-ceph-exporter
-            io.kubernetes.pod.namespace: rook-ceph
+            app.kubernetes.io/name: seaweedfs
+            io.kubernetes.pod.namespace: seaweedfs
       toPorts:
         - ports:
-            - port: "9926"
-              protocol: TCP
-    - toEndpoints:
-        - matchLabels:
-            app: rook-ceph-mgr
-            io.kubernetes.pod.namespace: rook-ceph
-      toPorts:
-        - ports:
-            - port: "9283"
+            - port: "9327"
               protocol: TCP
     - toEntities:
         - host

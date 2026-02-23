@@ -46,7 +46,7 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: ceph-block
+          storageClassName: qnap-iscsi
           resources:
             requests:
               storage: 20Gi

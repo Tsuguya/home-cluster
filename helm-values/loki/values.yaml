@@ -9,7 +9,7 @@ singleBinary:
     limits:
       memory: 512Mi
   persistence:
-    storageClass: ceph-block
+    storageClass: qnap-iscsi
     size: 10Gi
   extraArgs:
     - -config.expand-env=true

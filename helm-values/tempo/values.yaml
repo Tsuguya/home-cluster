@@ -67,7 +67,7 @@ securityContext:
 
 persistence:
   enabled: true
-  storageClassName: ceph-block
+  storageClassName: qnap-iscsi
   size: 10Gi
 
 serviceAccount:

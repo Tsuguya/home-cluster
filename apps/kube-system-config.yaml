@@ -12,6 +12,13 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
+  ignoreDifferences:
+    - group: cilium.io
+      kind: TracingPolicy
+      jqPathExpressions:
+        - .spec.kprobes[].args[] | (.maxData, .resolve, .returnCopy)
+        - .spec.kprobes[] | .return
+        - .spec.kprobes[].selectors[].matchCapabilities[]? | .isNamespaceCapability
   syncPolicy:
     automated:
       prune: true

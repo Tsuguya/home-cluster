@@ -74,7 +74,6 @@ spec:
           matchCapabilities:
             - type: Effective
               operator: NotIn
-              isNamespaceCapability: false
               values:
                 - "CAP_SYS_ADMIN"
           matchActions:

@@ -17,6 +17,8 @@ spec:
             sensor-name: upgrade-k8s
         - matchLabels:
             sensor-name: pxe-sync
+        - matchLabels:
+            sensor-name: talos-build
       toPorts:
         - ports:
             - port: "4222"

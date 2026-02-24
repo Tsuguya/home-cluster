@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: talos-build
+  namespace: argo
+spec:
+  template:
+    serviceAccountName: workflow-executor
+    container:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
+  dependencies:
+    - name: release
+      eventSourceName: github-webhook
+      eventName: talos-build
+      filters:
+        script: |-
+          if event.body == nil then return false end
+          if event.body.action ~= "created" and event.body.action ~= "published" then return false end
+          if event.body.release == nil then return false end
+          if event.body.release.prerelease ~= true then return false end
+          return true
+  triggers:
+    - template:
+        name: secureboot-build
+        conditions: "release"
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: talos-secureboot-
+                namespace: argo
+              spec:
+                workflowTemplateRef:
+                  name: talos-secureboot-build
+                arguments:
+                  parameters:
+                    - name: version
+                      value: ""
+          parameters:
+            - src:
+                dependencyName: release
+                dataKey: body.release.tag_name
+              dest: spec.arguments.parameters.0.value

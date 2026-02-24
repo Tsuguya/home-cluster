@@ -12,6 +12,7 @@ spec:
           - tofu-cloudflare
           - upgrade-k8s
           - pxe-sync
+          - talos-build
   ingressDeny:
     - fromEntities:
         - cluster

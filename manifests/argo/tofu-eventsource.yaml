@@ -31,6 +31,20 @@ spec:
         key: credential
       active: false
       contentType: json
+    talos-build:
+      owner: Tsuguya
+      repository: talos-custom-build
+      webhook:
+        endpoint: /talos-build
+        port: "12000"
+        method: POST
+      events:
+        - release
+      webhookSecret:
+        name: talos-custom-build-github-webhook
+        key: credential
+      active: false
+      contentType: json
     home-infra:
       owner: Tsuguya
       repository: home-infra

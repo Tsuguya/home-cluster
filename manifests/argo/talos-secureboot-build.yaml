@@ -1,0 +1,150 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: talos-build-executor
+  namespace: argo
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: talos-build-executor
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-edit
+subjects:
+  - kind: ServiceAccount
+    name: talos-build-executor
+    namespace: argo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: talos-secureboot-build
+  namespace: argo
+spec:
+  activeDeadlineSeconds: 1800
+  serviceAccountName: talos-build-executor
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: version
+  podMetadata:
+    labels:
+      talos-build: "true"
+  volumes:
+    - name: secureboot-keys
+      secret:
+        secretName: secureboot-signing-keys
+    - name: scripts
+      configMap:
+        name: talos-build-scripts
+        defaultMode: 0755
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - wn-03
+  templates:
+    - name: main
+      steps:
+        - - name: build-secureboot-installer
+            template: run-imager
+            arguments:
+              parameters:
+                - name: output-type
+                  value: secureboot-installer
+          - name: build-secureboot-iso
+            template: run-imager
+            arguments:
+              parameters:
+                - name: output-type
+                  value: secureboot-iso
+          - name: build-iso
+            template: run-imager
+            arguments:
+              parameters:
+                - name: output-type
+                  value: iso
+        - - name: push-artifacts
+            template: push
+            arguments:
+              artifacts:
+                - name: sb-installer
+                  from: "{{steps.build-secureboot-installer.outputs.artifacts.output}}"
+                - name: sb-iso
+                  from: "{{steps.build-secureboot-iso.outputs.artifacts.output}}"
+                - name: iso
+                  from: "{{steps.build-iso.outputs.artifacts.output}}"
+
+    - name: run-imager
+      inputs:
+        parameters:
+          - name: output-type
+      container:
+        image: "ghcr.io/tsuguya/imager:{{workflow.parameters.version}}"
+        args:
+          - "{{inputs.parameters.output-type}}"
+          - --arch
+          - amd64
+          - --system-extension-image
+          - ghcr.io/siderolabs/iscsi-tools:v0.2.0
+          - --base-installer-image
+          - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 2Gi
+        volumeMounts:
+          - name: secureboot-keys
+            mountPath: /secureboot
+            readOnly: true
+      outputs:
+        artifacts:
+          - name: output
+            path: /out
+
+    - name: push
+      inputs:
+        artifacts:
+          - name: sb-installer
+            path: /tmp/sb-installer/
+          - name: sb-iso
+            path: /tmp/sb-iso/
+          - name: iso
+            path: /tmp/iso/
+      container:
+        image: alpine:3.21
+        command: [sh, /scripts/push-artifacts.sh]
+        env:
+          - name: VERSION
+            value: "{{workflow.parameters.version}}"
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-pat-tofu
+                key: credential
+          - name: GH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-pat-tofu
+                key: credential
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
+        volumeMounts:
+          - name: scripts
+            mountPath: /scripts
+            readOnly: true

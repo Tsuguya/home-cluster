@@ -72,12 +72,13 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **workflows-server** | ingress → 2746 (L7 HTTP); sensors (tofu-cloudflare, upgrade-k8s, pxe-sync), workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, kanidm (kanidm):8443, seaweedfs-filer (seaweedfs):8333 |
 | **workflows-controller** | (none) | kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
-| **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
+| **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **events-controller** | (none) | kube-apiserver, eventbus:8222 |
-| **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s, pxe-sync) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
-| **workflow-pods** (backup-workflow, pxe-sync除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
+| **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
+| **workflow-pods** (backup-workflow, pxe-sync, talos-build除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
 | **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver, *.r2.cloudflarestorage.com + github.com + *.githubusercontent.com + dl.min.io :443, CP nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
 | **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + *.github.com + *.githubusercontent.com + *.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.0.241):2049 (NFS) |
+| **talos-build** (talos-build=true) | (none) | kube-apiserver, HTTPS 443, seaweedfs-filer (seaweedfs):8333 |
 
 ## monitoring (11 policies)
 
@@ -101,7 +102,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **master** | master/volume/filer/bucket-hook → 9333/19333; prometheus (monitoring) → 9327 | master (self):9333/19333, volume:8080/18080, filer:8888/18888 |
 | **volume** | master/filer → 8080/18080; prometheus (monitoring) → 9327 | master:9333/19333, volume (self):8080/18080 |
-| **filer** | loki (monitoring), tempo (monitoring), workflow-pods (argo), workflows-server (argo), etcd-backup (argo), pxe-sync (argo) → 8333; filer/master/bucket-hook/oauth2-proxy-seaweedfs (oauth2-proxy) → 8888/18888; prometheus (monitoring) → 9327 | master:9333/19333, volume:8080/18080, filer (self):8888/18888 |
+| **filer** | loki (monitoring), tempo (monitoring), workflow-pods (argo), workflows-server (argo), etcd-backup (argo), pxe-sync (argo), talos-build (argo) → 8333; filer/master/bucket-hook/oauth2-proxy-seaweedfs (oauth2-proxy) → 8888/18888; prometheus (monitoring) → 9327 | master:9333/19333, volume:8080/18080, filer (self):8888/18888 |
 | **bucket-hook** (Job) | (none) | master:9333, filer:8888 |
 
 ## kube-system (6 policies)

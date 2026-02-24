@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: talos-build-scripts
+  namespace: argo
+data:
+  push-artifacts.sh: |
+    #!/bin/sh
+    set -euo pipefail
+
+    apk add --no-cache curl jq p7zip
+
+    CRANE_VER=$(curl -sf https://api.github.com/repos/google/go-containerregistry/releases/latest | jq -r .tag_name)
+    curl -sL "https://github.com/google/go-containerregistry/releases/download/${CRANE_VER}/go-containerregistry_Linux_x86_64.tar.gz" \
+      | tar xzf - -C /usr/local/bin/ crane
+    echo "${GITHUB_TOKEN}" | crane auth login ghcr.io -u tsuguya --password-stdin
+
+    INSTALLER_TAR=$(find /tmp/sb-installer -name '*.tar' | head -1)
+    echo "=== Pushing SecureBoot installer: ${INSTALLER_TAR} ==="
+    crane push "${INSTALLER_TAR}" "ghcr.io/tsuguya/installer:${VERSION}"
+
+    ISO_FILE=$(find /tmp/iso -name '*.iso' | head -1)
+    echo "=== Extracting PXE assets from: ${ISO_FILE} ==="
+    7z x "${ISO_FILE}" -o/tmp/pxe boot/vmlinuz boot/initramfs.xz
+    mv /tmp/pxe/boot/vmlinuz /tmp/vmlinuz-amd64
+    mv /tmp/pxe/boot/initramfs.xz /tmp/initramfs-amd64.xz
+
+    GH_VER=$(curl -sf https://api.github.com/repos/cli/cli/releases/latest | jq -r .tag_name | sed 's/^v//')
+    curl -sL "https://github.com/cli/cli/releases/download/v${GH_VER}/gh_${GH_VER}_linux_amd64.tar.gz" \
+      | tar xzf - --strip-components=1 -C /usr/local/
+
+    SB_ISO_FILE=$(find /tmp/sb-iso -name '*.iso' | head -1)
+    echo "=== Uploading artifacts to GitHub Release ${VERSION} ==="
+    gh release upload "${VERSION}" \
+      "${SB_ISO_FILE}" \
+      /tmp/vmlinuz-amd64 \
+      /tmp/initramfs-amd64.xz \
+      --repo Tsuguya/talos-custom-build \
+      --clobber
+
+    gh release edit "${VERSION}" \
+      --repo Tsuguya/talos-custom-build \
+      --prerelease=false \
+      --notes "Custom Talos build with UFS + SecureBoot.
+
+    - Talos: ${VERSION}
+    - SecureBoot: Signed UKI + auto-enrollment ISO
+    - System extensions: iscsi-tools"
+
+    echo "=== Done ==="

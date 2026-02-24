@@ -12,12 +12,6 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
-  ignoreDifferences:
-    - group: cilium.io
-      kind: TracingPolicy
-      jqPathExpressions:
-        - .spec.kprobes[]?.args[]? | select(has("type")) | .maxData, .resolve, .returnCopy
-        - .spec.kprobes[]? | select(has("call")) | .return
   syncPolicy:
     automated:
       prune: true

@@ -121,6 +121,8 @@ server:
     enabled: false
 
 notifications:
+  context:
+    argocdUrl: https://argocd.infra.tgy.io
   resources:
     requests:
       cpu: 10m

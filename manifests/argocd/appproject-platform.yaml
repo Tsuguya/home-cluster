@@ -35,3 +35,5 @@ spec:
       kind: GatewayClass
     - group: '*'
       kind: Namespace
+    - group: cilium.io
+      kind: TracingPolicy

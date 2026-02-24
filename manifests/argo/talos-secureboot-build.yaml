@@ -126,7 +126,7 @@ spec:
           - name: artifact
             path: /tmp/artifact/
       container:
-        image: alpine:3.21
+        image: alpine:3.23
         command: [sh, /scripts/push-installer.sh]
         env:
           - name: VERSION
@@ -155,7 +155,7 @@ spec:
           - name: iso
             path: /tmp/iso/
       container:
-        image: alpine:3.21
+        image: alpine:3.23
         command: [sh, /scripts/push-iso.sh]
         env:
           - name: VERSION
@@ -183,7 +183,7 @@ spec:
 
     - name: finalize-release
       container:
-        image: alpine:3.21
+        image: alpine:3.23
         command: [sh, /scripts/finalize-release.sh]
         env:
           - name: VERSION

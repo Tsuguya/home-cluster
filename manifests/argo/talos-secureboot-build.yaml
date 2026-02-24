@@ -123,7 +123,7 @@ spec:
           - name: iso
             path: /tmp/iso/
       container:
-        image: alpine:3.21
+        image: alpine:3.23
         command: [sh, /scripts/push-artifacts.sh]
         env:
           - name: VERSION

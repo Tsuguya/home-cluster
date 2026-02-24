@@ -20,7 +20,8 @@ spec:
       filters:
         script: |-
           if event.body == nil then return false end
-          if event.body.action ~= "created" and event.body.action ~= "published" then return false end
+          local a = event.body.action
+          if a ~= "created" and a ~= "published" and a ~= "prereleased" then return false end
           if event.body.release == nil then return false end
           if event.body.release.prerelease ~= true then return false end
           return true

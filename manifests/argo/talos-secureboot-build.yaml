@@ -132,12 +132,12 @@ spec:
           - name: GITHUB_TOKEN
             valueFrom:
               secretKeyRef:
-                name: github-pat-tofu
+                name: github-pat-talos-build
                 key: credential
           - name: GH_TOKEN
             valueFrom:
               secretKeyRef:
-                name: github-pat-tofu
+                name: github-pat-talos-build
                 key: credential
         resources:
           requests:

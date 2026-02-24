@@ -90,6 +90,7 @@ spec:
           - name: output-type
       container:
         image: "ghcr.io/tsuguya/imager:{{workflow.parameters.version}}"
+        command: [/bin/imager]
         args:
           - "{{inputs.parameters.output-type}}"
           - --arch

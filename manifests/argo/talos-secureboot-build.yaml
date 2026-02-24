@@ -73,16 +73,22 @@ spec:
               parameters:
                 - name: output-type
                   value: iso
-        - - name: push-artifacts
-            template: push
+        - - name: push-installer
+            template: push-installer
             arguments:
               artifacts:
-                - name: sb-installer
+                - name: artifact
                   from: "{{steps.build-secureboot-installer.outputs.artifacts.output}}"
+          - name: push-iso
+            template: push-iso
+            arguments:
+              artifacts:
                 - name: sb-iso
                   from: "{{steps.build-secureboot-iso.outputs.artifacts.output}}"
                 - name: iso
                   from: "{{steps.build-iso.outputs.artifacts.output}}"
+        - - name: finalize-release
+            template: finalize-release
 
     - name: run-imager
       inputs:
@@ -114,18 +120,43 @@ spec:
           - name: output
             path: /out
 
-    - name: push
+    - name: push-installer
       inputs:
         artifacts:
-          - name: sb-installer
-            path: /tmp/sb-installer/
+          - name: artifact
+            path: /tmp/artifact/
+      container:
+        image: alpine:3.21
+        command: [sh, /scripts/push-installer.sh]
+        env:
+          - name: VERSION
+            value: "{{workflow.parameters.version}}"
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-pat-talos-build
+                key: credential
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
+        volumeMounts:
+          - name: scripts
+            mountPath: /scripts
+            readOnly: true
+
+    - name: push-iso
+      inputs:
+        artifacts:
           - name: sb-iso
             path: /tmp/sb-iso/
           - name: iso
             path: /tmp/iso/
       container:
-        image: alpine:3.23
-        command: [sh, /scripts/push-artifacts.sh]
+        image: alpine:3.21
+        command: [sh, /scripts/push-iso.sh]
         env:
           - name: VERSION
             value: "{{workflow.parameters.version}}"
@@ -145,6 +176,29 @@ spec:
             memory: 256Mi
           limits:
             memory: 1Gi
+        volumeMounts:
+          - name: scripts
+            mountPath: /scripts
+            readOnly: true
+
+    - name: finalize-release
+      container:
+        image: alpine:3.21
+        command: [sh, /scripts/finalize-release.sh]
+        env:
+          - name: VERSION
+            value: "{{workflow.parameters.version}}"
+          - name: GH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-pat-talos-build
+                key: credential
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
         volumeMounts:
           - name: scripts
             mountPath: /scripts

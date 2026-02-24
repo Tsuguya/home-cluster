@@ -4,37 +4,51 @@ metadata:
   name: talos-build-scripts
   namespace: argo
 data:
-  push-artifacts.sh: |
+  push-installer.sh: |
     #!/bin/sh
     set -euo pipefail
-
-    apk add --no-cache curl jq p7zip skopeo
-
-    INSTALLER_TAR=$(find /tmp/sb-installer -name '*.tar' | head -1)
+    apk add --no-cache skopeo
+    INSTALLER_TAR=$(find /tmp/artifact -name '*.tar' | head -1)
     echo "=== Pushing SecureBoot installer: ${INSTALLER_TAR} ==="
     skopeo copy \
       --dest-creds="tsuguya:${GITHUB_TOKEN}" \
       "docker-archive:${INSTALLER_TAR}" \
       "docker://ghcr.io/tsuguya/installer:${VERSION}"
+    echo "=== Done ==="
 
-    ISO_FILE=$(find /tmp/iso -name '*.iso' | head -1)
-    echo "=== Extracting PXE assets from: ${ISO_FILE} ==="
-    7z x "${ISO_FILE}" -o/tmp/pxe boot/vmlinuz boot/initramfs.xz
-    mv /tmp/pxe/boot/vmlinuz /tmp/vmlinuz-amd64
-    mv /tmp/pxe/boot/initramfs.xz /tmp/initramfs-amd64.xz
+  push-iso.sh: |
+    #!/bin/sh
+    set -euo pipefail
+    apk add --no-cache curl jq p7zip
 
     GH_VER=$(curl -sf https://api.github.com/repos/cli/cli/releases/latest | jq -r .tag_name | sed 's/^v//')
     curl -sL "https://github.com/cli/cli/releases/download/v${GH_VER}/gh_${GH_VER}_linux_amd64.tar.gz" \
       | tar xzf - --strip-components=1 -C /usr/local/
 
-    SB_ISO_FILE=$(find /tmp/sb-iso -name '*.iso' | head -1)
+    SB_ISO=$(find /tmp/sb-iso -name '*.iso' | head -1)
+    ISO=$(find /tmp/iso -name '*.iso' | head -1)
+
+    echo "=== Extracting PXE assets from: ${ISO} ==="
+    7z x "${ISO}" -o/tmp/pxe boot/vmlinuz boot/initramfs.xz
+    mv /tmp/pxe/boot/vmlinuz /tmp/vmlinuz-amd64
+    mv /tmp/pxe/boot/initramfs.xz /tmp/initramfs-amd64.xz
+
     echo "=== Uploading artifacts to GitHub Release ${VERSION} ==="
     gh release upload "${VERSION}" \
-      "${SB_ISO_FILE}" \
+      "${SB_ISO}" \
       /tmp/vmlinuz-amd64 \
       /tmp/initramfs-amd64.xz \
       --repo Tsuguya/talos-custom-build \
       --clobber
+    echo "=== Done ==="
+
+  finalize-release.sh: |
+    #!/bin/sh
+    set -euo pipefail
+    apk add --no-cache curl jq
+    GH_VER=$(curl -sf https://api.github.com/repos/cli/cli/releases/latest | jq -r .tag_name | sed 's/^v//')
+    curl -sL "https://github.com/cli/cli/releases/download/v${GH_VER}/gh_${GH_VER}_linux_amd64.tar.gz" \
+      | tar xzf - --strip-components=1 -C /usr/local/
 
     gh release edit "${VERSION}" \
       --repo Tsuguya/talos-custom-build \
@@ -44,5 +58,4 @@ data:
     - Talos: ${VERSION}
     - SecureBoot: Signed UKI + auto-enrollment ISO
     - System extensions: iscsi-tools"
-
-    echo "=== Done ==="
+    echo "=== Release finalized ==="

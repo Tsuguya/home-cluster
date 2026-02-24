@@ -21,6 +21,7 @@ docs/              # 運用ドキュメント
 - **Secrets**: `manifests/secrets/` に OnePasswordItem YAML → 1Password Operator が Secret 自動生成（専用 `secrets` app で他 app の reconcile から隔離）
 - **CNP 変更**: `manifests/<namespace>/netpol-*.yaml` + `docs/network-policies.md` を同時に更新。作業前に `docs/network-policies.md` を読んで通信の全体像を把握すること
 - **SSO 追加**: `docs/sso.md` の手順に従う
+- **新サービス（AppProject）**: `docs/argocd-projects.md` を参照。クラスタスコープリソースを使う場合は AppProject の `clusterResourceWhitelist` への追加を忘れないこと
 
 ## CiliumNetworkPolicy (CNP) 規約
 

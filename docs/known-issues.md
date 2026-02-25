@@ -52,6 +52,48 @@ kube-prometheus-stack と Cilium のダッシュボードには、シングル�
 
 将来マルチクラスタや Thanos/Mimir が必要になった場合は、recording rule だけでなく全スクレイプターゲットの ServiceMonitor `metricRelabelings` で `cluster` を付与すること。
 
+## iscsi-tools extension のホストバイナリ消失
+
+siderolabs/extensions の `fb4eb042` ("consolidate extension services") で iscsi-tools のアーキテクチャが変更され、バイナリがホスト rootfs からコンテナ rootfs 内のみの配置に移行された。
+
+**影響**: ホストの `/usr/local/sbin/iscsiadm` が消失し、Trident CSI が iSCSI ボリュームをマウントできなくなる。SeaweedFS の volume/filer が `ContainerCreating` でスタックする。
+
+**根本原因**:
+
+| バージョン | バイナリ配置 | Trident |
+|-----------|-------------|---------|
+| 旧 (consolidation 前) | `/usr/local/sbin/iscsiadm` (ホスト) | OK |
+| 新 (consolidation 後) | `/usr/local/lib/containers/iscsid/usr/local/sbin/iscsiadm` (コンテナ内のみ) | NG |
+
+`c2bff8e8` ("fix: iscsi and rpcbind extensions", 2026-02-23) はコンテナ内パスの修正のみで、ホストレベル配置は未修復。
+
+**対策**: 旧版 extension image を自前 GHCR にミラーして pin。
+
+```
+ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
+```
+
+- 元 digest: `sha256:b30127b2f3ea6a49aa73dcf18c30da1fa1d2604da00c60519f8f00b4c6d25294`
+- WorkflowTemplate `talos-secureboot-build` の `--system-extension-image` で指定
+
+**診断方法**:
+
+```bash
+# ホストに iscsiadm があるか
+talosctl -n <NODE_IP> ls /usr/local/sbin/
+
+# iscsid サービスの状態
+talosctl -n <NODE_IP> services ext-iscsid
+
+# Trident ログで iSCSI 検出確認
+kubectl -n trident logs <trident-node-pod> -c trident-main | grep -i iscsi
+```
+
+**注意**:
+- Talos ホストにシェル (`/bin/sh`) がないため wrapper script による回避は不可
+- upstream が修正されたらミラー版から公式版に戻すこと
+- TODO: siderolabs/extensions に issue 提出
+
 ## QNAP CSI (trident-operator) CPU limit ハードコード
 
 QNAP CSI Helm chart (v1.6.0) は `bundle.yaml` テンプレート内で `resources.limits.cpu: 20m` をハードコードしており、values で上書きできない。この制限により CPUThrottlingHigh アラートが発生する。

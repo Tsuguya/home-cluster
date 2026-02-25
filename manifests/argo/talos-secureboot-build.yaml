@@ -102,7 +102,7 @@ spec:
           - --arch
           - amd64
           - --system-extension-image
-          - ghcr.io/siderolabs/iscsi-tools@sha256:b30127b2f3ea6a49aa73dcf18c30da1fa1d2604da00c60519f8f00b4c6d25294
+          - ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
           - --base-installer-image
           - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
           - --extra-kernel-arg

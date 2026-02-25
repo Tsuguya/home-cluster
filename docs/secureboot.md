@@ -182,5 +182,5 @@ SecureBoot 有効の UEFI に未署名 installer を書くと **Secure Boot Viol
 ## 次のステップ
 
 - [x] 全ノード SecureBoot 有効化完了
-- [ ] TPM ディスク暗号化（全ノード SecureBoot 有効済み）
+- [x] TPM ディスク暗号化（STATE + EPHEMERAL、全 6 ノード LUKS2 暗号化完了）
 - [ ] siderolabs/extensions に issue: ホストレベル iscsiadm 復活要求

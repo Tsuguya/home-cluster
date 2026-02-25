@@ -69,7 +69,7 @@ spec:
 
     - name: detect-in-cluster
       container:
-        image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.22.7
+        image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.22.8
         resources:
           requests:
             cpu: 10m
@@ -86,7 +86,7 @@ spec:
 
     - name: detect-helm
       container:
-        image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.22.7
+        image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.22.8
         resources:
           requests:
             cpu: 10m

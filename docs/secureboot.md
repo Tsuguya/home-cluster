@@ -27,11 +27,10 @@ GHA (talos-custom-build)              Argo Workflows (argo namespace)
 
 | ノード | HW | SecureBoot | 備考 |
 |--------|-----|-----------|------|
-| cp-03 | Minisforum S100 | **有効** | UEFI リセット + boot override で登録（下記参照） |
-| cp-01/02 | Minisforum S100 | 未適用 | cp-03 と同じ手順で可能 |
+| cp-01/02/03 | Minisforum S100 | **有効** | UEFI Shell + Reset To Setup Mode + auto-enrollment で登録 |
 | wn-01 | TRIGKEY G4 | **有効** | UEFI Key Management から USB で .auth 登録 |
 | wn-02 | NiPoGi AK2Plus | **有効** | 同上 |
-| wn-03 | Minisforum UM790Pro | **非対応** | UEFI が対応していない |
+| wn-03 | Minisforum UM790Pro | **有効** | UEFI Shell + Reset To Setup Mode + auto-enrollment で登録 |
 
 ## 署名鍵
 
@@ -121,30 +120,54 @@ ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
    - UEFI 設定 → Secure Boot → Enabled
    - 保存して再起動
 
-### 方法 B: UEFI リセット + boot override + auto-enrollment（Minisforum S100）
+### 方法 B: UEFI Shell + Reset To Setup Mode + auto-enrollment（Minisforum S100）
 
-S100 の UEFI は Key Management メニューがなく、Setup Mode にも直接入れない。
-SecureBoot installer の systemd-boot 自動登録機能を利用する。
+S100 の UEFI は Key Management メニューがなく、USB からの直接キーインポートができない。
+UEFI Shell で .auth ファイルを ESP に配置し、systemd-boot の自動登録機能を利用する。
+
+`secureboot-installer` は auto-enrollment 用の .auth ファイルを ESP に配置しない（設計上、キー登録済みが前提）。
+そのため UEFI Shell で手動配置が必要。
+
+0. **USB 準備**: FAT32 フォーマットした USB に PK.auth, KEK.auth, db.auth をコピー
 
 1. **SecureBoot installer にアップグレード**
    ```bash
    talosctl upgrade --image ghcr.io/tsuguya/installer:vX.Y.Z -n <NODE_IP>
    ```
 
-2. **UEFI リセット**: UEFI 設定から工場出荷状態にリセット
+2. **UEFI 設定変更**（物理アクセス必要）
+   - Secure Boot → **Disabled**
+   - Secure Boot Mode → **Custom**
 
-3. **boot override で割り込み**: リセット後2回リブートが走る。**1回目のリブートで boot override** を使い、ディスクからのブートを選択。この時点で UEFI が Setup Mode になっている。
+3. **UEFI Shell で .auth ファイルを ESP にコピー**
+   - Save & Exit → UEFI Shell を起動
+   - USB を挿入した状態で以下を実行:
+   ```
+   map -r
+   ls fs0:\          # EFI, loader があるドライブを探す
+   mkdir fs0:\loader\keys
+   mkdir fs0:\loader\keys\auto
+   cp fs1:\db.auth fs0:\loader\keys\auto\db.auth
+   cp fs1:\KEK.auth fs0:\loader\keys\auto\KEK.auth
+   cp fs1:\PK.auth fs0:\loader\keys\auto\PK.auth
+   ```
+   - `fs0:` が ESP、`fs1:` が USB（環境により異なるので `ls` で確認）
+   - 完了後、再起動
 
-4. **auto-enrollment 選択**: systemd-boot のブートメニューが表示される。**一番下の auto-enrollment エントリを選択**。SecureBoot installer が `loader/keys/auto/` に配置した PK/KEK/db が自動登録される。
+4. **Reset To Setup Mode**: UEFI 設定 → Secure Boot → Custom → Reset To Setup Mode
+   - ポップアップ: Reset To Setup Mode → **Yes**
+   - ポップアップ: Reset Without Saving → **Cancel**
 
-5. **SecureBoot 有効化**: 再起動後、UEFI 設定 → Secure Boot → Enabled → 保存して再起動
+5. **Boot Override で起動**: Save & Exit → Boot Override からディスクを選択して起動
+   - UEFI Shell は選ばないこと（Setup Mode では Shell から戻れなくなる場合がある）
 
-USB に .auth ファイルを用意する必要はない（installer の ESP 内に含まれている）。
+6. **auto-enrollment 選択**: systemd-boot のブートメニューが表示される。**一番下の 「Enroll Secure Boot keys: auto」を選択**。`loader/keys/auto/` の PK/KEK/db が UEFI 変数に自動登録される。
+
+7. **SecureBoot 有効化**: 再起動後、UEFI 設定 → Secure Boot → **Enabled** → 保存して再起動
 
 **注意**:
 - SecureBoot ON では UEFI Shell に入れない
-- SecureBoot OFF では UEFI 変数の書き込みが拒否される
-- UEFI リセット後の Setup Mode タイミングで割り込むのがポイント
+- `secureboot-iso` を USB に焼いてブートする方法でも可（ISO には auto-enrollment 用 .auth が含まれている）
 - 失敗しても CMOS クリア（バッテリー外し）で復旧可能
 
 ### 確認
@@ -160,6 +183,6 @@ SecureBoot 有効の UEFI に未署名 installer を書くと **Secure Boot Viol
 
 ## 次のステップ
 
-- [ ] cp-01/02 に SecureBoot 適用（方法 B）
-- [ ] TPM ディスク暗号化（SecureBoot 有効ノードのみ）
+- [x] 全ノード SecureBoot 有効化完了
+- [ ] TPM ディスク暗号化（全ノード SecureBoot 有効済み）
 - [ ] siderolabs/extensions に issue: ホストレベル iscsiadm 復活要求

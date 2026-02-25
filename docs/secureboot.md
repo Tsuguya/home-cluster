@@ -2,9 +2,7 @@
 
 ## 概要
 
-Worker ノードで UEFI SecureBoot を有効化。カスタム署名鍵で UKI (Unified Kernel Image) を署名し、ブートチェーンの整合性を保証する。
-
-CP ノード（Minisforum S100）は UEFI が SecureBoot カスタムキー登録に非対応のため対象外。
+全ノードで UEFI SecureBoot を有効化。カスタム署名鍵で UKI (Unified Kernel Image) を署名し、ブートチェーンの整合性を保証する。
 
 ## アーキテクチャ
 

@@ -27,7 +27,8 @@ GHA (talos-custom-build)              Argo Workflows (argo namespace)
 
 | ノード | HW | SecureBoot | 備考 |
 |--------|-----|-----------|------|
-| cp-01/02/03 | Minisforum S100 | **非対応** | UEFI がカスタムキー登録に対応していない |
+| cp-03 | Minisforum S100 | **有効** | UEFI リセット + boot override で登録（下記参照） |
+| cp-01/02 | Minisforum S100 | 未適用 | cp-03 と同じ手順で可能 |
 | wn-01 | TRIGKEY G4 | **有効** | UEFI Key Management から USB で .auth 登録 |
 | wn-02 | NiPoGi AK2Plus | **有効** | 同上 |
 | wn-03 | Minisforum UM790Pro | **非対応** | UEFI が対応していない |
@@ -105,7 +106,7 @@ ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
 - `ghcr.io/tsuguya/installer:vX.Y.Z` に SecureBoot 署名済み installer が存在
 - USB に .auth ファイル（PK.auth, KEK.auth, db.auth）をコピー済み
 
-### 手順
+### 方法 A: UEFI Key Management（TRIGKEY G4 / NiPoGi AK2Plus）
 
 1. **installer アップグレード**
    ```bash
@@ -115,17 +116,43 @@ ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
 2. **UEFI キー登録**（物理アクセス必要）
    - UEFI 設定 → Key Management
    - USB から PK.auth, KEK.auth, db.auth をインポート
-   - TRIGKEY G4 / NiPoGi AK2Plus で動作確認済み
 
 3. **SecureBoot 有効化**
    - UEFI 設定 → Secure Boot → Enabled
    - 保存して再起動
 
-4. **確認**
+### 方法 B: UEFI リセット + boot override（Minisforum S100）
+
+S100 の UEFI は Key Management メニューがなく、Setup Mode にも直接入れない。
+以下の方法で SecureBoot キーを登録できる。
+
+1. **installer アップグレード**
    ```bash
-   talosctl -n <NODE_IP> get securitystate
-   # SecureBoot: true を確認
+   talosctl upgrade --image ghcr.io/tsuguya/installer:vX.Y.Z -n <NODE_IP>
    ```
+
+2. **USB 準備**: .auth ファイル（PK.auth, KEK.auth, db.auth）を FAT32 USB にコピー
+
+3. **UEFI リセット実行**: UEFI 設定からリセット（工場出荷状態に戻す）
+
+4. **boot override で割り込み**: リセット後、通常2回リブートが走る（この間にデフォルトキーが復元される）。**1回目のリブートで boot override を使い UEFI Shell に入る**。この時点で Setup Mode になっている。
+
+5. **UEFI Shell からキー登録**: Shell 内で USB の .auth ファイルを使いキー登録（db → KEK → PK の順、PK 登録で Setup Mode 終了）
+
+6. **SecureBoot 有効化**: UEFI 設定 → Secure Boot → Enabled → 保存して再起動
+
+**注意**:
+- SecureBoot ON では UEFI Shell に入れない（署名チェックで弾かれる）
+- SecureBoot OFF では UEFI 変数の書き込みが拒否される
+- UEFI リセット後の Setup Mode 経由タイミングで割り込むのがポイント
+- 失敗しても CMOS クリア（バッテリー外し）で復旧可能
+
+### 確認
+
+```bash
+talosctl -n <NODE_IP> get securitystate
+# SecureBoot: true を確認
+```
 
 ### 注意: 未署名 installer で SecureBoot ON にしない
 
@@ -133,6 +160,6 @@ SecureBoot 有効の UEFI に未署名 installer を書くと **Secure Boot Viol
 
 ## 次のステップ
 
+- [ ] cp-01/02 に SecureBoot 適用（方法 B）
 - [ ] TPM ディスク暗号化（SecureBoot 有効ノードのみ）
 - [ ] siderolabs/extensions に issue: ホストレベル iscsiadm 復活要求
-- [ ] CP ノード代替ハードウェア検討（SecureBoot 対応）

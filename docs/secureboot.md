@@ -121,30 +121,30 @@ ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
    - UEFI 設定 → Secure Boot → Enabled
    - 保存して再起動
 
-### 方法 B: UEFI リセット + boot override（Minisforum S100）
+### 方法 B: UEFI リセット + boot override + auto-enrollment（Minisforum S100）
 
 S100 の UEFI は Key Management メニューがなく、Setup Mode にも直接入れない。
-以下の方法で SecureBoot キーを登録できる。
+SecureBoot installer の systemd-boot 自動登録機能を利用する。
 
-1. **installer アップグレード**
+1. **SecureBoot installer にアップグレード**
    ```bash
    talosctl upgrade --image ghcr.io/tsuguya/installer:vX.Y.Z -n <NODE_IP>
    ```
 
-2. **USB 準備**: .auth ファイル（PK.auth, KEK.auth, db.auth）を FAT32 USB にコピー
+2. **UEFI リセット**: UEFI 設定から工場出荷状態にリセット
 
-3. **UEFI リセット実行**: UEFI 設定からリセット（工場出荷状態に戻す）
+3. **boot override で割り込み**: リセット後2回リブートが走る。**1回目のリブートで boot override** を使い、ディスクからのブートを選択。この時点で UEFI が Setup Mode になっている。
 
-4. **boot override で割り込み**: リセット後、通常2回リブートが走る（この間にデフォルトキーが復元される）。**1回目のリブートで boot override を使い UEFI Shell に入る**。この時点で Setup Mode になっている。
+4. **auto-enrollment 選択**: systemd-boot のブートメニューが表示される。**一番下の auto-enrollment エントリを選択**。SecureBoot installer が `loader/keys/auto/` に配置した PK/KEK/db が自動登録される。
 
-5. **UEFI Shell からキー登録**: Shell 内で USB の .auth ファイルを使いキー登録（db → KEK → PK の順、PK 登録で Setup Mode 終了）
+5. **SecureBoot 有効化**: 再起動後、UEFI 設定 → Secure Boot → Enabled → 保存して再起動
 
-6. **SecureBoot 有効化**: UEFI 設定 → Secure Boot → Enabled → 保存して再起動
+USB に .auth ファイルを用意する必要はない（installer の ESP 内に含まれている）。
 
 **注意**:
-- SecureBoot ON では UEFI Shell に入れない（署名チェックで弾かれる）
+- SecureBoot ON では UEFI Shell に入れない
 - SecureBoot OFF では UEFI 変数の書き込みが拒否される
-- UEFI リセット後の Setup Mode 経由タイミングで割り込むのがポイント
+- UEFI リセット後の Setup Mode タイミングで割り込むのがポイント
 - 失敗しても CMOS クリア（バッテリー外し）で復旧可能
 
 ### 確認

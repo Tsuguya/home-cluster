@@ -105,6 +105,10 @@ spec:
           - ghcr.io/siderolabs/iscsi-tools:v0.2.0
           - --base-installer-image
           - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
+          - --extra-kernel-arg
+          - "-lockdown"
+          - --extra-kernel-arg
+          - "lockdown=integrity"
         resources:
           requests:
             cpu: 100m

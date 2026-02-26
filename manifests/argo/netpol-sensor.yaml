@@ -15,7 +15,6 @@ spec:
           - talos-build
   ingressDeny:
     - fromEntities:
-        - cluster
         - world
   egress:
     - toEndpoints:

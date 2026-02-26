@@ -16,7 +16,6 @@ spec:
         operator: DoesNotExist
   ingressDeny:
     - fromEntities:
-        - cluster
         - world
   egress:
     - toEntities:

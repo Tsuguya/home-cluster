@@ -9,7 +9,6 @@ spec:
       app.kubernetes.io/name: argocd-notifications-controller
   ingressDeny:
     - fromEntities:
-        - cluster
         - world
   egress:
     - toEntities:

@@ -9,7 +9,6 @@ spec:
       name: onepassword-connect
   ingressDeny:
     - fromEntities:
-        - cluster
         - world
   egress:
     - toEntities:

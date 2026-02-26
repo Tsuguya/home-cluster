@@ -9,7 +9,6 @@ spec:
       pxe-sync: "true"
   ingressDeny:
     - fromEntities:
-        - cluster
         - world
   egress:
     - toEntities:

@@ -17,8 +17,8 @@ spec:
   egress:
     - toEntities:
         - kube-apiserver
-    - toCIDR:
-        - 0.0.0.0/0
+    - toFQDNs:
+        - matchName: "api.cloudflare.com"
       toPorts:
         - ports:
             - port: "443"

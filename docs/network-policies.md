@@ -58,10 +58,10 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **server** | ingress, cloudflared → 8080 | kube-apiserver, repo-server:8081, kanidm (kanidm):8443, redis:6379 |
 | **application-controller** | (none) | kube-apiserver, repo-server:8081, redis:6379 |
-| **repo-server** | server, app-controller → 8081 | HTTPS 443, redis:6379 |
+| **repo-server** | server, app-controller → 8081 | github.com:443, redis:6379 |
 | **redis** | server, repo-server, app-controller → 6379 | (none) |
 | **applicationset-controller** | (none) | kube-apiserver |
-| **notifications-controller** | (none) | kube-apiserver, HTTPS 443 |
+| **notifications-controller** | (none) | kube-apiserver, discord.com:443 |
 | **redis-secret-init** (Job) | (none) | kube-apiserver |
 | **cloudflared** | (none) | HTTPS 443, QUIC 7844, server:8080, eventsource (argo):12000 |
 
@@ -85,7 +85,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Component | Ingress | Egress |
 |---|---|---|
 | **prometheus** | grafana, tempo → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, tetragon-operator (kube-system):2113, seaweedfs (seaweedfs):9327, host/remote-node:10250/9100/2379/2381/10257/10259/9965/2112 |
-| **alertmanager** | prometheus → 9093/8080 | HTTPS 443 |
+| **alertmanager** | prometheus → 9093/8080 | discord.com:443 |
 | **grafana** | ingress → 3000 (L7 HTTP); prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, tempo:3200, shared-pg (database):5432, kanidm (kanidm):8443, HTTPS 443 |
 | **kube-state-metrics** | prometheus → 8080 | kube-apiserver |
 | **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | kube-apiserver |
@@ -135,7 +135,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **external-dns** | host → 7979 | kube-apiserver, HTTPS 443 (Cloudflare API) |
+| **external-dns** | host → 7979 | kube-apiserver, api.cloudflare.com:443 |
 
 ## cnpg-system (1 policy)
 

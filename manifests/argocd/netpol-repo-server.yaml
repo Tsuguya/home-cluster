@@ -18,8 +18,8 @@ spec:
             - port: "8081"
               protocol: TCP
   egress:
-    - toCIDR:
-        - 0.0.0.0/0
+    - toFQDNs:
+        - matchName: "github.com"
       toPorts:
         - ports:
             - port: "443"

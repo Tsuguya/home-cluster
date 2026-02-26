@@ -94,6 +94,10 @@ grafana:
     userKey: admin-user
     passwordKey: admin-password
   grafana.ini:
+    analytics:
+      check_for_updates: false
+      check_for_plugin_updates: false
+      reporting_enabled: false
     log:
       mode: console
     log.console:

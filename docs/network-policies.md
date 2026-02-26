@@ -167,7 +167,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **trivy-operator** | prometheus (monitoring) → 8080; host → 9090 (probes) | kube-apiserver |
+| **trivy-operator** | prometheus (monitoring) → 8080; host → 9090 (probes) | kube-apiserver, HTTPS 443 (registry metadata) |
 | **scan-jobs** (managed-by: trivy-operator) | (none) | HTTPS 443 (vuln DB + registries) |
 
 ## trident (2 policies)

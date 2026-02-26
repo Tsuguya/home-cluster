@@ -20,3 +20,5 @@ spec:
       kind: ClusterRole
     - group: '*'
       kind: ClusterRoleBinding
+    - group: ''
+      kind: Namespace

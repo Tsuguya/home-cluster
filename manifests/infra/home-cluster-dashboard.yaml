@@ -80,7 +80,7 @@ data:
           "title": "Disk Usage by Node",
           "type": "bargauge",
           "targets": [
-            { "expr": "1 - node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"}", "legendFormat": "{{ instance }}", "refId": "A" }
+            { "expr": "1 - node_filesystem_avail_bytes{mountpoint=\"/var\",fstype=\"xfs\"} / node_filesystem_size_bytes{mountpoint=\"/var\",fstype=\"xfs\"}", "legendFormat": "{{ instance }}", "refId": "A" }
           ]
         },
         {

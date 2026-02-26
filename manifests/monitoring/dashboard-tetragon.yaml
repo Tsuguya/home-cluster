@@ -1,0 +1,458 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-tetragon
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  tetragon-security-events.json: |
+    {
+      "annotations": {"list": []},
+      "editable": true,
+      "graphTooltip": 1,
+      "links": [],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["tetragon", "security"],
+      "time": {"from": "now-1h", "to": "now"},
+      "timezone": "browser",
+      "title": "Tetragon Security Events",
+      "uid": "tetragon-security-events",
+      "templating": {
+        "list": [
+          {
+            "current": {"selected": true, "text": "All", "value": "$__all"},
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "definition": "label_values(tetragon_policy_events_total, policy)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "name": "policy",
+            "label": "Policy",
+            "query": {"query": "label_values(tetragon_policy_events_total, policy)"},
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "current": {"selected": true, "text": "All", "value": "$__all"},
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "definition": "label_values(tetragon_policy_events_total, namespace)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "name": "namespace",
+            "label": "Namespace",
+            "query": {"query": "label_values(tetragon_policy_events_total, namespace)"},
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 100,
+          "type": "row",
+          "title": "Overview",
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+          "collapsed": false
+        },
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Total Policy Event Rate",
+          "gridPos": {"h": 6, "w": 4, "x": 0, "y": 1},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum(rate(tetragon_policy_events_total{policy=~\"$policy\",namespace=~\"$namespace\"}[$__rate_interval]))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "eps",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 1},
+                  {"color": "red", "value": 10}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"]},
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "sensitive-file-access",
+          "gridPos": {"h": 6, "w": 5, "x": 4, "y": 1},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum(rate(tetragon_policy_events_total{policy=\"sensitive-file-access\",namespace=~\"$namespace\"}[$__rate_interval]))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "eps",
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.5},
+                  {"color": "red", "value": 5}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"]},
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "suspicious-binary",
+          "gridPos": {"h": 6, "w": 5, "x": 9, "y": 1},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum(rate(tetragon_policy_events_total{policy=\"suspicious-binary\",namespace=~\"$namespace\"}[$__rate_interval]))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "eps",
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.5},
+                  {"color": "red", "value": 5}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"]},
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "privileges-raise",
+          "gridPos": {"h": 6, "w": 5, "x": 14, "y": 1},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum(rate(tetragon_policy_events_total{policy=\"privileges-raise\",namespace=~\"$namespace\"}[$__rate_interval]))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "eps",
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.1},
+                  {"color": "red", "value": 1}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"]},
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 5,
+          "type": "stat",
+          "title": "Loaded Policies",
+          "gridPos": {"h": 6, "w": 5, "x": 19, "y": 1},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "count(tetragon_tracingpolicy_loaded{state=\"active\"})",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"]},
+            "colorMode": "background",
+            "graphMode": "none"
+          }
+        },
+        {
+          "id": 101,
+          "type": "row",
+          "title": "Events Over Time",
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 7},
+          "collapsed": false
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Events by Policy",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum by (policy) (rate(tetragon_policy_events_total{policy=~\"$policy\",namespace=~\"$namespace\"}[$__rate_interval]))",
+              "refId": "A",
+              "legendFormat": "{{policy}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"fillOpacity": 20, "stacking": {"mode": "normal"}},
+              "unit": "eps"
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "Events by Namespace",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum by (namespace) (rate(tetragon_policy_events_total{policy=~\"$policy\",namespace=~\"$namespace\"}[$__rate_interval]))",
+              "refId": "A",
+              "legendFormat": "{{namespace}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"fillOpacity": 20, "stacking": {"mode": "normal"}},
+              "unit": "eps"
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        },
+        {
+          "id": 102,
+          "type": "row",
+          "title": "Top Offenders",
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 16},
+          "collapsed": false
+        },
+        {
+          "id": 8,
+          "type": "table",
+          "title": "Top Workloads by Event Count",
+          "gridPos": {"h": 8, "w": 16, "x": 0, "y": 17},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "topk(20, sum by (namespace, workload, binary, policy) (rate(tetragon_policy_events_total{policy=~\"$policy\",namespace=~\"$namespace\"}[$__rate_interval])))",
+              "refId": "A",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {
+                "matcher": {"id": "byName", "options": "Value"},
+                "properties": [
+                  {"id": "displayName", "value": "Events/sec"},
+                  {"id": "unit", "value": "eps"},
+                  {"id": "custom.cellOptions", "value": {"type": "color-background"}},
+                  {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "transparent", "value": null}, {"color": "yellow", "value": 0.1}, {"color": "red", "value": 1}]}}
+                ]
+              },
+              {
+                "matcher": {"id": "byName", "options": "Time"},
+                "properties": [{"id": "custom.hidden", "value": true}]
+              }
+            ]
+          },
+          "transformations": [
+            {"id": "sortBy", "options": {"fields": [{"desc": true, "displayName": "Value"}]}}
+          ],
+          "options": {
+            "sortBy": [{"displayName": "Value", "desc": true}],
+            "footer": {"enablePagination": true}
+          }
+        },
+        {
+          "id": 9,
+          "type": "bargauge",
+          "title": "Events by Namespace",
+          "gridPos": {"h": 8, "w": 8, "x": 16, "y": 17},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sort_desc(sum by (namespace) (rate(tetragon_policy_events_total{policy=~\"$policy\",namespace=~\"$namespace\"}[$__rate_interval])))",
+              "refId": "A",
+              "legendFormat": "{{namespace}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "eps",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.5},
+                  {"color": "red", "value": 5}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"]},
+            "orientation": "horizontal",
+            "displayMode": "gradient"
+          }
+        },
+        {
+          "id": 103,
+          "type": "row",
+          "title": "Health",
+          "gridPos": {"h": 1, "w": 24, "x": 0, "y": 25},
+          "collapsed": false
+        },
+        {
+          "id": 10,
+          "type": "timeseries",
+          "title": "BPF Memory Usage",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 26},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum by (instance) (tetragon_tracingpolicy_kernel_memory_bytes)",
+              "refId": "A",
+              "legendFormat": "{{instance}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"fillOpacity": 10},
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        },
+        {
+          "id": 11,
+          "type": "stat",
+          "title": "Ringbuf Lost Events",
+          "gridPos": {"h": 8, "w": 6, "x": 12, "y": 26},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum(rate(tetragon_ringbuf_perf_event_lost_total[$__rate_interval]))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "eps",
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.01},
+                  {"color": "red", "value": 1}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"]},
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 12,
+          "type": "stat",
+          "title": "Errors Total Rate",
+          "gridPos": {"h": 8, "w": 6, "x": 18, "y": 26},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum(rate(tetragon_errors_total[$__rate_interval]))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "eps",
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.01},
+                  {"color": "red", "value": 1}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"]},
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        }
+      ]
+    }

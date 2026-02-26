@@ -31,6 +31,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Workflow pods (argo) | SeaweedFS filer (seaweedfs) | 8333 | Artifact/log storage |
 | PXE sync pods (argo) | SeaweedFS filer (seaweedfs) | 8333 | Artifact/log storage |
 | Argo Workflows server (argo) | SeaweedFS filer (seaweedfs) | 8333 | Archived log retrieval |
+| Prometheus (monitoring) | Trivy Operator (trivy-system) | 8080 | Metrics scrape |
 | Grafana (monitoring) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | ArgoCD server (argocd) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | Argo Workflows server (argo) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
@@ -84,7 +85,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **prometheus** | grafana, tempo → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, tetragon-operator (kube-system):2113, seaweedfs (seaweedfs):9327, host/remote-node:10250/9100/2379/2381/10257/10259/9965/2112 |
+| **prometheus** | grafana, tempo → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, tetragon-operator (kube-system):2113, seaweedfs (seaweedfs):9327, trivy-operator (trivy-system):8080, host/remote-node:10250/9100/2379/2381/10257/10259/9965/2112 |
 | **alertmanager** | prometheus → 9093/8080 | discord.com:443 |
 | **grafana** | ingress → 3000 (L7 HTTP); prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, tempo:3200, shared-pg (database):5432, kanidm (kanidm):8443 |
 | **kube-state-metrics** | prometheus → 8080 | kube-apiserver |
@@ -161,6 +162,13 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **oauth2-proxy-hubble** | ingress → 4180 | hubble-ui (kube-system):8081, kanidm (kanidm):8443 |
 | **oauth2-proxy-seaweedfs** | ingress → 4180 | seaweedfs-filer (seaweedfs):8888, kanidm (kanidm):8443 |
+
+## trivy-system (2 policies)
+
+| Component | Ingress | Egress |
+|---|---|---|
+| **trivy-operator** | prometheus (monitoring) → 8080; host → 9090 (probes) | kube-apiserver |
+| **scan-jobs** (managed-by: trivy-operator) | (none) | HTTPS 443 (vuln DB + registries) |
 
 ## trident (2 policies)
 

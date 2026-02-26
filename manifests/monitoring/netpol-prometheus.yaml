@@ -81,6 +81,14 @@ spec:
         - ports:
             - port: "9327"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: trivy-operator
+            io.kubernetes.pod.namespace: trivy-system
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
     - toEntities:
         - host
         - remote-node

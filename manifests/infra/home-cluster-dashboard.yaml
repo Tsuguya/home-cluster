@@ -96,8 +96,8 @@ data:
           "title": "SeaweedFS Volume",
           "type": "stat",
           "targets": [
-            { "expr": "sum(seaweedfs_volumeServer_total_disk_size)", "legendFormat": "Used", "refId": "A" },
-            { "expr": "sum(seaweedfs_volumeServer_max_volume_count) * 30 * 1024 * 1024 * 1024", "legendFormat": "Max Volumes (est.)", "refId": "B" }
+            { "expr": "sum(SeaweedFS_volumeServer_total_disk_size)", "legendFormat": "Used", "refId": "A" },
+            { "expr": "sum(SeaweedFS_volumeServer_max_volume_count) * 30 * 1024 * 1024 * 1024", "legendFormat": "Max Volumes (est.)", "refId": "B" }
           ]
         },
         {

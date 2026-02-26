@@ -4,3 +4,6 @@
 # Editor
 .vscode/
 *.swp
+
+# Node
+node_modules/

@@ -117,29 +117,69 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install MCP server dependencies
+        run: npm ci
+        working-directory: .github/mcp/pr-review
+
+      - uses: azure/setup-helm@v4
+
+      - name: Create MCP config
+        run: |
+          cat > /tmp/mcp-config.json << EOF
+          {
+            "mcpServers": {
+              "pr-review": {
+                "command": "npx",
+                "args": ["tsx", "src/index.ts"],
+                "cwd": "${GITHUB_WORKSPACE}/.github/mcp/pr-review",
+                "env": {
+                  "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+                }
+              }
+            }
+          }
+          EOF
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_bots: "renovate[bot]"
-          claude_args: "--model claude-sonnet-4-6 --max-turns 25 --disallowedTools Edit,Write,NotebookEdit --allowedTools 'Bash(gh:*)' 'Bash(curl:*)' Read Glob Grep WebFetch WebSearch"
+          claude_args: "--model claude-sonnet-4-6 --max-turns 15 --disallowedTools Edit,Write,NotebookEdit --allowedTools 'Bash(gh:*)' Read 'mcp__pr-review__*' --mcp-config /tmp/mcp-config.json"
           prompt: |
             You are reviewing a Renovate dependency update PR for a Kubernetes homelab cluster managed by ArgoCD.
 
-            Repository structure:
-            - apps/ — ArgoCD Application definitions
-            - helm-values/ — Helm chart values (one directory per service)
-            - manifests/ — Raw K8s manifests
+            You have MCP tools for efficient review. Follow this workflow:
 
-            Steps:
-            1. Run `gh pr view ${{ github.event.pull_request.number }}` to read the PR description and release notes
-            2. Run `gh pr diff ${{ github.event.pull_request.number }}` to see the changes
-            3. Read the relevant helm-values/ files to check if the update affects any configured options
-            4. If the PR description lacks sufficient release notes, search the web for the changelog
-            5. Evaluate:
-               - No breaking changes affecting our values configuration
-               - No deprecated options we currently use
-               - No known critical bugs in the new version
+            Step 1: Get PR summary
+            Use `get_pr_summary` with pr_number=${{ github.event.pull_request.number }} to get structured PR info including update type, package versions, release notes, and affected files.
+
+            Step 2: If update_type is "helm", run helm values diff
+            Use `helm_values_diff` with the chart's repo_url, chart name, old/new versions (from step 1), and user_values_path (from affected_helm_values in step 1).
+            This writes detailed diffs to /tmp/pr-review/diff/ — check the summary first.
+
+            Step 3: Check app version change
+            If `app_version_change` is present, the underlying application version also changed (e.g., ArgoCD chart bump includes ArgoCD server version bump).
+            - Check `app_version_change.level` — major/minor upgrades need careful review
+            - If `app_version_change.release_notes_file` exists, use `Read` on `/tmp/pr-review/app-release-notes.md` for upstream release notes
+            - This is often where breaking changes actually live (chart changes are usually just values, app changes affect behavior)
+
+            Step 4: Deep dive if needed
+            - If removed_keys or impact_on_user_values has entries, use `Read` on the relevant section diff files in /tmp/pr-review/diff/sections/
+            - If release_notes_summary mentions breaking/deprecated keywords, use `Read` on /tmp/pr-review/release-notes.md
+            - Read the relevant helm-values/ files to verify your understanding
+
+            Step 5: Evaluate
+            - No breaking changes affecting our values configuration
+            - No deprecated options we currently use
+            - No removed keys that we depend on
+            - No known critical bugs in the new version
 
             Decision:
-            - SAFE: Run `gh pr review ${{ github.event.pull_request.number }} --approve -b "AI Review: No breaking changes detected."` then `gh pr merge ${{ github.event.pull_request.number }} --squash`
+            - SAFE: Run `gh pr review ${{ github.event.pull_request.number }} --approve -b "AI Review: <brief summary of what was checked>"` then `gh pr merge ${{ github.event.pull_request.number }} --squash`
             - CONCERNS: Run `gh pr comment ${{ github.event.pull_request.number }} -b "<your detailed concerns>"` — do NOT approve or merge

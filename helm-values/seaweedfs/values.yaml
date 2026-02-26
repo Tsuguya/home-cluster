@@ -14,7 +14,7 @@ master:
     type: "emptyDir"
   resources:
     requests:
-      cpu: 25m
+      cpu: 10m
       memory: 64Mi
     limits:
       memory: 256Mi
@@ -60,7 +60,7 @@ volume:
     type: "emptyDir"
   resources:
     requests:
-      cpu: 50m
+      cpu: 10m
       memory: 128Mi
     limits:
       memory: 512Mi
@@ -100,10 +100,10 @@ filer:
     type: "emptyDir"
   resources:
     requests:
-      cpu: 25m
-      memory: 128Mi
+      cpu: 10m
+      memory: 256Mi
     limits:
-      memory: 512Mi
+      memory: 768Mi
   tolerations: |
     - key: memory-constrained
       operator: Exists

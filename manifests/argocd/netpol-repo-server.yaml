@@ -21,6 +21,7 @@ spec:
     - toFQDNs:
         - matchName: "github.com"
         - matchPattern: "*.github.io"
+        - matchPattern: "*.githubusercontent.com"
       toPorts:
         - ports:
             - port: "443"

@@ -11,8 +11,11 @@ spec:
     - fromEntities:
         - world
   egress:
-    - toCIDR:
-        - 0.0.0.0/0
+    - toFQDNs:
+        - matchPattern: "*.v2.argotunnel.com"
+        - matchName: "cftunnel.com"
+        - matchName: "h2.cftunnel.com"
+        - matchName: "quic.cftunnel.com"
       toPorts:
         - ports:
             - port: "443"

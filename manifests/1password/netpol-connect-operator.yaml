@@ -13,8 +13,8 @@ spec:
   egress:
     - toEntities:
         - kube-apiserver
-    - toCIDR:
-        - 0.0.0.0/0
+    - toFQDNs:
+        - matchPattern: "*.1password.com"
       toPorts:
         - ports:
             - port: "443"

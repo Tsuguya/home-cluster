@@ -17,6 +17,13 @@ spec:
   egress:
     - toEntities:
         - kube-apiserver
+    - toFQDNs:
+        - matchName: "acme-v02.api.letsencrypt.org"
+        - matchName: "api.cloudflare.com"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
     - toCIDR:
         - 0.0.0.0/0
       toPorts:
@@ -24,6 +31,4 @@ spec:
             - port: "53"
               protocol: UDP
             - port: "53"
-              protocol: TCP
-            - port: "443"
               protocol: TCP

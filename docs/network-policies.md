@@ -63,7 +63,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **applicationset-controller** | (none) | kube-apiserver |
 | **notifications-controller** | (none) | kube-apiserver, discord.com:443 |
 | **redis-secret-init** (Job) | (none) | kube-apiserver |
-| **cloudflared** | (none) | HTTPS 443, QUIC 7844, server:8080, eventsource (argo):12000 |
+| **cloudflared** | (none) | *.v2.argotunnel.com + cftunnel.com:443/7844, server:8080, eventsource (argo):12000 |
 
 ## argo (9 policies)
 
@@ -126,7 +126,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **controller** | host → 9403 | kube-apiserver, external DNS 53 + HTTPS 443 (ACME/Cloudflare DNS-01) |
+| **controller** | host → 9403 | kube-apiserver, acme-v02.api.letsencrypt.org:443, api.cloudflare.com:443, external DNS 53 (propagation check) |
 | **cainjector** | (none) | kube-apiserver |
 | **webhook** | kube-apiserver/remote-node → 10250; host → 6080 | kube-apiserver |
 | **startupapicheck** (Job) | (none) | kube-apiserver |
@@ -147,7 +147,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **connect-operator** | (none) | kube-apiserver, HTTPS 443 (1Password API) |
+| **connect-operator** | (none) | kube-apiserver, *.1password.com:443 |
 
 ## kanidm (1 policy)
 

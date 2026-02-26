@@ -26,42 +26,6 @@ spec:
           matchActions:
             - action: Post
               rateLimit: "1m"
-        - matchNamespaces:
-            - namespace: Pid
-              operator: NotIn
-              values:
-                - "host_ns"
-          matchArgs:
-            - index: 0
-              operator: "Equal"
-              values:
-                - "/etc/passwd"
-          matchActions:
-            - action: Post
-              rateLimit: "1m"
-
-    - call: "security_file_open"
-      syscall: false
-      message: "Kubernetes service account token accessed"
-      args:
-        - index: 0
-          type: "file"
-        - index: 1
-          type: "int"
-      selectors:
-        - matchNamespaces:
-            - namespace: Pid
-              operator: NotIn
-              values:
-                - "host_ns"
-          matchArgs:
-            - index: 0
-              operator: "Prefix"
-              values:
-                - "/var/run/secrets/kubernetes.io/serviceaccount"
-          matchActions:
-            - action: Post
-              rateLimit: "1m"
 
     - call: "security_file_open"
       syscall: false

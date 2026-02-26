@@ -55,6 +55,7 @@ spec:
             for pod in $CILIUM_PODS; do
               RESULT=$(kubectl exec -n kube-system "$pod" -- cilium endpoint list -o json 2>/dev/null | \
                 jq -r '.[] |
+                  select(.status."external-identifiers"."k8s-namespace" != null) |
                   select(.status."external-identifiers"."pod-name" | length > 0) |
                   select((.status.policy.spec."policy-enabled" // "none") == "both" | not) |
                   "\(.status."external-identifiers"."k8s-namespace")/\(.status."external-identifiers"."pod-name") policy=\(.status.policy.spec."policy-enabled" // "none")"' 2>/dev/null || true)

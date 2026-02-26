@@ -113,7 +113,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **hubble-relay** | host → 4222; hubble-ui → 4245 | host/remote-node/kube-apiserver:4244 |
 | **hubble-ui** | oauth2-proxy-hubble (oauth2-proxy)/host → 8081 | kube-apiserver, hubble-relay:4245 |
 | **metrics-server** | host/remote-node/kube-apiserver → 10250 | kube-apiserver, host/remote-node:10250 |
-| **reloader** | (none) | kube-apiserver |
+| **reloader** | host → 9090 (probes) | kube-apiserver |
 | **tetragon-operator** | prometheus (monitoring) → 2113 | kube-apiserver |
 
 ## database (1 policy)

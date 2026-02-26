@@ -1,6 +1,8 @@
 global:
   monitoring:
     enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack
   automountServiceAccountToken: false
 
 master:

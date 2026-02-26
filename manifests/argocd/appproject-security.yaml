@@ -22,3 +22,5 @@ spec:
       kind: ClusterRoleBinding
     - group: ''
       kind: Namespace
+    - group: aquasecurity.github.io
+      kind: '*'

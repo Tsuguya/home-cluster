@@ -127,30 +127,11 @@ jobs:
 
       - uses: azure/setup-helm@v4
 
-      - name: Create MCP config
-        run: |
-          cat > /tmp/mcp-config.json << EOF
-          {
-            "mcpServers": {
-              "pr-review": {
-                "command": "npx",
-                "args": ["tsx", "src/index.ts"],
-                "cwd": "${GITHUB_WORKSPACE}/.github/mcp/pr-review",
-                "env": {
-                  "GITHUB_TOKEN": "${GITHUB_TOKEN}"
-                }
-              }
-            }
-          }
-          EOF
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_bots: "renovate[bot]"
-          claude_args: "--model claude-sonnet-4-6 --max-turns 15 --disallowedTools Edit,Write,NotebookEdit --allowedTools 'Bash(gh:*)' Read 'mcp__pr-review__*' --mcp-config /tmp/mcp-config.json"
+          claude_args: "--model claude-sonnet-4-6 --max-turns 15 --disallowedTools Edit,Write,NotebookEdit --allowedTools 'Bash(gh:*)' Read 'mcp__pr-review__*' --mcp-config .github/mcp/pr-review/mcp-config.json"
           prompt: |
             You are reviewing a Renovate dependency update PR for a Kubernetes homelab cluster managed by ArgoCD.
 

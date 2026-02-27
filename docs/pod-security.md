@@ -10,7 +10,7 @@ Cluster-wide default is **restricted enforce** (configured in Talos `admissionCo
 | argo | restricted | EventBus/EventSource/Sensor に runAsUser:1000 を明示設定 |
 | argocd | restricted | |
 | cert-manager | restricted | |
-| cilium-secrets | restricted | Pod なし |
+| cilium-secrets | (default) | Cilium helm 管理。明示ラベルなし、クラスタデフォルトで restricted |
 | cnpg-system | restricted | |
 | database | restricted | |
 | default | restricted | Pod なし |
@@ -64,3 +64,4 @@ cluster:
 - **argo-events images** run as root by default — `runAsUser: 1000` required in pod securityContext
 - **NATS (EventBus)** also runs as root — same fix, plus all 3 containers (main, reloader, metrics) need container-level securityContext
 - **Talos merges** its own kube-system exemption into the admissionControl config — do NOT add kube-system in the patch (causes duplicate)
+- **他の controller が管理する namespace** (e.g. cilium-secrets) に PSA ラベルを付けると tracking-id が競合して OutOfSync が出たり消えたりする。クラスタデフォルトが restricted なので明示ラベル不要

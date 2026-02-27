@@ -33,6 +33,13 @@ controller:
         - ALL
   workflowDefaults:
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       ttlStrategy:
         secondsAfterSuccess: 86400
         secondsAfterFailure: 259200
@@ -57,6 +64,20 @@ controller:
       passwordSecret:
         name: argo-pg-credentials
         key: password
+
+mainContainer:
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+executor:
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
 
 server:
   resources:

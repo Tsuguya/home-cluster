@@ -10,8 +10,14 @@ spec:
     - name: trivy
       rules:
         - alert: TrivyCriticalVulnerability
-          expr: sum by (image_repository, image_tag) (trivy_image_vulnerabilities{severity="Critical"}) > 0
-          for: 15m
+          expr: >-
+            sum by (image_repository, image_tag) (
+              trivy_image_vulnerabilities{
+                severity="Critical",
+                image_repository!~"kube-apiserver|kube-scheduler|kube-controller-manager|coredns/coredns|qnapsystem/.*"
+              }
+            ) > 0
+          for: 1h
           labels:
             severity: critical
           annotations:

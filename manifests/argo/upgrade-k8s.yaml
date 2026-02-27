@@ -304,7 +304,7 @@ spec:
               kubectl drain "$SHORT_NAME" --ignore-daemonsets --delete-emptydir-data --timeout=300s
               talosctl -n "$IP" --talosconfig /etc/talos/config \
                 patch machineconfig \
-                -p "[{\"op\":\"add\",\"path\":\"/machine/kubelet/image\",\"value\":\"ghcr.io/siderolabs/kubelet:v${NEW_VER}\"}]"
+                -p "{\"machine\":{\"kubelet\":{\"image\":\"ghcr.io/siderolabs/kubelet:v${NEW_VER}\"}}}"
               kubectl wait --for=condition=Ready "node/${SHORT_NAME}" --timeout=300s
               kubectl uncordon "$SHORT_NAME"
               echo "Node ${SHORT_NAME} upgraded to v${NEW_VER}"

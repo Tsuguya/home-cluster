@@ -132,7 +132,9 @@ S3 ストレージ（Loki、Tempo、Argo Workflows）は SeaweedFS が提供し�
 
 #### Kanidm 初期設定
 
-Kanidm pod が Running になった後:
+> **R2 バックアップが存在する場合**: 手動セットアップの代わりに `docs/disaster-recovery.md` の「両方のデータロス（R2 バックアップからリストア）」手順でリストアできる。ユーザー・グループ・OAuth2 クライアントが全て復元されるため、以下の手動手順は不要。
+
+Kanidm pod が Running になった後（初回構築 or バックアップなしの場合）:
 
 1. admin / idm_admin のパスワード復旧:
    ```bash

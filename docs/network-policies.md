@@ -154,7 +154,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443; argocd-server (argocd) → 8443; argo-workflows-server (argo) → 8443; oauth2-proxy-hubble (oauth2-proxy) → 8443; oauth2-proxy-seaweedfs (oauth2-proxy) → 8443 | kube-apiserver |
+| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443; argocd-server (argocd) → 8443; argo-workflows-server (argo) → 8443; oauth2-proxy-hubble (oauth2-proxy) → 8443; oauth2-proxy-seaweedfs (oauth2-proxy) → 8443; self → 8444 (replication) | self:8444 (replication), kube-apiserver |
 
 ## oauth2-proxy (2 policies)
 

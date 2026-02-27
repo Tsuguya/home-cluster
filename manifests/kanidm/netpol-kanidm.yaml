@@ -50,6 +50,20 @@ spec:
         - ports:
             - port: "8443"
               protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: kanidm
+      toPorts:
+        - ports:
+            - port: "8444"
+              protocol: TCP
   egress:
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: kanidm
+      toPorts:
+        - ports:
+            - port: "8444"
+              protocol: TCP
     - toEntities:
         - kube-apiserver

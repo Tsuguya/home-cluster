@@ -70,6 +70,36 @@ kubectl logs -n database -l cnpg.io/cluster=shared-pg --tail=20
 # "recovery completed" のログを確認
 ```
 
+## Kanidm 復旧
+
+Kanidm は 2 Pod レプリケーション構成（mutual-pull）。片方のデータロスは他方から再同期で復旧可能。
+
+### 片方のデータロス
+
+Pod が空 DB で再起動した場合、レプリケーション証明書も再生成されるため ConfigMap の更新が必要。
+
+1. 新しい証明書を取得:
+
+```bash
+kubectl exec -n kanidm kanidm-<N> -- kanidmd show-replication-certificate -c /config/server.toml
+```
+
+2. `manifests/kanidm/configmap-repl.yaml` のパートナー証明書を更新して push
+
+3. Reloader が Pod をローリングリスタート後、consumer refresh で同期:
+
+```bash
+kubectl exec -n kanidm kanidm-<N> -- kanidmd refresh-replication-consumer -c /config/server.toml
+```
+
+### 両方のデータロス
+
+レプリケーションでは復旧不可。手動で Kanidm を再セットアップ:
+
+1. `kanidmd recover-account admin` で初期管理者パスワードをリセット
+2. ユーザー・グループ・OAuth2 クライアントを再作成
+3. 各サービスの SSO 設定を確認
+
 ## etcd 復旧
 
 ### 前提

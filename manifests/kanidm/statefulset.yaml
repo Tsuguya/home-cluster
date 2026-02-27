@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kanidm
+  namespace: kanidm
+  labels:
+    app.kubernetes.io/name: kanidm
+spec:
+  serviceName: kanidm-headless
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kanidm
+  template:
+    metadata:
+      annotations:
+        secret.reloader.stakater.com/reload: "kanidm-tls"
+        configmap.reloader.stakater.com/reload: "kanidm-server-config,kanidm-repl-config"
+      labels:
+        app.kubernetes.io/name: kanidm
+    spec:
+      automountServiceAccountToken: false
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: kanidm
+              topologyKey: kubernetes.io/hostname
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: config-init
+          image: alpine:3.23
+          command:
+            - sh
+            - -c
+            - |
+              cp /base-config/server.toml /config/server.toml
+              ORDINAL=${HOSTNAME##*-}
+              cat >> /config/server.toml <<EOF
+
+              [replication]
+              origin = "repl://${HOSTNAME}.kanidm-headless.kanidm.svc.cluster.local:8444"
+              bindaddress = "[::]:8444"
+              EOF
+              PARTNER_FILE="/repl-config/partner-${ORDINAL}.toml"
+              if [ -f "$PARTNER_FILE" ]; then
+                cat "$PARTNER_FILE" >> /config/server.toml
+              fi
+          volumeMounts:
+            - name: config-out
+              mountPath: /config
+            - name: base-config
+              mountPath: /base-config
+              readOnly: true
+            - name: repl-config
+              mountPath: /repl-config
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+      containers:
+        - name: kanidm
+          image: docker.io/kanidm/server:1.9.1
+          args:
+            - kanidmd
+            - server
+            - -c
+            - /config/server.toml
+          ports:
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+            - name: replication
+              containerPort: 8444
+              protocol: TCP
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+            - name: config-out
+              mountPath: /config
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 30
+      volumes:
+        - name: certs
+          secret:
+            secretName: kanidm-tls
+        - name: base-config
+          configMap:
+            name: kanidm-server-config
+        - name: repl-config
+          configMap:
+            name: kanidm-repl-config
+            optional: true
+        - name: config-out
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: qnap-iscsi
+        resources:
+          requests:
+            storage: 1Gi

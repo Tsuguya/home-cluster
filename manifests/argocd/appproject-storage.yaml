@@ -34,6 +34,8 @@ spec:
       kind: Namespace
     - group: '*'
       kind: StorageClass
+    - group: ''
+      kind: PersistentVolume
     - group: '*'
       kind: CSIDriver
     - group: '*'

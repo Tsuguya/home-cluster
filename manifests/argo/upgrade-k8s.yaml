@@ -140,8 +140,8 @@ spec:
             DIFF=$(curl -sf "https://api.github.com/repos/Tsuguya/home-infra/compare/${BEFORE}...${AFTER}" \
               -H "Accept: application/vnd.github.v3.diff")
 
-            OLD_VER=$(echo "$DIFF" | grep '^-kubernetesVersion:' | sed 's/^-kubernetesVersion: *//' | tr -d '"' | head -1 || true)
-            NEW_VER=$(echo "$DIFF" | grep '^+kubernetesVersion:' | sed 's/^+kubernetesVersion: *//' | tr -d '"' | head -1 || true)
+            OLD_VER=$(echo "$DIFF" | grep '^-kubernetesVersion:' | sed 's/^-kubernetesVersion: *//' | tr -d '"v' | head -1 || true)
+            NEW_VER=$(echo "$DIFF" | grep '^+kubernetesVersion:' | sed 's/^+kubernetesVersion: *//' | tr -d '"v' | head -1 || true)
 
             if [ -z "$OLD_VER" ] || [ -z "$NEW_VER" ]; then
               echo "No kubernetesVersion change detected."
@@ -245,15 +245,20 @@ spec:
             CP_IPS="{{inputs.parameters.cp-ips}}"
             WORKER_IPS="{{inputs.parameters.worker-ips}}"
 
+            FIRST_CP=$(echo "$CP_IPS" | cut -d, -f1)
+
             echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
             curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
-              -o /usr/local/bin/talosctl && chmod +x /usr/local/bin/talosctl
+              -o /usr/local/bin/talosctl
+            chmod +x /usr/local/bin/talosctl
             curl -fsSL "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl" \
-              -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
+              -o /usr/local/bin/kubectl
+            chmod +x /usr/local/bin/kubectl
 
             echo "=== Pre-flight: talosctl health ==="
             talosctl health \
               --talosconfig /etc/talos/config \
+              -n "${FIRST_CP}" \
               --control-plane-nodes "${CP_IPS}" \
               --worker-nodes "${WORKER_IPS}" \
               --wait-timeout 1m
@@ -341,9 +346,11 @@ spec:
 
             echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
             curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
-              -o /usr/local/bin/talosctl && chmod +x /usr/local/bin/talosctl
+              -o /usr/local/bin/talosctl
+            chmod +x /usr/local/bin/talosctl
             curl -fsSL "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl" \
-              -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
+              -o /usr/local/bin/kubectl
+            chmod +x /usr/local/bin/kubectl
 
             echo "=== Upgrading remaining nodes (pinned to ${UPGRADED_NODE}) ==="
             ALL_NODES=$(echo "$NODES_JSON" | jq -c '.[]')
@@ -406,15 +413,20 @@ spec:
             WORKER_IPS="{{inputs.parameters.worker-ips}}"
             NODES_JSON='{{inputs.parameters.nodes-json}}'
 
+            FIRST_CP=$(echo "$CP_IPS" | cut -d, -f1)
+
             echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
             curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
-              -o /usr/local/bin/talosctl && chmod +x /usr/local/bin/talosctl
+              -o /usr/local/bin/talosctl
+            chmod +x /usr/local/bin/talosctl
             curl -fsSL "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl" \
-              -o /usr/local/bin/kubectl && chmod +x /usr/local/bin/kubectl
+              -o /usr/local/bin/kubectl
+            chmod +x /usr/local/bin/kubectl
 
             echo "=== Post-upgrade: talosctl health ==="
             talosctl health \
               --talosconfig /etc/talos/config \
+              -n "${FIRST_CP}" \
               --control-plane-nodes "${CP_IPS}" \
               --worker-nodes "${WORKER_IPS}" \
               --wait-timeout 2m

@@ -43,6 +43,8 @@ prometheus:
       requests:
         cpu: 200m
         memory: 1Gi
+    nodeSelector:
+      kubernetes.io/hostname: wn-02
     storageSpec:
       volumeClaimTemplate:
         spec:

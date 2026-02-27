@@ -20,6 +20,8 @@ spec:
         app.kubernetes.io/name: kanidm
     spec:
       automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: wn-01
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000

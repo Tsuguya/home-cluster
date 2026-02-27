@@ -65,6 +65,9 @@ securityContext:
   seccompProfile:
     type: RuntimeDefault
 
+nodeSelector:
+  kubernetes.io/hostname: wn-01
+
 persistence:
   enabled: true
   storageClassName: qnap-iscsi

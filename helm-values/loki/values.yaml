@@ -8,6 +8,8 @@ singleBinary:
       memory: 256Mi
     limits:
       memory: 512Mi
+  nodeSelector:
+    kubernetes.io/hostname: wn-03
   persistence:
     storageClass: qnap-iscsi
     size: 10Gi

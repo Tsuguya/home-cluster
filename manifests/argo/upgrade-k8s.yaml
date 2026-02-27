@@ -274,6 +274,7 @@ spec:
             echo "=== Upgrading CP components to v${NEW_VER} (kubelet skipped) ==="
             talosctl upgrade-k8s \
               --talosconfig /etc/talos/config \
+              -n "${FIRST_CP}" \
               --to "${NEW_VER}" \
               --upgrade-kubelet=false
 

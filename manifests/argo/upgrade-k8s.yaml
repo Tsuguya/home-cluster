@@ -245,7 +245,7 @@ spec:
             CP_IPS="{{inputs.parameters.cp-ips}}"
             WORKER_IPS="{{inputs.parameters.worker-ips}}"
 
-            FIRST_CP=$(echo "$CP_IPS" | cut -d, -f1)
+            LAST_CP=$(echo "$CP_IPS" | tr ',' '\n' | tail -1)
 
             echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
             curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
@@ -258,23 +258,22 @@ spec:
             echo "=== Pre-flight: talosctl health ==="
             talosctl health \
               --talosconfig /etc/talos/config \
-              -n "${FIRST_CP}" \
+              -n "${LAST_CP}" \
               --control-plane-nodes "${CP_IPS}" \
               --worker-nodes "${WORKER_IPS}" \
               --wait-timeout 1m
 
             echo "=== Verifying current cluster version ==="
             ACTUAL_VER=$(kubectl version -o json | jq -r '.serverVersion.gitVersion' | sed 's/^v//')
-            if [ "${ACTUAL_VER}" != "${OLD_VER}" ]; then
-              echo "ERROR: Cluster version mismatch. expected=${OLD_VER} actual=${ACTUAL_VER}"
-              echo "Previous upgrade may not have completed. Manual investigation required."
+            if [ "${ACTUAL_VER}" != "${OLD_VER}" ] && [ "${ACTUAL_VER}" != "${NEW_VER}" ]; then
+              echo "ERROR: Unexpected cluster version. expected=${OLD_VER} or ${NEW_VER}, actual=${ACTUAL_VER}"
               exit 1
             fi
 
             echo "=== Upgrading CP components to v${NEW_VER} (kubelet skipped) ==="
             talosctl upgrade-k8s \
               --talosconfig /etc/talos/config \
-              -n "${FIRST_CP}" \
+              -n "${LAST_CP}" \
               --to "${NEW_VER}" \
               --upgrade-kubelet=false \
               --endpoint "https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
@@ -415,7 +414,7 @@ spec:
             WORKER_IPS="{{inputs.parameters.worker-ips}}"
             NODES_JSON='{{inputs.parameters.nodes-json}}'
 
-            FIRST_CP=$(echo "$CP_IPS" | cut -d, -f1)
+            LAST_CP=$(echo "$CP_IPS" | tr ',' '\n' | tail -1)
 
             echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
             curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
@@ -428,7 +427,7 @@ spec:
             echo "=== Post-upgrade: talosctl health ==="
             talosctl health \
               --talosconfig /etc/talos/config \
-              -n "${FIRST_CP}" \
+              -n "${LAST_CP}" \
               --control-plane-nodes "${CP_IPS}" \
               --worker-nodes "${WORKER_IPS}" \
               --wait-timeout 2m

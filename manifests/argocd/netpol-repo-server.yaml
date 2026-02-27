@@ -22,6 +22,8 @@ spec:
         - matchName: "github.com"
         - matchPattern: "*.github.io"
         - matchPattern: "*.githubusercontent.com"
+        - matchName: "charts.jetstack.io"
+        - matchName: "helm.cilium.io"
       toPorts:
         - ports:
             - port: "443"

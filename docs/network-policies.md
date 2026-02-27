@@ -163,12 +163,13 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **oauth2-proxy-hubble** | ingress → 4180 | hubble-ui (kube-system):8081, kanidm (kanidm):8443 |
 | **oauth2-proxy-seaweedfs** | ingress → 4180 | seaweedfs-filer (seaweedfs):8888, kanidm (kanidm):8443 |
 
-## trivy-system (2 policies)
+## trivy-system (3 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
 | **trivy-operator** | prometheus (monitoring) → 8080; host → 9090 (probes) | kube-apiserver, mirror.gcr.io + registry-1.docker.io + auth.docker.io + production.cloudflare.docker.com + ghcr.io + registry.k8s.io + *.pkg.dev + quay.io + *.quay.io + public.ecr.aws :443 |
 | **scan-jobs** (managed-by: trivy-operator) | (none) | (same registries as trivy-operator) :443 |
+| **node-collector** (app: node-collector) | deny world | kube-apiserver |
 
 ## trident (2 policies)
 

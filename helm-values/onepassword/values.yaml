@@ -11,7 +11,7 @@ operator:
     limits:
       memory: 256Mi
   authMethod: service-account
-  pollingInterval: 7200
+  pollingInterval: 43200
   serviceAccountToken:
     name: onepassword-token
   watchNamespace: []

@@ -25,8 +25,17 @@ spec:
   egress:
     - toEntities:
         - kube-apiserver
-    - toCIDR:
-        - 0.0.0.0/0
+    - toFQDNs:
+        - matchName: "mirror.gcr.io"
+        - matchName: "registry-1.docker.io"
+        - matchName: "auth.docker.io"
+        - matchName: "production.cloudflare.docker.com"
+        - matchName: "ghcr.io"
+        - matchName: "registry.k8s.io"
+        - matchPattern: "*.pkg.dev"
+        - matchName: "quay.io"
+        - matchPattern: "*.quay.io"
+        - matchName: "public.ecr.aws"
       toPorts:
         - ports:
             - port: "443"

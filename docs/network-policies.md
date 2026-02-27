@@ -79,7 +79,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **workflow-pods** (backup-workflow, pxe-sync, talos-build除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
 | **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver, *.r2.cloudflarestorage.com + github.com + *.githubusercontent.com + dl.min.io :443, CP nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
 | **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + *.github.com + *.githubusercontent.com + *.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.0.241):2049 (NFS) |
-| **talos-build** (talos-build=true) | (none) | kube-apiserver, HTTPS 443, seaweedfs-filer (seaweedfs):8333 |
+| **talos-build** (talos-build=true) | (none) | kube-apiserver, ghcr.io + github.com + api.github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333 |
 
 ## monitoring (11 policies)
 
@@ -167,8 +167,8 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **trivy-operator** | prometheus (monitoring) → 8080; host → 9090 (probes) | kube-apiserver, HTTPS 443 (registry metadata) |
-| **scan-jobs** (managed-by: trivy-operator) | (none) | HTTPS 443 (vuln DB + registries) |
+| **trivy-operator** | prometheus (monitoring) → 8080; host → 9090 (probes) | kube-apiserver, mirror.gcr.io + registry-1.docker.io + auth.docker.io + production.cloudflare.docker.com + ghcr.io + registry.k8s.io + *.pkg.dev + quay.io + *.quay.io + public.ecr.aws :443 |
+| **scan-jobs** (managed-by: trivy-operator) | (none) | (same registries as trivy-operator) :443 |
 
 ## trident (2 policies)
 

@@ -133,7 +133,6 @@ grafana:
       allow_sign_up: true
       auto_login: true
       role_attribute_path: grafana_role
-      oauth_allow_insecure_email_lookup: true
   envValueFrom:
     GF_DATABASE_USER:
       secretKeyRef:

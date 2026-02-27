@@ -7,6 +7,10 @@ spec:
   jetstream:
     version: latest
     replicas: 3
+    securityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
     containerTemplate:
       resources:
         requests:
@@ -14,6 +18,11 @@ spec:
           memory: 32Mi
         limits:
           memory: 128Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
     metricsContainerTemplate:
       resources:
         requests:
@@ -21,6 +30,11 @@ spec:
           memory: 32Mi
         limits:
           memory: 64Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
     reloaderContainerTemplate:
       resources:
         requests:
@@ -28,3 +42,8 @@ spec:
           memory: 32Mi
         limits:
           memory: 64Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]

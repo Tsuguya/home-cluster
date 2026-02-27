@@ -5,6 +5,10 @@ metadata:
   namespace: argo
 spec:
   template:
+    securityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
     container:
       resources:
         requests:
@@ -12,6 +16,11 @@ spec:
           memory: 32Mi
         limits:
           memory: 64Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
   service:
     ports:
       - port: 12000
@@ -68,6 +77,10 @@ metadata:
 spec:
   template:
     serviceAccountName: workflow-executor
+    securityContext:
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
     container:
       resources:
         requests:
@@ -75,6 +88,11 @@ spec:
           memory: 32Mi
         limits:
           memory: 64Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
   dependencies:
     - name: push
       eventSourceName: github-webhook

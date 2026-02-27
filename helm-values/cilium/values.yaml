@@ -52,6 +52,9 @@ envoy:
     limits:
       memory: 256Mi
 
+extraConfig:
+  tofqdns-min-ttl: "60"
+
 encryption:
   enabled: true
   type: wireguard

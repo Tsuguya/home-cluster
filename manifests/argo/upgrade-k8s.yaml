@@ -277,7 +277,7 @@ spec:
               -n "${FIRST_CP}" \
               --to "${NEW_VER}" \
               --upgrade-kubelet=false \
-              --k8s-endpoint "https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
+              --endpoint "https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
 
             echo "=== Upgrading first kubelet ==="
             ALL_NODES=$(echo "$NODES_JSON" | jq -c '.[]')

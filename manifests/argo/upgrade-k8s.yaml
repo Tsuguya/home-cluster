@@ -281,9 +281,7 @@ spec:
               --endpoint "https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
 
             echo "=== Upgrading kubelets (skipping self: ${MY_NODE_NAME}) ==="
-            ALL_NODES=$(echo "$NODES_JSON" | jq -c '.[]')
-
-            while IFS= read -r node; do
+            echo "$NODES_JSON" | jq -c '.[]' | while IFS= read -r node; do
               HOSTNAME=$(echo "$node" | jq -r '.hostname')
               SHORT_NAME=$(echo "$HOSTNAME" | cut -d. -f1)
               IP=$(echo "$node" | jq -r '.ip')
@@ -307,7 +305,7 @@ spec:
               kubectl wait --for=condition=Ready "node/${SHORT_NAME}" --timeout=300s
               kubectl uncordon "$SHORT_NAME"
               echo "Node ${SHORT_NAME} upgraded to v${NEW_VER}"
-            done <<< "$ALL_NODES"
+            done
 
             echo "$MY_NODE_NAME" > /tmp/self-node
             SAFE_NODE=$(echo "$NODES_JSON" | jq -r --arg self "$MY_NODE_NAME" \

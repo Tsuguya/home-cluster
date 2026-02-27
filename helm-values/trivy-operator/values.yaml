@@ -12,6 +12,9 @@ scanJobsConcurrentLimit: 3
 
 trivy:
   ignoreUnfixed: true
+  configFile:
+    cache:
+      backend: memory
 
 nodeCollector:
   tolerations:

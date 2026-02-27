@@ -94,6 +94,44 @@ kubectl -n trident logs <trident-node-pod> -c trident-main | grep -i iscsi
 - upstream が修正されたらミラー版から公式版に戻すこと
 - TODO: siderolabs/extensions に issue 提出
 
+## QNAP Trident iSCSI: ノード移動時の LUN リフォーマット
+
+Pod がノード間を移動した際に、Trident CSI が iSCSI LUN を再フォーマットしてデータを全消失させるバグ。2026-02-27 の K8s v1.35.2 アップグレード時に SeaweedFS volume で発生。
+
+**根本原因チェーン**:
+
+1. K8s アップグレード等で API server が再起動
+2. Trident コントローラーが API 接続断で再起動、ブートストラップ中にバックエンドが一時不可
+3. Pod が別ノードに再スケジュール（liveness probe 失敗等）
+4. 移動先ノードに前回の stale iSCSI セッションが残存（portal 情報が空 `:3260`）
+5. FSType チェック失敗 → Trident がデバイスを ext4 で再フォーマット → **データ全消失**
+
+**対策: nodeSelector / nodeAffinity でノード固定**
+
+Pod がノード間を移動しなければ stale iSCSI セッション問題は発生しない。iSCSI PVC を持つ全ワークロードを現在稼働中のノードに固定する。
+
+| ワークロード | 固定先 | 方式 |
+|---|---|---|
+| kanidm | wn-02, wn-03 | nodeAffinity (StatefulSet 2 replicas) |
+| seaweedfs volume/filer | wn-02 | nodeSelector |
+| prometheus | wn-02 | nodeSelector |
+| loki | wn-03 | nodeSelector |
+| tempo | wn-01 | nodeSelector |
+
+**レプリケーション HA を持つワークロードの方針**:
+
+Kanidm のようにレプリケーションでデータ冗長性を持つワークロードは、可能であれば iSCSI を使わずローカルディスク（Local PV）を使う。これにより QNAP CSI 依存を完全排除できる。ノード障害時はもう片方の Pod がサービス継続し、復旧後にレプリケーションで再同期。
+
+**レプリケーションなしのワークロード**:
+
+nodeSelector で固定し PDB で voluntary eviction を防止。ノード障害時は復旧を待つ。
+
+**注意事項**:
+
+- 新たに iSCSI PVC を使うワークロードを追加する際は必ず nodeSelector を設定すること
+- K8s アップグレード前に iSCSI ワークロードの配置を確認（`kubectl get pods -o wide`）
+- emptyDir は Pod 削除でデータ消失するため、DB 系ワークロードにはレプリケーション併用でも不適（レプリケーション証明書も消失するため手動復旧が必要になる）
+
 ## QNAP CSI (trident-operator) CPU limit ハードコード
 
 QNAP CSI Helm chart (v1.6.0) は `bundle.yaml` テンプレート内で `resources.limits.cpu: 20m` をハードコードしており、values で上書きできない。この制限により CPUThrottlingHigh アラートが発生する。

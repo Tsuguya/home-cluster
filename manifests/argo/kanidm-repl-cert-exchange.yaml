@@ -24,7 +24,7 @@ metadata:
   name: kanidm-repl-cert-exchange
   namespace: argo
 spec:
-  activeDeadlineSeconds: 120
+  activeDeadlineSeconds: 300
   serviceAccountName: kanidm-repl-cert-exchanger
   entrypoint: main
   templates:
@@ -71,9 +71,13 @@ spec:
               echo "OK"
             done
 
+            echo "Reading certs from files..."
             CERT_0=$(cat /tmp/cert-0)
             CERT_1=$(cat /tmp/cert-1)
+            echo "CERT_0 length: ${#CERT_0}"
+            echo "CERT_1 length: ${#CERT_1}"
 
+            echo "Generating partner TOML files..."
             cat > /tmp/partner-0.toml << EOF
             [replication."repl://kanidm-1.kanidm-headless.kanidm.svc.cluster.local:8444"]
             type = "mutual-pull"
@@ -88,6 +92,7 @@ spec:
             automatic_refresh = true
             EOF
 
+            echo "Applying Secret..."
             kubectl create secret generic "$SECRET" \
               --namespace="$NS" \
               --from-file=partner-0.toml=/tmp/partner-0.toml \

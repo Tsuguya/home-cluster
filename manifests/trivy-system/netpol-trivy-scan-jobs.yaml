@@ -11,21 +11,8 @@ spec:
     - fromEntities:
         - world
   egress:
-    - toFQDNs:
-        - matchName: "mirror.gcr.io"
-        - matchName: "registry-1.docker.io"
-        - matchName: "index.docker.io"
-        - matchName: "auth.docker.io"
-        - matchName: "production.cloudflare.docker.com"
-        - matchName: "ghcr.io"
-        - matchName: "pkg-containers.githubusercontent.com"
-        - matchName: "registry.k8s.io"
-        - matchPattern: "*.pkg.dev"
-        - matchPattern: "*.amazonaws.com"
-        - matchName: "quay.io"
-        - matchPattern: "*.quay.io"
-        - matchName: "public.ecr.aws"
-        - matchName: "check.trivy.dev"
+    - toCIDR:
+        - 0.0.0.0/0
       toPorts:
         - ports:
             - port: "443"

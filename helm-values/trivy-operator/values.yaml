@@ -13,6 +13,38 @@ scanJobsConcurrentLimit: 3
 trivy:
   ignoreUnfixed: true
 
+nodeCollector:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+  volumes:
+    - name: var-lib-kubelet
+      hostPath:
+        path: /var/lib/kubelet
+    - name: etc-kubernetes
+      hostPath:
+        path: /etc/kubernetes
+    - name: etc-cni-netd
+      hostPath:
+        path: /etc/cni/net.d/
+    - name: lib-systemd
+      hostPath:
+        path: /lib/systemd
+  volumeMounts:
+    - name: var-lib-kubelet
+      mountPath: /var/lib/kubelet
+      readOnly: true
+    - name: etc-kubernetes
+      mountPath: /etc/kubernetes
+      readOnly: true
+    - name: etc-cni-netd
+      mountPath: /etc/cni/net.d/
+      readOnly: true
+    - name: lib-systemd
+      mountPath: /lib/systemd/
+      readOnly: true
+
 serviceMonitor:
   enabled: true
   labels:

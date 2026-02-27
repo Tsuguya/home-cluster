@@ -12,3 +12,8 @@ data:
     tls_key = "/certs/tls.key"
     db_path = "/data/kanidm.db"
     db_fs_type = "other"
+
+    [online_backup]
+    path = "/data/backups/"
+    schedule = "00 19 * * *"
+    versions = 3

@@ -8,6 +8,7 @@ R2 オフサイトバックアップからの復旧手順。
 |------|------|-------------|---------|
 | PostgreSQL (shared-pg) | CNPG barman → R2 | WAL: リアルタイム / base backup: 毎日 3:00 JST | CNPG: 7日 / R2: 14日 |
 | etcd | talosctl snapshot → R2 | 毎日 4:00 JST | R2: 14日 |
+| Kanidm | online_backup (PVC) + scripting backup → R2 | PVC: 毎日 4:00 JST / R2: 毎日 4:30 JST | PVC: 3世代 / R2: 14日 |
 
 バケット: `s3://home-cluster-backup/` (Cloudflare R2, APAC)
 
@@ -92,13 +93,47 @@ kubectl exec -n kanidm kanidm-<N> -- kanidmd show-replication-certificate -c /co
 kubectl exec -n kanidm kanidm-<N> -- kanidmd refresh-replication-consumer -c /config/server.toml
 ```
 
-### 両方のデータロス
+### 両方のデータロス（R2 バックアップからリストア）
 
-レプリケーションでは復旧不可。手動で Kanidm を再セットアップ:
+1. R2 からバックアップをダウンロード:
 
-1. `kanidmd recover-account admin` で初期管理者パスワードをリセット
-2. ユーザー・グループ・OAuth2 クライアントを再作成
-3. 各サービスの SSO 設定を確認
+```bash
+mc alias set r2 https://b0832b1c20a7cada26af0ac45862ce80.r2.cloudflarestorage.com <ACCESS_KEY> <SECRET_KEY>
+
+# 最新のバックアップを確認
+mc ls r2/home-cluster-backup/kanidm/
+
+# ダウンロード
+mc cp r2/home-cluster-backup/kanidm/<TIMESTAMP>.backup /tmp/kanidm-backup
+```
+
+2. Kanidm Pod を 1 レプリカにスケールダウン（StatefulSet replicas: 1）
+
+3. バックアップをリストア:
+
+```bash
+# Pod を停止（replicas: 0）
+kubectl scale statefulset kanidm -n kanidm --replicas=0
+
+# バックアップファイルを PVC にコピー（一時 Pod 経由）
+kubectl run kanidm-restore --image=alpine:3.23 -n kanidm --restart=Never \
+  --overrides='{"spec":{"volumes":[{"name":"data","persistentVolumeClaim":{"claimName":"data-kanidm-0"}}],"containers":[{"name":"restore","image":"alpine:3.23","command":["sleep","3600"],"volumeMounts":[{"name":"data","mountPath":"/data"}],"securityContext":{"runAsUser":1000,"runAsGroup":1000}}]}}'
+
+kubectl cp /tmp/kanidm-backup kanidm/kanidm-restore:/data/restore.backup
+
+# kanidmd database restore で復元（一時 Pod 内で実行は不可 — kanidmd バイナリがない）
+# 代わりに kanidm イメージで restore を実行
+kubectl delete pod kanidm-restore -n kanidm
+kubectl run kanidm-restore --image=docker.io/kanidm/server:1.9.1 -n kanidm --restart=Never \
+  --overrides='{"spec":{"volumes":[{"name":"data","persistentVolumeClaim":{"claimName":"data-kanidm-0"}},{"name":"config","configMap":{"name":"kanidm-server-config"}}],"containers":[{"name":"restore","image":"docker.io/kanidm/server:1.9.1","command":["kanidmd","database","restore","-c","/config/server.toml","/data/restore.backup"],"volumeMounts":[{"name":"data","mountPath":"/data"},{"name":"config","mountPath":"/config","readOnly":true}],"securityContext":{"runAsUser":1000,"runAsGroup":1000}}]}}'
+
+# restore 完了を確認
+kubectl logs -n kanidm kanidm-restore
+kubectl delete pod kanidm-restore -n kanidm
+```
+
+4. StatefulSet を元に戻す（replicas: 2）。kanidm-1 はレプリケーションで自動同期。
+   レプリケーション証明書が不一致の場合は「片方のデータロス」の手順で証明書を更新。
 
 ## etcd 復旧
 

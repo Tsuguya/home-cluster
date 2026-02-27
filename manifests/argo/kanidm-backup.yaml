@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kanidm-backup-executor
+  namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kanidm-backup-executor
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-edit
+subjects:
+  - kind: ServiceAccount
+    name: kanidm-backup-executor
+    namespace: argo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: kanidm-backup
+  namespace: argo
+spec:
+  activeDeadlineSeconds: 300
+  serviceAccountName: kanidm-backup-executor
+  entrypoint: main
+  templates:
+    - name: main
+      metadata:
+        labels:
+          kanidm-backup: "true"
+      container:
+        image: alpine:3.23
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+        command: [sh, -c]
+        args:
+          - |
+            set -euo pipefail
+
+            echo "=== Installing kubectl and curl ==="
+            K8S_VERSION="v1.35.1"
+            wget -qO /tmp/kubectl "https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/amd64/kubectl" \
+              && chmod +x /tmp/kubectl
+            _apk=/tmp/apk; mkdir -p $_apk/etc/apk; cp -r /etc/apk/keys $_apk/etc/apk/
+            apk add --root $_apk --initdb --usermode --no-cache \
+              --repositories-file /etc/apk/repositories curl > /dev/null
+            export PATH="$_apk/usr/bin:$PATH" LD_LIBRARY_PATH="$_apk/usr/lib:$_apk/lib"
+
+            echo "=== Taking Kanidm backup via scripting interface ==="
+            TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
+            /tmp/kubectl exec -n kanidm kanidm-0 -- kanidmd scripting backup -c /config/server.toml > /tmp/kanidm-backup
+
+            BACKUP_SIZE=$(wc -c < /tmp/kanidm-backup)
+            echo "Backup size: ${BACKUP_SIZE} bytes"
+
+            if [ "$BACKUP_SIZE" -lt 100 ]; then
+              echo "ERROR: Backup too small, likely failed"
+              exit 1
+            fi
+
+            echo "=== Uploading to R2 ==="
+            curl -fsSL --aws-sigv4 "aws:amz:auto:s3" \
+              --user "${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}" \
+              -H "Content-Type: application/octet-stream" \
+              -T /tmp/kanidm-backup \
+              "${R2_ENDPOINT}/home-cluster-backup/kanidm/${TIMESTAMP}.backup"
+
+            echo "=== Done ==="
+            echo "Uploaded: kanidm/${TIMESTAMP}.backup (${BACKUP_SIZE} bytes)"
+        env:
+          - name: R2_ENDPOINT
+            valueFrom:
+              secretKeyRef:
+                name: r2-backup-credentials
+                key: endpoint
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: r2-backup-credentials
+                key: credential
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: r2-backup-credentials
+                key: password
+---
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: kanidm-backup
+  namespace: argo
+spec:
+  schedule: "30 4 * * *"
+  timezone: Asia/Tokyo
+  concurrencyPolicy: Replace
+  workflowSpec:
+    workflowTemplateRef:
+      name: kanidm-backup

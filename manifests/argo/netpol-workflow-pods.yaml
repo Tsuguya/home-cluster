@@ -16,6 +16,8 @@ spec:
         operator: DoesNotExist
       - key: kanidm-repl-exchange
         operator: DoesNotExist
+      - key: kanidm-backup
+        operator: DoesNotExist
   ingressDeny:
     - fromEntities:
         - world

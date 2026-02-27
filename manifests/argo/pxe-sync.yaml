@@ -92,6 +92,21 @@ spec:
       metadata:
         labels:
           pxe-sync: "true"
+      volumes:
+        - name: workspace
+          emptyDir: {}
+      initContainers:
+        - name: git-clone
+          image: alpine/git:v2.47.2
+          command: [git, clone, --depth, "1"]
+          args: ["https://github.com/Tsuguya/home-infra.git", /workspace]
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
       container:
         image: alpine:3.23
         resources:
@@ -108,9 +123,6 @@ spec:
             TALHELPER_VERSION="v3.1.5"
             SOPS_VERSION="v3.12.1"
 
-            echo "=== Installing tools ==="
-            apk add --no-cache git
-
             echo "=== Installing talhelper ${TALHELPER_VERSION} ==="
             wget -qO- "https://github.com/budimanjojo/talhelper/releases/download/${TALHELPER_VERSION}/talhelper_linux_amd64.tar.gz" | tar xz -C /tmp
             chmod +x /tmp/talhelper
@@ -121,16 +133,14 @@ spec:
 
             export PATH="/tmp:${PATH}"
 
-            echo "=== Cloning home-infra ==="
-            git clone --depth 1 https://github.com/Tsuguya/home-infra.git /tmp/home-infra
-            cd /tmp/home-infra
+            cd /workspace
 
             echo "=== Running talhelper genconfig ==="
             talhelper genconfig --no-gitignore
 
             echo "=== Mapping configs to MAC addresses ==="
             CONFIG_DIR=/pxe/config
-            CLUSTER_DIR=/tmp/home-infra/clusterconfig
+            CLUSTER_DIR=/workspace/clusterconfig
 
             map_config() {
               mac="$1"
@@ -161,5 +171,7 @@ spec:
                 name: sops-age-key
                 key: credential
         volumeMounts:
+          - name: workspace
+            mountPath: /workspace
           - name: pxe
             mountPath: /pxe

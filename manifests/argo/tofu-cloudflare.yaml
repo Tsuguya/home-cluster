@@ -63,6 +63,27 @@ spec:
           - apply
   templates:
     - name: main
+      volumes:
+        - name: workspace
+          emptyDir: {}
+      initContainers:
+        - name: git-clone
+          image: alpine/git:v2.47.2
+          command: [git, clone, --depth, "1"]
+          args: ["https://$(GITHUB_TOKEN)@github.com/Tsuguya/home-cloudflare.git", /workspace]
+          env:
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat-tofu
+                  key: credential
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
       container:
         image: ghcr.io/opentofu/opentofu:1.11.5
         resources:
@@ -74,22 +95,17 @@ spec:
         command: [sh, -c]
         args:
           - |
-            set -euo pipefail
-            apk add --no-cache git
-            git clone --depth 1 https://${GITHUB_TOKEN}@github.com/Tsuguya/home-cloudflare.git /tmp/repo
-            cd /tmp/repo
+            cd /workspace
             tofu init
             if [ "{{workflow.parameters.command}}" = "apply" ]; then
               tofu apply -auto-approve
             else
               tofu plan
             fi
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
         env:
-          - name: GITHUB_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: github-pat-tofu
-                key: credential
           - name: CLOUDFLARE_API_TOKEN
             valueFrom:
               secretKeyRef:
@@ -123,6 +139,30 @@ spec:
         default: ""
   templates:
     - name: main
+      volumes:
+        - name: workspace
+          emptyDir: {}
+      initContainers:
+        - name: git-clone
+          image: alpine/git:v2.47.2
+          command: [sh, -c]
+          args:
+            - git clone --depth 1 -b "${BRANCH}" "https://${GITHUB_TOKEN}@github.com/Tsuguya/home-cloudflare.git" /workspace
+          env:
+            - name: BRANCH
+              value: "{{workflow.parameters.branch}}"
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat-tofu
+                  key: credential
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
       container:
         image: ghcr.io/opentofu/opentofu:1.11.5
         resources:
@@ -135,14 +175,17 @@ spec:
         args:
           - |
             set -uo pipefail
-            apk add --no-cache git curl jq
-            git clone --depth 1 -b "{{workflow.parameters.branch}}" "https://${GITHUB_TOKEN}@github.com/Tsuguya/home-cloudflare.git" /tmp/repo
-            cd /tmp/repo
+            wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
+            wget -qO /tmp/gh.tar.gz "https://github.com/cli/cli/releases/download/v2.74.1/gh_2.74.1_linux_amd64.tar.gz"
+            tar xzf /tmp/gh.tar.gz -C /tmp gh_2.74.1_linux_amd64/bin/gh --strip-components=2
+            chmod +x /tmp/jq /tmp/gh
+            export PATH="/tmp:$PATH"
+
+            cd /workspace
             tofu init -input=false
             PLAN_OUTPUT=$(tofu plan -detailed-exitcode -no-color 2>&1) && EXIT_CODE=0 || EXIT_CODE=$?
             PR="{{workflow.parameters.pr-number}}"
             REPO="Tsuguya/home-cloudflare"
-            API="https://api.github.com"
             if [ "$EXIT_CODE" = "0" ]; then
               TITLE="Tofu Plan: No Changes"
               MSG="Infrastructure is up-to-date."
@@ -158,19 +201,14 @@ spec:
               --arg msg "$MSG" \
               --arg output "$PLAN_OUTPUT" \
               '{body: ("### " + $title + "\n" + $msg + "\n\n<details>\n<summary>Plan Output</summary>\n\n```\n" + $output + "\n```\n\n</details>")}')
-            curl -sf -X POST \
-              -H "Authorization: token ${GITHUB_TOKEN}" \
-              -H "Accept: application/vnd.github+json" \
-              "$API/repos/$REPO/issues/$PR/comments" \
-              -d "$BODY"
+            echo "$BODY" | gh api "repos/$REPO/issues/$PR/comments" --input -
             AUTHOR="{{workflow.parameters.author}}"
             if [ "$EXIT_CODE" = "0" ] && [ "$AUTHOR" = "renovate[bot]" ]; then
-              curl -sf -X PUT \
-                -H "Authorization: token ${GITHUB_TOKEN}" \
-                -H "Accept: application/vnd.github+json" \
-                "$API/repos/$REPO/pulls/$PR/merge" \
-                -d '{"merge_method":"squash"}'
+              gh api "repos/$REPO/pulls/$PR/merge" --method PUT -f merge_method=squash
             fi
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
         env:
           - name: GITHUB_TOKEN
             valueFrom:

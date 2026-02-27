@@ -136,14 +136,17 @@ spec:
         args:
           - |
             set -euo pipefail
-            apk add --no-cache curl jq yq > /dev/null
+            wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
+            wget -qO /tmp/yq "https://github.com/mikefarah/yq/releases/download/v4.49.2/yq_linux_amd64"
+            chmod +x /tmp/jq /tmp/yq
+            export PATH="/tmp:$PATH"
 
             BEFORE="{{workflow.parameters.before-sha}}"
             AFTER="{{workflow.parameters.after-sha}}"
 
             echo "=== Fetching diff ${BEFORE}...${AFTER} ==="
-            DIFF=$(curl -sf "https://api.github.com/repos/Tsuguya/home-infra/compare/${BEFORE}...${AFTER}" \
-              -H "Accept: application/vnd.github.v3.diff")
+            DIFF=$(wget -qO- --header="Accept: application/vnd.github.v3.diff" \
+              "https://api.github.com/repos/Tsuguya/home-infra/compare/${BEFORE}...${AFTER}")
 
             OLD_VER=$(echo "$DIFF" | grep '^-kubernetesVersion:' | sed 's/^-kubernetesVersion: *//' | tr -d '"v' | head -1 || true)
             NEW_VER=$(echo "$DIFF" | grep '^+kubernetesVersion:' | sed 's/^+kubernetesVersion: *//' | tr -d '"v' | head -1 || true)
@@ -175,7 +178,7 @@ spec:
             fi
 
             echo "=== Fetching talconfig.yaml at ${AFTER} ==="
-            TALCONFIG=$(curl -sf "https://api.github.com/repos/Tsuguya/home-infra/contents/talconfig.yaml?ref=${AFTER}" \
+            TALCONFIG=$(wget -qO- "https://api.github.com/repos/Tsuguya/home-infra/contents/talconfig.yaml?ref=${AFTER}" \
               | jq -r '.content' | base64 -d)
 
             TALOS_VER=$(echo "$TALCONFIG" | yq '.talosVersion')
@@ -241,7 +244,9 @@ spec:
         args:
           - |
             set -euo pipefail
-            apk add --no-cache curl jq > /dev/null
+            wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
+            chmod +x /tmp/jq
+            export PATH="/tmp:$PATH"
 
             OLD_VER="{{inputs.parameters.old-version}}"
             NEW_VER="{{inputs.parameters.new-version}}"
@@ -253,12 +258,9 @@ spec:
             LAST_CP=$(echo "$CP_IPS" | tr ',' '\n' | tail -1)
 
             echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
-            curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
-              -o /usr/local/bin/talosctl
-            chmod +x /usr/local/bin/talosctl
-            curl -fsSL "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl" \
-              -o /usr/local/bin/kubectl
-            chmod +x /usr/local/bin/kubectl
+            wget -qO /tmp/talosctl "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64"
+            wget -qO /tmp/kubectl "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl"
+            chmod +x /tmp/talosctl /tmp/kubectl
 
             echo "=== Pre-flight: talosctl health ==="
             talosctl health \
@@ -361,7 +363,9 @@ spec:
         args:
           - |
             set -euo pipefail
-            apk add --no-cache curl jq > /dev/null
+            wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
+            chmod +x /tmp/jq
+            export PATH="/tmp:$PATH"
 
             NEW_VER="{{inputs.parameters.new-version}}"
             TALOS_VER="{{inputs.parameters.talos-version}}"
@@ -369,12 +373,9 @@ spec:
             SELF_NODE="{{inputs.parameters.self-node}}"
 
             echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
-            curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
-              -o /usr/local/bin/talosctl
-            chmod +x /usr/local/bin/talosctl
-            curl -fsSL "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl" \
-              -o /usr/local/bin/kubectl
-            chmod +x /usr/local/bin/kubectl
+            wget -qO /tmp/talosctl "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64"
+            wget -qO /tmp/kubectl "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl"
+            chmod +x /tmp/talosctl /tmp/kubectl
 
             echo "=== Upgrading last node: ${SELF_NODE} ==="
             IP=$(echo "$NODES_JSON" | jq -r --arg h "$SELF_NODE" \
@@ -424,7 +425,9 @@ spec:
         args:
           - |
             set -euo pipefail
-            apk add --no-cache curl jq > /dev/null
+            wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
+            chmod +x /tmp/jq
+            export PATH="/tmp:$PATH"
 
             NEW_VER="{{inputs.parameters.new-version}}"
             TALOS_VER="{{inputs.parameters.talos-version}}"
@@ -435,12 +438,9 @@ spec:
             LAST_CP=$(echo "$CP_IPS" | tr ',' '\n' | tail -1)
 
             echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
-            curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
-              -o /usr/local/bin/talosctl
-            chmod +x /usr/local/bin/talosctl
-            curl -fsSL "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl" \
-              -o /usr/local/bin/kubectl
-            chmod +x /usr/local/bin/kubectl
+            wget -qO /tmp/talosctl "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64"
+            wget -qO /tmp/kubectl "https://dl.k8s.io/release/v${NEW_VER}/bin/linux/amd64/kubectl"
+            chmod +x /tmp/talosctl /tmp/kubectl
 
             echo "=== Post-upgrade: talosctl health ==="
             talosctl health \

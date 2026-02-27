@@ -17,7 +17,9 @@ spec:
         command: [sh, -c]
         args:
           - |
-            apk add --no-cache curl jq > /dev/null 2>&1
+            wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
+            chmod +x /tmp/jq
+            export PATH="/tmp:$PATH"
 
             STATUS="{{workflow.status}}"
             WF_NAME="{{workflow.name}}"
@@ -56,9 +58,8 @@ spec:
               --arg ts "$TIMESTAMP" \
               '{embeds: [{title: $title, url: $url, color: $color, fields: $fields, timestamp: $ts}]}')
 
-            curl -sfS -X POST "$DISCORD_WEBHOOK_URL" \
-              -H "Content-Type: application/json" \
-              -d "$PAYLOAD"
+            wget -qO /dev/null --header="Content-Type: application/json" \
+              --post-data="$PAYLOAD" "$DISCORD_WEBHOOK_URL"
         env:
           - name: DISCORD_WEBHOOK_URL
             valueFrom:

@@ -7,7 +7,7 @@ Cluster-wide default is **restricted enforce** (configured in Talos `admissionCo
 | Namespace | enforce | Reason |
 |---|---|---|
 | 1password | restricted | |
-| argo | privileged | ワークフロー Pod が alpine + apk add を使うため（専用イメージ移行後に restricted へ戻す） |
+| argo | restricted | init container + static binary DL で apk add 脱却 |
 | argocd | restricted | |
 | cert-manager | restricted | |
 | cilium-secrets | (default) | Cilium helm 管理。明示ラベルなし、クラスタデフォルトで restricted |

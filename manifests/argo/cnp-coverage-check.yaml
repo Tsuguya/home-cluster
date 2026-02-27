@@ -41,9 +41,10 @@ spec:
         args:
           - |
             set -euo pipefail
-            apk add --no-cache jq curl > /dev/null 2>&1
-            curl -sLo /usr/local/bin/kubectl "https://dl.k8s.io/release/v1.35.0/bin/linux/amd64/kubectl"
-            chmod +x /usr/local/bin/kubectl
+            wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
+            wget -qO /tmp/kubectl "https://dl.k8s.io/release/v1.35.2/bin/linux/amd64/kubectl"
+            chmod +x /tmp/jq /tmp/kubectl
+            export PATH="/tmp:$PATH"
 
             echo "=== CNP Coverage Check ==="
             echo "Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"

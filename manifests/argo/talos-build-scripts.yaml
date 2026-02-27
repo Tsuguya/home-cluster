@@ -7,23 +7,31 @@ data:
   push-installer.sh: |
     #!/bin/sh
     set -euo pipefail
-    apk add --no-cache skopeo
+    wget -qO /tmp/crane.tar.gz "https://github.com/google/go-containerregistry/releases/download/v0.20.7/go-containerregistry_Linux_x86_64.tar.gz"
+    tar xzf /tmp/crane.tar.gz -C /tmp crane
+    chmod +x /tmp/crane
+    export PATH="/tmp:$PATH"
     INSTALLER_TAR=$(find /tmp/artifact -name '*.tar' | head -1)
     echo "=== Pushing SecureBoot installer: ${INSTALLER_TAR} ==="
-    skopeo copy \
-      --dest-creds="tsuguya:${GITHUB_TOKEN}" \
-      "docker-archive:${INSTALLER_TAR}" \
-      "docker://ghcr.io/tsuguya/installer:${VERSION}"
+    crane auth login ghcr.io -u tsuguya -p "${GITHUB_TOKEN}"
+    crane push "${INSTALLER_TAR}" "ghcr.io/tsuguya/installer:${VERSION}"
     echo "=== Done ==="
 
   push-iso.sh: |
     #!/bin/sh
     set -euo pipefail
-    apk add --no-cache curl jq p7zip
 
-    GH_VER=$(curl -sf https://api.github.com/repos/cli/cli/releases/latest | jq -r .tag_name | sed 's/^v//')
-    curl -sL "https://github.com/cli/cli/releases/download/v${GH_VER}/gh_${GH_VER}_linux_amd64.tar.gz" \
-      | tar xzf - --strip-components=1 -C /usr/local/
+    wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
+    chmod +x /tmp/jq
+    wget -qO /tmp/gh.tar.gz "https://github.com/cli/cli/releases/download/v2.74.1/gh_2.74.1_linux_amd64.tar.gz"
+    tar xzf /tmp/gh.tar.gz -C /tmp gh_2.74.1_linux_amd64/bin/gh --strip-components=2
+    chmod +x /tmp/gh
+    export PATH="/tmp:$PATH"
+
+    _apk=/tmp/apk; mkdir -p $_apk/etc/apk; cp -r /etc/apk/keys $_apk/etc/apk/
+    apk add --root $_apk --initdb --usermode --no-cache \
+      --repositories-file /etc/apk/repositories 7zip > /dev/null
+    export PATH="$_apk/usr/bin:$PATH" LD_LIBRARY_PATH="$_apk/usr/lib:$_apk/lib"
 
     SB_ISO=$(find /tmp/sb-iso -name '*.iso' | head -1)
     ISO=$(find /tmp/iso -name '*.iso' | head -1)
@@ -45,10 +53,10 @@ data:
   finalize-release.sh: |
     #!/bin/sh
     set -euo pipefail
-    apk add --no-cache curl jq
-    GH_VER=$(curl -sf https://api.github.com/repos/cli/cli/releases/latest | jq -r .tag_name | sed 's/^v//')
-    curl -sL "https://github.com/cli/cli/releases/download/v${GH_VER}/gh_${GH_VER}_linux_amd64.tar.gz" \
-      | tar xzf - --strip-components=1 -C /usr/local/
+    wget -qO /tmp/gh.tar.gz "https://github.com/cli/cli/releases/download/v2.74.1/gh_2.74.1_linux_amd64.tar.gz"
+    tar xzf /tmp/gh.tar.gz -C /tmp gh_2.74.1_linux_amd64/bin/gh --strip-components=2
+    chmod +x /tmp/gh
+    export PATH="/tmp:$PATH"
 
     gh release edit "${VERSION}" \
       --repo Tsuguya/talos-custom-build \

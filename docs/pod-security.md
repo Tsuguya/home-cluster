@@ -7,7 +7,7 @@ Cluster-wide default is **restricted enforce** (configured in Talos `admissionCo
 | Namespace | enforce | Reason |
 |---|---|---|
 | 1password | restricted | |
-| argo | restricted | EventBus/EventSource/Sensor に runAsUser:1000 を明示設定 |
+| argo | privileged | ワークフロー Pod が alpine + apk add を使うため（専用イメージ移行後に restricted へ戻す） |
 | argocd | restricted | |
 | cert-manager | restricted | |
 | cilium-secrets | (default) | Cilium helm 管理。明示ラベルなし、クラスタデフォルトで restricted |

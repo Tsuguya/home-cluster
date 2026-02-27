@@ -35,7 +35,7 @@ configs:
     url: https://argocd.infra.tgy.io
     oidc.config: |
       name: Kanidm
-      issuer: https://idm.infra.tgy.io/oauth2/openid/argocd
+      issuer: https://idm.tgy.io/oauth2/openid/argocd
       clientID: argocd
       enablePKCEAuthentication: true
       requestedScopes:

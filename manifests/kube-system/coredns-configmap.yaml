@@ -16,7 +16,7 @@ data:
         }
         prometheus :9153
 
-        rewrite name idm.infra.tgy.io kanidm.kanidm.svc.cluster.local
+        rewrite name idm.tgy.io kanidm.kanidm.svc.cluster.local
 
         kubernetes cluster.local in-addr.arpa ip6.arpa {
             pods insecure

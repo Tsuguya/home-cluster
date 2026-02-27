@@ -19,42 +19,42 @@ ArgoCD は Kanidm パブリッククライアント (PKCE S256) を使用する�
 ### ArgoCD (パブリッククライアント)
 
 ```bash
-kanidm system oauth2 create-public argocd "ArgoCD" https://argocd.infra.tgy.io --url https://idm.infra.tgy.io
+kanidm system oauth2 create-public argocd "ArgoCD" https://argocd.infra.tgy.io --url https://idm.tgy.io
 
-kanidm system oauth2 add-redirect-url argocd https://argocd.infra.tgy.io/auth/callback --url https://idm.infra.tgy.io
+kanidm system oauth2 add-redirect-url argocd https://argocd.infra.tgy.io/auth/callback --url https://idm.tgy.io
 
-kanidm group create argocd_users --url https://idm.infra.tgy.io
-kanidm group add-members argocd_users tsuguya --url https://idm.infra.tgy.io
+kanidm group create argocd_users --url https://idm.tgy.io
+kanidm group add-members argocd_users tsuguya --url https://idm.tgy.io
 
-kanidm system oauth2 update-scope-map argocd argocd_users openid profile email --url https://idm.infra.tgy.io
+kanidm system oauth2 update-scope-map argocd argocd_users openid profile email --url https://idm.tgy.io
 
-kanidm system oauth2 prefer-short-username argocd --url https://idm.infra.tgy.io
+kanidm system oauth2 prefer-short-username argocd --url https://idm.tgy.io
 
-kanidm system oauth2 enable-localhost-redirects argocd --url https://idm.infra.tgy.io
+kanidm system oauth2 enable-localhost-redirects argocd --url https://idm.tgy.io
 ```
 
 ### Grafana (コンフィデンシャルクライアント)
 
 ```bash
-kanidm system oauth2 create grafana "Grafana" https://grafana.infra.tgy.io --url https://idm.infra.tgy.io
+kanidm system oauth2 create grafana "Grafana" https://grafana.infra.tgy.io --url https://idm.tgy.io
 
-kanidm system oauth2 add-redirect-url grafana https://grafana.infra.tgy.io/login/generic_oauth --url https://idm.infra.tgy.io
+kanidm system oauth2 add-redirect-url grafana https://grafana.infra.tgy.io/login/generic_oauth --url https://idm.tgy.io
 
-kanidm group create grafana_users --url https://idm.infra.tgy.io
-kanidm group add-members grafana_users tsuguya --url https://idm.infra.tgy.io
+kanidm group create grafana_users --url https://idm.tgy.io
+kanidm group add-members grafana_users tsuguya --url https://idm.tgy.io
 
-kanidm system oauth2 update-scope-map grafana grafana_users openid profile email --url https://idm.infra.tgy.io
+kanidm system oauth2 update-scope-map grafana grafana_users openid profile email --url https://idm.tgy.io
 
-kanidm system oauth2 prefer-short-username grafana --url https://idm.infra.tgy.io
+kanidm system oauth2 prefer-short-username grafana --url https://idm.tgy.io
 
-kanidm system oauth2 show-basic-secret grafana --url https://idm.infra.tgy.io
+kanidm system oauth2 show-basic-secret grafana --url https://idm.tgy.io
 ```
 
 カスタムクレームでグループ → Grafana ロールのマッピングを設定:
 
 ```bash
-kanidm system oauth2 update-claim-map grafana grafana_role grafana_users Admin --url https://idm.infra.tgy.io
-kanidm system oauth2 update-claim-map-join grafana grafana_role csv --url https://idm.infra.tgy.io
+kanidm system oauth2 update-claim-map grafana grafana_role grafana_users Admin --url https://idm.tgy.io
+kanidm system oauth2 update-claim-map-join grafana grafana_role csv --url https://idm.tgy.io
 ```
 
 ID トークンに `"grafana_role": "Admin"` が含まれるようになる（`grafana_users` グループのメンバーのみ）。
@@ -65,20 +65,20 @@ clientSecret は 1Password (kanidm-grafana-oauth) に保存し、OnePasswordItem
 ### Argo Workflows (コンフィデンシャルクライアント)
 
 ```bash
-kanidm system oauth2 create argo-workflows "Argo Workflows" https://argo.infra.tgy.io --url https://idm.infra.tgy.io
+kanidm system oauth2 create argo-workflows "Argo Workflows" https://argo.infra.tgy.io --url https://idm.tgy.io
 
-kanidm system oauth2 add-redirect-url argo-workflows https://argo.infra.tgy.io/oauth2/callback --url https://idm.infra.tgy.io
+kanidm system oauth2 add-redirect-url argo-workflows https://argo.infra.tgy.io/oauth2/callback --url https://idm.tgy.io
 
-kanidm group create argo_workflows_users --url https://idm.infra.tgy.io
-kanidm group add-members argo_workflows_users tsuguya --url https://idm.infra.tgy.io
+kanidm group create argo_workflows_users --url https://idm.tgy.io
+kanidm group add-members argo_workflows_users tsuguya --url https://idm.tgy.io
 
-kanidm system oauth2 update-scope-map argo-workflows argo_workflows_users openid profile email --url https://idm.infra.tgy.io
+kanidm system oauth2 update-scope-map argo-workflows argo_workflows_users openid profile email --url https://idm.tgy.io
 
-kanidm system oauth2 prefer-short-username argo-workflows --url https://idm.infra.tgy.io
+kanidm system oauth2 prefer-short-username argo-workflows --url https://idm.tgy.io
 
-kanidm system oauth2 warning-insecure-client-disable-pkce argo-workflows --url https://idm.infra.tgy.io
+kanidm system oauth2 warning-insecure-client-disable-pkce argo-workflows --url https://idm.tgy.io
 
-kanidm system oauth2 show-basic-secret argo-workflows --url https://idm.infra.tgy.io
+kanidm system oauth2 show-basic-secret argo-workflows --url https://idm.tgy.io
 ```
 
 Argo Workflows は PKCE 未サポートのため `warning-insecure-client-disable-pkce` が必要。
@@ -87,18 +87,18 @@ clientSecret は 1Password (kanidm-argo-workflows-oauth) に保存し、OnePassw
 ### Hubble UI (oauth2-proxy, コンフィデンシャルクライアント)
 
 ```bash
-kanidm system oauth2 create oauth2-proxy-hubble "Hubble UI" https://hubble.infra.tgy.io --url https://idm.infra.tgy.io
+kanidm system oauth2 create oauth2-proxy-hubble "Hubble UI" https://hubble.infra.tgy.io --url https://idm.tgy.io
 
-kanidm system oauth2 add-redirect-url oauth2-proxy-hubble https://hubble.infra.tgy.io/oauth2/callback --url https://idm.infra.tgy.io
+kanidm system oauth2 add-redirect-url oauth2-proxy-hubble https://hubble.infra.tgy.io/oauth2/callback --url https://idm.tgy.io
 
-kanidm group create hubble_users --url https://idm.infra.tgy.io
-kanidm group add-members hubble_users tsuguya --url https://idm.infra.tgy.io
+kanidm group create hubble_users --url https://idm.tgy.io
+kanidm group add-members hubble_users tsuguya --url https://idm.tgy.io
 
-kanidm system oauth2 update-scope-map oauth2-proxy-hubble hubble_users openid profile email --url https://idm.infra.tgy.io
+kanidm system oauth2 update-scope-map oauth2-proxy-hubble hubble_users openid profile email --url https://idm.tgy.io
 
-kanidm system oauth2 prefer-short-username oauth2-proxy-hubble --url https://idm.infra.tgy.io
+kanidm system oauth2 prefer-short-username oauth2-proxy-hubble --url https://idm.tgy.io
 
-kanidm system oauth2 show-basic-secret oauth2-proxy-hubble --url https://idm.infra.tgy.io
+kanidm system oauth2 show-basic-secret oauth2-proxy-hubble --url https://idm.tgy.io
 ```
 
 oauth2-proxy 経由で認証。clientSecret + cookieSecret を 1Password (oauth2-proxy-hubble-oauth) に保存。
@@ -106,18 +106,18 @@ oauth2-proxy 経由で認証。clientSecret + cookieSecret を 1Password (oauth2
 ### SeaweedFS UI (oauth2-proxy, コンフィデンシャルクライアント)
 
 ```bash
-kanidm system oauth2 create oauth2-proxy-seaweedfs "SeaweedFS UI" https://seaweedfs.infra.tgy.io --url https://idm.infra.tgy.io
+kanidm system oauth2 create oauth2-proxy-seaweedfs "SeaweedFS UI" https://seaweedfs.infra.tgy.io --url https://idm.tgy.io
 
-kanidm system oauth2 add-redirect-url oauth2-proxy-seaweedfs https://seaweedfs.infra.tgy.io/oauth2/callback --url https://idm.infra.tgy.io
+kanidm system oauth2 add-redirect-url oauth2-proxy-seaweedfs https://seaweedfs.infra.tgy.io/oauth2/callback --url https://idm.tgy.io
 
-kanidm group create seaweedfs_users --url https://idm.infra.tgy.io
-kanidm group add-members seaweedfs_users tsuguya --url https://idm.infra.tgy.io
+kanidm group create seaweedfs_users --url https://idm.tgy.io
+kanidm group add-members seaweedfs_users tsuguya --url https://idm.tgy.io
 
-kanidm system oauth2 update-scope-map oauth2-proxy-seaweedfs seaweedfs_users openid profile email --url https://idm.infra.tgy.io
+kanidm system oauth2 update-scope-map oauth2-proxy-seaweedfs seaweedfs_users openid profile email --url https://idm.tgy.io
 
-kanidm system oauth2 prefer-short-username oauth2-proxy-seaweedfs --url https://idm.infra.tgy.io
+kanidm system oauth2 prefer-short-username oauth2-proxy-seaweedfs --url https://idm.tgy.io
 
-kanidm system oauth2 show-basic-secret oauth2-proxy-seaweedfs --url https://idm.infra.tgy.io
+kanidm system oauth2 show-basic-secret oauth2-proxy-seaweedfs --url https://idm.tgy.io
 ```
 
 oauth2-proxy 経由で認証。clientSecret + cookieSecret を 1Password (oauth2-proxy-seaweedfs-oauth) に保存。
@@ -140,26 +140,26 @@ oauth2-proxy の Secret キーは chart の `existingSecret` が期待する `cl
 
 ```bash
 # コンフィデンシャルクライアント (clientSecret あり)
-kanidm system oauth2 create <client_name> "<Display Name>" https://<service>.infra.tgy.io --url https://idm.infra.tgy.io
+kanidm system oauth2 create <client_name> "<Display Name>" https://<service>.infra.tgy.io --url https://idm.tgy.io
 
 # またはパブリッククライアント (PKCE のみ、clientSecret なし)
-kanidm system oauth2 create-public <client_name> "<Display Name>" https://<service>.infra.tgy.io --url https://idm.infra.tgy.io
+kanidm system oauth2 create-public <client_name> "<Display Name>" https://<service>.infra.tgy.io --url https://idm.tgy.io
 ```
 
 ### 2. リダイレクト URL とスコープマップ
 
 ```bash
-kanidm system oauth2 add-redirect-url <client_name> https://<service>.infra.tgy.io/<callback_path> --url https://idm.infra.tgy.io
+kanidm system oauth2 add-redirect-url <client_name> https://<service>.infra.tgy.io/<callback_path> --url https://idm.tgy.io
 
-kanidm system oauth2 update-scope-map <client_name> <group> openid profile email --url https://idm.infra.tgy.io
+kanidm system oauth2 update-scope-map <client_name> <group> openid profile email --url https://idm.tgy.io
 
-kanidm system oauth2 prefer-short-username <client_name> --url https://idm.infra.tgy.io
+kanidm system oauth2 prefer-short-username <client_name> --url https://idm.tgy.io
 ```
 
 ### 3. コンフィデンシャルクライアントの場合: Secret をデプロイ
 
 ```bash
-kanidm system oauth2 show-basic-secret <client_name> --url https://idm.infra.tgy.io
+kanidm system oauth2 show-basic-secret <client_name> --url https://idm.tgy.io
 ```
 
 1Password に API Credential として保存し、`manifests/secrets/` に OnePasswordItem を作成する。
@@ -183,10 +183,10 @@ kanidm system oauth2 show-basic-secret <client_name> --url https://idm.infra.tgy
 
 | エンドポイント | URL |
 |---|---|
-| Issuer | `https://idm.infra.tgy.io/oauth2/openid/<client_name>` |
-| Authorization | `https://idm.infra.tgy.io/ui/oauth2` |
-| Token | `https://idm.infra.tgy.io/oauth2/token` |
-| Userinfo | `https://idm.infra.tgy.io/oauth2/openid/<client_name>/userinfo` |
+| Issuer | `https://idm.tgy.io/oauth2/openid/<client_name>` |
+| Authorization | `https://idm.tgy.io/ui/oauth2` |
+| Token | `https://idm.tgy.io/oauth2/token` |
+| Userinfo | `https://idm.tgy.io/oauth2/openid/<client_name>/userinfo` |
 
 ## 注意事項
 

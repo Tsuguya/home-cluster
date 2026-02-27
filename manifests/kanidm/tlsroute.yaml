@@ -11,7 +11,7 @@ spec:
       namespace: kanidm
       sectionName: passthrough
   hostnames:
-    - idm.infra.tgy.io
+    - idm.tgy.io
   rules:
     - backendRefs:
         - group: ""

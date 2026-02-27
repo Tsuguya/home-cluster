@@ -5,7 +5,7 @@ config:
 
 extraArgs:
   provider: oidc
-  oidc-issuer-url: "https://idm.infra.tgy.io/oauth2/openid/oauth2-proxy-seaweedfs"
+  oidc-issuer-url: "https://idm.tgy.io/oauth2/openid/oauth2-proxy-seaweedfs"
   redirect-url: "https://seaweedfs.infra.tgy.io/oauth2/callback"
   upstream: "http://seaweedfs-filer.seaweedfs.svc.cluster.local:8888"
   email-domain: "*"

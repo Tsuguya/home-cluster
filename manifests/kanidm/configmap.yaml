@@ -5,8 +5,8 @@ metadata:
   namespace: kanidm
 data:
   server.toml: |
-    domain = "idm.infra.tgy.io"
-    origin = "https://idm.infra.tgy.io"
+    domain = "idm.tgy.io"
+    origin = "https://idm.tgy.io"
     bindaddress = "[::]:8443"
     tls_chain = "/certs/tls.crt"
     tls_key = "/certs/tls.key"

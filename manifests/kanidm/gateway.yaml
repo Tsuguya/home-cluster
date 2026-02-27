@@ -7,7 +7,7 @@ spec:
   gatewayClassName: cilium
   listeners:
     - name: passthrough
-      hostname: idm.infra.tgy.io
+      hostname: idm.tgy.io
       port: 443
       protocol: TLS
       tls:

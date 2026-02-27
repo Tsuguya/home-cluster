@@ -142,7 +142,7 @@ Kanidm pod が Running になった後:
 
 2. kanidm CLI でログイン:
    ```bash
-   kanidm login --name idm_admin --url https://idm.infra.tgy.io
+   kanidm login --name idm_admin --url https://idm.tgy.io
    ```
 
 3. ユーザー・グループ作成、OAuth2 クライアント設定:
@@ -150,8 +150,8 @@ Kanidm pod が Running になった後:
 
 4. Grafana の custom claim 設定:
    ```bash
-   kanidm system oauth2 update-claim-map grafana grafana_role grafana_users Admin --url https://idm.infra.tgy.io
-   kanidm system oauth2 update-claim-map-join grafana grafana_role csv --url https://idm.infra.tgy.io
+   kanidm system oauth2 update-claim-map grafana grafana_role grafana_users Admin --url https://idm.tgy.io
+   kanidm system oauth2 update-claim-map-join grafana grafana_role csv --url https://idm.tgy.io
    ```
 
 5. Grafana の kanidm-grafana-oauth を 1Password に保存:

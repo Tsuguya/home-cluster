@@ -7,7 +7,7 @@ ArgoCD のみ TLS Passthrough（専用 argocd-gateway、ArgoCD 自身が TLS 終
 
 | サービス | URL | バックエンド | TLS |
 |---|---|---|---|
-| Kanidm | https://idm.infra.tgy.io | kanidm:443 (kanidm) | Passthrough (kanidm-gateway) |
+| Kanidm | https://idm.tgy.io | kanidm:443 (kanidm) | Passthrough (kanidm-gateway) |
 | ArgoCD | https://argocd.infra.tgy.io | argocd-server (argocd) | Passthrough (argocd-gateway) |
 | Grafana | https://grafana.infra.tgy.io | kube-prometheus-stack-grafana:80 (monitoring) | Terminate (main-gateway) |
 | Hubble UI | https://hubble.infra.tgy.io | hubble-ui:80 (kube-system) | Terminate (main-gateway) |

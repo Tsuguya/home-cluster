@@ -74,7 +74,7 @@ server:
     - sso
   sso:
     enabled: true
-    issuer: https://idm.infra.tgy.io/oauth2/openid/argo-workflows
+    issuer: https://idm.tgy.io/oauth2/openid/argo-workflows
     clientId:
       name: kanidm-argo-workflows-oauth
       key: clientID

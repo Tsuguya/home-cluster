@@ -34,14 +34,17 @@ egress:
   # 2. kube-apiserver が必要なら toEntities で
   - toEntities:
       - kube-apiserver
-  # 3. 外部 HTTPS は toCIDR 0.0.0.0/0:443
-  - toCIDR:
-      - 0.0.0.0/0
+  # 3. 外部 HTTPS は toFQDNs で必要なドメインだけ許可
+  - toFQDNs:
+      - matchName: "example.com"
+      - matchPattern: "*.example.com"
     toPorts:
       - ports:
           - port: "443"
             protocol: TCP
 ```
+
+`toCIDR 0.0.0.0/0:443` は接続先を限定できないため、`toFQDNs` でドメイン単位で絞ること。広範なアクセスが必要な場合（ビルドジョブ等）のみ `toCIDR` を許容する。
 
 ### クロスネームスペース通信
 - `io.kubernetes.pod.namespace` ラベルで namespace を指定

@@ -66,7 +66,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **redis-secret-init** (Job) | (none) | kube-apiserver |
 | **cloudflared** | (none) | *.v2.argotunnel.com + cftunnel.com:443/7844, server:8080, eventsource (argo):12000 |
 
-## argo (9 policies)
+## argo (10 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
@@ -76,10 +76,11 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **events-controller** | (none) | kube-apiserver, eventbus:8222 |
 | **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
-| **workflow-pods** (backup-workflow, pxe-sync, talos-build除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
+| **workflow-pods** (backup-workflow, pxe-sync, talos-build, kanidm-repl-exchange除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
 | **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver, *.r2.cloudflarestorage.com + github.com + *.githubusercontent.com + dl.min.io :443, CP nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
 | **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + *.github.com + *.githubusercontent.com + *.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.0.241):2049 (NFS) |
 | **talos-build** (talos-build=true) | (none) | kube-apiserver, ghcr.io + github.com + api.github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333 |
+| **kanidm-repl-exchange** (kanidm-repl-exchange=true) | (deny world) | kube-apiserver |
 
 ## monitoring (11 policies)
 

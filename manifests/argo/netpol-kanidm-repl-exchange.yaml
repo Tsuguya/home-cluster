@@ -1,0 +1,15 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kanidm-repl-exchange
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      kanidm-repl-exchange: "true"
+  ingressDeny:
+    - fromEntities:
+        - world
+  egress:
+    - toEntities:
+        - kube-apiserver

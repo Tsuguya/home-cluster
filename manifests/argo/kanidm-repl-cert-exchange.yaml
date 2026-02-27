@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kanidm-repl-cert-exchanger
+  namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kanidm-repl-cert-exchanger
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-edit
+subjects:
+  - kind: ServiceAccount
+    name: kanidm-repl-cert-exchanger
+    namespace: argo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: kanidm-repl-cert-exchange
+  namespace: argo
+spec:
+  activeDeadlineSeconds: 120
+  serviceAccountName: kanidm-repl-cert-exchanger
+  entrypoint: main
+  templates:
+    - name: main
+      metadata:
+        labels:
+          kanidm-repl-exchange: "true"
+      container:
+        image: registry.suse.com/suse/kubectl:1.35
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+        command: [sh, -c]
+        args:
+          - |
+            set -euo pipefail
+
+            NS="kanidm"
+            SECRET="kanidm-repl-certs"
+
+            for i in 0 1; do
+              PHASE=$(kubectl get pod -n "$NS" "kanidm-${i}" -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
+              if [ "$PHASE" != "Running" ]; then
+                echo "ERROR: kanidm-${i} is ${PHASE}"
+                exit 1
+              fi
+            done
+
+            for i in 0 1; do
+              echo "Extracting cert from kanidm-${i}..."
+              CERT=$(kubectl exec -n "$NS" "kanidm-${i}" -c kanidm -- \
+                kanidmd show-replication-certificate -c /config/server.toml 2>&1 | \
+                grep 'certificate:' | sed 's/.*certificate: "\(.*\)"/\1/')
+              if [ -z "$CERT" ]; then
+                echo "ERROR: Failed to extract cert from kanidm-${i}"
+                exit 1
+              fi
+              echo "$CERT" > "/tmp/cert-${i}"
+              echo "OK"
+            done
+
+            CERT_0=$(cat /tmp/cert-0)
+            CERT_1=$(cat /tmp/cert-1)
+
+            cat > /tmp/partner-0.toml << EOF
+            [replication."repl://kanidm-1.kanidm-headless.kanidm.svc.cluster.local:8444"]
+            type = "mutual-pull"
+            partner_cert = "${CERT_1}"
+            automatic_refresh = true
+            EOF
+
+            cat > /tmp/partner-1.toml << EOF
+            [replication."repl://kanidm-0.kanidm-headless.kanidm.svc.cluster.local:8444"]
+            type = "mutual-pull"
+            partner_cert = "${CERT_0}"
+            automatic_refresh = true
+            EOF
+
+            kubectl create secret generic "$SECRET" \
+              --namespace="$NS" \
+              --from-file=partner-0.toml=/tmp/partner-0.toml \
+              --from-file=partner-1.toml=/tmp/partner-1.toml \
+              --dry-run=client -o yaml | kubectl apply -f -
+
+            echo "Done"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: kanidm-repl-cert-exchange
+  namespace: argo
+spec:
+  schedule: "0 5 * * *"
+  timezone: Asia/Tokyo
+  concurrencyPolicy: Replace
+  workflowSpec:
+    workflowTemplateRef:
+      name: kanidm-repl-cert-exchange

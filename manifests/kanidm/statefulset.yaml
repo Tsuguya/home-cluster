@@ -14,8 +14,8 @@ spec:
   template:
     metadata:
       annotations:
-        secret.reloader.stakater.com/reload: "kanidm-tls"
-        configmap.reloader.stakater.com/reload: "kanidm-server-config,kanidm-repl-config"
+        secret.reloader.stakater.com/reload: "kanidm-tls,kanidm-repl-certs"
+        configmap.reloader.stakater.com/reload: "kanidm-server-config"
       labels:
         app.kubernetes.io/name: kanidm
     spec:
@@ -135,8 +135,8 @@ spec:
           configMap:
             name: kanidm-server-config
         - name: repl-config
-          configMap:
-            name: kanidm-repl-config
+          secret:
+            secretName: kanidm-repl-certs
             optional: true
         - name: config-out
           emptyDir: {}

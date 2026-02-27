@@ -14,6 +14,8 @@ spec:
         operator: DoesNotExist
       - key: talos-build
         operator: DoesNotExist
+      - key: kanidm-repl-exchange
+        operator: DoesNotExist
   ingressDeny:
     - fromEntities:
         - world

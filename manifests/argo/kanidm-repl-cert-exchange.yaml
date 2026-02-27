@@ -58,11 +58,13 @@ spec:
 
             for i in 0 1; do
               echo "Extracting cert from kanidm-${i}..."
-              CERT=$(kubectl exec -n "$NS" "kanidm-${i}" -c kanidm -- \
-                kanidmd show-replication-certificate -c /config/server.toml 2>&1 | \
-                grep 'certificate:' | sed 's/.*certificate: "\(.*\)"/\1/')
-              if [ -z "$CERT" ]; then
+              OUTPUT=$(kubectl exec -n "$NS" "kanidm-${i}" -c kanidm -- \
+                kanidmd show-replication-certificate -c /config/server.toml 2>&1)
+              CERT="${OUTPUT#*certificate: \"}"
+              CERT="${CERT%%\"*}"
+              if [ -z "$CERT" ] || [ "$CERT" = "$OUTPUT" ]; then
                 echo "ERROR: Failed to extract cert from kanidm-${i}"
+                echo "Output was: $OUTPUT"
                 exit 1
               fi
               echo "$CERT" > "/tmp/cert-${i}"

@@ -6,7 +6,7 @@ resources:
     cpu: 50m
     memory: 100Mi
   limits:
-    memory: 256Mi
+    memory: 512Mi
 
 scanJobsConcurrentLimit: 3
 

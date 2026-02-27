@@ -1,11 +1,12 @@
 operator:
   scanJobNamespace: trivy-system
-  resources:
-    requests:
-      cpu: 50m
-      memory: 100Mi
-    limits:
-      memory: 256Mi
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 100Mi
+  limits:
+    memory: 256Mi
 
 scanJobsConcurrentLimit: 3
 

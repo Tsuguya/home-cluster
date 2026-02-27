@@ -79,6 +79,14 @@ alloy:
   mounts:
     varlog: true
 
+configReloader:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
 controller:
   tolerations:
     - key: memory-constrained

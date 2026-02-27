@@ -62,6 +62,7 @@
 | コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
 |---|---|---|---|
 | alloy | 25m / 128Mi | 512Mi | 21-29m / 87-315Mi |
+| config-reloader | 10m / 32Mi | 64Mi | 低負荷 |
 
 ### kube-prometheus-stack
 
@@ -90,6 +91,7 @@
 | seaweedfs | master ×3 | 25m / 64Mi | 256Mi | 未計測 |
 | seaweedfs | volume | 50m / 128Mi | 512Mi | 未計測 |
 | seaweedfs | filer | 25m / 128Mi | 512Mi | 未計測 |
+| trivy-operator | operator | 50m / 100Mi | 256Mi | 低負荷 |
 
 ## CRD マニフェスト
 

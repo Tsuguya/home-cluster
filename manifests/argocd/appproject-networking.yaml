@@ -9,6 +9,7 @@ spec:
     - https://charts.jetstack.io
     - https://kubernetes-sigs.github.io/external-dns
     - https://github.com/Tsuguya/home-cluster.git
+    - https://github.com/kubernetes-sigs/gateway-api.git
   destinations:
     - server: https://kubernetes.default.svc
       namespace: '*'

@@ -50,7 +50,7 @@
     },
     {
       "description": "Do not automerge critical infrastructure",
-      "matchPackageNames": ["cilium", "tetragon"],
+      "matchPackageNames": ["cilium", "tetragon", "https://github.com/kubernetes-sigs/gateway-api.git"],
       "automerge": false
     },
     {

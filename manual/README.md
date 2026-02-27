@@ -14,7 +14,12 @@ ArgoCD (GitOps) 管理外で、手動実行が必要な手順をまとめる。
 Cilium は Gateway API CRDs を同梱しないため、先にインストールする。
 TLSRoute（ArgoCD TLS Passthrough に使用）は experimental channel に含まれる。
 
+初回ブートストラップ時のみ手動インストールが必要（ArgoCD がまだ存在しないため）。
+day-2 以降は `apps/gateway-api-crds.yaml` の ArgoCD Application が管理する。
+バージョンは同ファイルの `targetRevision` が source of truth。
+
 ```bash
+# 初回ブートストラップ時のみ実行（バージョンは apps/gateway-api-crds.yaml の targetRevision に合わせる）
 kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
 ```
 

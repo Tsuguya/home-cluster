@@ -94,8 +94,10 @@ spec:
             when: "{{steps.validate.outputs.parameters.should-upgrade}} == true"
             arguments:
               parameters:
-                - name: upgraded-node
-                  value: "{{steps.upgrade.outputs.parameters.upgraded-node}}"
+                - name: self-node
+                  value: "{{steps.upgrade.outputs.parameters.self-node}}"
+                - name: safe-node
+                  value: "{{steps.upgrade.outputs.parameters.safe-node}}"
                 - name: new-version
                   value: "{{steps.validate.outputs.parameters.new-version}}"
                 - name: talos-version
@@ -278,7 +280,7 @@ spec:
               --upgrade-kubelet=false \
               --endpoint "https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
 
-            echo "=== Upgrading first kubelet ==="
+            echo "=== Upgrading kubelets (skipping self: ${MY_NODE_NAME}) ==="
             ALL_NODES=$(echo "$NODES_JSON" | jq -c '.[]')
 
             while IFS= read -r node; do
@@ -286,10 +288,14 @@ spec:
               SHORT_NAME=$(echo "$HOSTNAME" | cut -d. -f1)
               IP=$(echo "$node" | jq -r '.ip')
 
+              if [ "$SHORT_NAME" = "$MY_NODE_NAME" ]; then
+                echo "Skipping self (${SHORT_NAME}), will upgrade in next step"
+                continue
+              fi
+
               STATUS=$(kubectl get node "$SHORT_NAME" -o jsonpath='{.status.nodeInfo.kubeletVersion}' 2>/dev/null || echo "unknown")
               if [ "$STATUS" = "v${NEW_VER}" ]; then
                 echo "Node ${SHORT_NAME} already at v${NEW_VER}, skipping"
-                echo "$SHORT_NAME" > /tmp/upgraded-node
                 continue
               fi
 
@@ -301,31 +307,47 @@ spec:
               kubectl wait --for=condition=Ready "node/${SHORT_NAME}" --timeout=300s
               kubectl uncordon "$SHORT_NAME"
               echo "Node ${SHORT_NAME} upgraded to v${NEW_VER}"
-              echo "$SHORT_NAME" > /tmp/upgraded-node
-              break
             done <<< "$ALL_NODES"
+
+            echo "$MY_NODE_NAME" > /tmp/self-node
+            SAFE_NODE=$(echo "$NODES_JSON" | jq -r --arg self "$MY_NODE_NAME" \
+              '[.[] | select(.controlPlane != true) | .hostname | split(".")[0]] | map(select(. != $self)) | .[0]')
+            if [ "$SAFE_NODE" = "null" ] || [ -z "$SAFE_NODE" ]; then
+              echo "ERROR: No safe worker node found for next step"
+              exit 1
+            fi
+            echo "Safe node for next step: ${SAFE_NODE}"
+            echo "$SAFE_NODE" > /tmp/safe-node
         env:
           - name: TALOSCONFIG
             value: /etc/talos/config
+          - name: MY_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
         volumeMounts:
           - name: talosconfig
             mountPath: /etc/talos
             readOnly: true
       outputs:
         parameters:
-          - name: upgraded-node
+          - name: self-node
             valueFrom:
-              path: /tmp/upgraded-node
+              path: /tmp/self-node
+          - name: safe-node
+            valueFrom:
+              path: /tmp/safe-node
 
     - name: upgrade-remaining
       inputs:
         parameters:
-          - name: upgraded-node
+          - name: self-node
+          - name: safe-node
           - name: new-version
           - name: talos-version
           - name: nodes-json
       nodeSelector:
-        kubernetes.io/hostname: "{{inputs.parameters.upgraded-node}}"
+        kubernetes.io/hostname: "{{inputs.parameters.safe-node}}"
       container:
         image: alpine:3.23
         resources:
@@ -343,7 +365,7 @@ spec:
             NEW_VER="{{inputs.parameters.new-version}}"
             TALOS_VER="{{inputs.parameters.talos-version}}"
             NODES_JSON='{{inputs.parameters.nodes-json}}'
-            UPGRADED_NODE="{{inputs.parameters.upgraded-node}}"
+            SELF_NODE="{{inputs.parameters.self-node}}"
 
             echo "=== Installing talosctl ${TALOS_VER} and kubectl ==="
             curl -fsSL "https://github.com/siderolabs/talos/releases/download/${TALOS_VER}/talosctl-linux-amd64" \
@@ -353,29 +375,24 @@ spec:
               -o /usr/local/bin/kubectl
             chmod +x /usr/local/bin/kubectl
 
-            echo "=== Upgrading remaining nodes (pinned to ${UPGRADED_NODE}) ==="
-            ALL_NODES=$(echo "$NODES_JSON" | jq -c '.[]')
+            echo "=== Upgrading last node: ${SELF_NODE} ==="
+            IP=$(echo "$NODES_JSON" | jq -r --arg h "$SELF_NODE" \
+              '.[] | select((.hostname | split(".")[0]) == $h) | .ip')
 
-            while IFS= read -r node; do
-              HOSTNAME=$(echo "$node" | jq -r '.hostname')
-              SHORT_NAME=$(echo "$HOSTNAME" | cut -d. -f1)
-              IP=$(echo "$node" | jq -r '.ip')
+            STATUS=$(kubectl get node "$SELF_NODE" -o jsonpath='{.status.nodeInfo.kubeletVersion}' 2>/dev/null || echo "unknown")
+            if [ "$STATUS" = "v${NEW_VER}" ]; then
+              echo "Node ${SELF_NODE} already at v${NEW_VER}, skipping"
+              exit 0
+            fi
 
-              STATUS=$(kubectl get node "$SHORT_NAME" -o jsonpath='{.status.nodeInfo.kubeletVersion}' 2>/dev/null || echo "unknown")
-              if [ "$STATUS" = "v${NEW_VER}" ]; then
-                echo "Node ${SHORT_NAME} already at v${NEW_VER}, skipping"
-                continue
-              fi
-
-              echo "Upgrading kubelet on ${SHORT_NAME} (${IP})"
-              kubectl drain "$SHORT_NAME" --ignore-daemonsets --delete-emptydir-data --timeout=300s
-              talosctl -n "$IP" --talosconfig /etc/talos/config \
-                patch machineconfig \
-                -p "[{\"op\":\"add\",\"path\":\"/machine/kubelet/image\",\"value\":\"ghcr.io/siderolabs/kubelet:v${NEW_VER}\"}]"
-              kubectl wait --for=condition=Ready "node/${SHORT_NAME}" --timeout=300s
-              kubectl uncordon "$SHORT_NAME"
-              echo "Node ${SHORT_NAME} upgraded to v${NEW_VER}"
-            done <<< "$ALL_NODES"
+            echo "Upgrading kubelet on ${SELF_NODE} (${IP})"
+            kubectl drain "$SELF_NODE" --ignore-daemonsets --delete-emptydir-data --timeout=300s
+            talosctl -n "$IP" --talosconfig /etc/talos/config \
+              patch machineconfig \
+              -p "[{\"op\":\"add\",\"path\":\"/machine/kubelet/image\",\"value\":\"ghcr.io/siderolabs/kubelet:v${NEW_VER}\"}]"
+            kubectl wait --for=condition=Ready "node/${SELF_NODE}" --timeout=300s
+            kubectl uncordon "$SELF_NODE"
+            echo "Node ${SELF_NODE} upgraded to v${NEW_VER}"
 
             echo "=== All nodes upgraded ==="
         env:

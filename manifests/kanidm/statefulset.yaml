@@ -148,7 +148,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: qnap-iscsi
+        storageClassName: local-storage
         resources:
           requests:
             storage: 1Gi

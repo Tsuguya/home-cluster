@@ -7,6 +7,10 @@ nextcloud:
     secretName: nextcloud-admin-credentials
     usernameKey: username
     passwordKey: password
+  defaultConfigs:
+    s3.config.php: false
+    reverse-proxy.config.php: false
+    redis.config.php: false
   phpConfigs:
     uploadlimit.ini: |
       upload_max_filesize = 16G

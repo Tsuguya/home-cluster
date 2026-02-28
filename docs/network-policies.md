@@ -28,6 +28,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Argo Workflows server (argo) | shared-pg (database) | 5432 | Workflow archive |
 | CloudNative-PG (cnpg-system) | shared-pg (database) | 8000 | Health probes |
 | Cloudflared (argocd) | EventSource (argo) | 12000 | GitHub webhook relay |
+| Cloudflared (argocd) | Kanidm (kanidm) | 8443 | Cloudflare Tunnel → Kanidm |
 | Workflow pods (argo) | SeaweedFS filer (seaweedfs) | 8333 | Artifact/log storage |
 | PXE sync pods (argo) | SeaweedFS filer (seaweedfs) | 8333 | Artifact/log storage |
 | Argo Workflows server (argo) | SeaweedFS filer (seaweedfs) | 8333 | Archived log retrieval |

@@ -85,20 +85,14 @@ alloy:
       loki.process "audit" {
         stage.json {
           expressions = {
-            level    = "level",
-            verb     = "verb",
-            user     = "user.username",
-            resource = "objectRef.resource",
-            ns       = "objectRef.namespace",
-            code     = "responseStatus.code",
+            level = "level",
+            verb  = "verb",
           }
         }
         stage.labels {
           values = {
-            level    = "",
-            verb     = "",
-            user     = "",
-            resource = "",
+            level = "",
+            verb  = "",
           }
         }
         forward_to = [loki.write.default.receiver]

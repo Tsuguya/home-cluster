@@ -29,6 +29,9 @@ txtPrefix: _externaldns.
 domainFilters:
   - tgy.io
 
+excludeDomains:
+  - idm.tgy.io
+
 securityContext:
   allowPrivilegeEscalation: false
   runAsNonRoot: true

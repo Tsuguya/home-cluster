@@ -12,7 +12,7 @@ nextcloud:
       upload_max_filesize = 16G
       post_max_size = 16G
   configs:
-    s3.config.php: |-
+    objectstore.config.php: |-
       <?php
       $CONFIG = array(
         'objectstore' => array(
@@ -81,13 +81,10 @@ persistence:
   storageClass: qnap-iscsi
   size: 2Gi
 
-securityContext:
-  allowPrivilegeEscalation: false
-  seccompProfile:
-    type: RuntimeDefault
-
 podSecurityContext:
   fsGroup: 33
+  seccompProfile:
+    type: RuntimeDefault
 
 resources:
   requests:

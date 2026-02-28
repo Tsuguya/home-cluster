@@ -1,4 +1,7 @@
 alloy:
+  securityContext:
+    runAsUser: 65534
+    runAsGroup: 65534
   resources:
     requests:
       cpu: 25m
@@ -63,6 +66,41 @@ alloy:
         forward_to = [loki.write.default.receiver]
       }
 
+      // K8s API audit logs (control plane nodes only)
+      local.file_match "audit" {
+        path_targets = [{
+          __path__ = "/var/log/audit/kube/kube-apiserver*.log",
+          job       = "audit",
+        }]
+      }
+
+      loki.source.file "audit" {
+        targets    = local.file_match.audit.targets
+        forward_to = [loki.process.audit.receiver]
+      }
+
+      loki.process "audit" {
+        stage.json {
+          expressions = {
+            level    = "level",
+            verb     = "verb",
+            user     = "user.username",
+            resource = "objectRef.resource",
+            ns       = "objectRef.namespace",
+            code     = "responseStatus.code",
+          }
+        }
+        stage.labels {
+          values = {
+            level    = "",
+            verb     = "",
+            user     = "",
+            resource = "",
+          }
+        }
+        forward_to = [loki.write.default.receiver]
+      }
+
       // Kubernetes cluster events
       loki.source.kubernetes_events "events" {
         log_format = "json"
@@ -89,6 +127,9 @@ configReloader:
 
 controller:
   tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
     - key: memory-constrained
       operator: Exists
       effect: NoSchedule

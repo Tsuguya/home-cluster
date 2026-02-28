@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nextcloud
+  namespace: argocd
+spec:
+  project: apps
+  sources:
+    - repoURL: https://nextcloud.github.io/helm/
+      chart: nextcloud
+      targetRevision: "8.9.1"
+      helm:
+        releaseName: nextcloud
+        valueFiles:
+          - $values/helm-values/nextcloud/values.yaml
+    - repoURL: https://valkey.io/valkey-helm/
+      chart: valkey
+      targetRevision: "0.9.3"
+      helm:
+        releaseName: valkey
+        valueFiles:
+          - $values/helm-values/valkey/values.yaml
+    - repoURL: https://github.com/Tsuguya/home-cluster.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://github.com/Tsuguya/home-cluster.git
+      targetRevision: main
+      path: manifests/nextcloud
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nextcloud
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

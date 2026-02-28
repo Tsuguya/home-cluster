@@ -47,3 +47,11 @@ spec:
         - ports:
             - port: "8443"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: nextcloud
+            io.kubernetes.pod.namespace: nextcloud
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP

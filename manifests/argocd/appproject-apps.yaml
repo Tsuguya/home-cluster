@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  description: User-facing applications
+  sourceRepos:
+    - https://nextcloud.github.io/helm/
+    - https://valkey.io/valkey-helm/
+    - https://github.com/Tsuguya/home-cluster.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: nextcloud
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: CustomResourceDefinition
+    - group: '*'
+      kind: ClusterRole
+    - group: '*'
+      kind: ClusterRoleBinding
+    - group: ''
+      kind: Namespace

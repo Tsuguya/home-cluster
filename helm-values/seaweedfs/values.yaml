@@ -136,6 +136,7 @@ filer:
       - name: loki-storage
       - name: tempo-storage
       - name: argo-artifacts
+      - name: nextcloud
   extraEnvironmentVars:
     WEED_LEVELDB2_ENABLED: "true"
     WEED_FILER_OPTIONS_RECURSIVE_DELETE: "false"

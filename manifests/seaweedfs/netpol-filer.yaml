@@ -25,6 +25,9 @@ spec:
         - matchLabels:
             app.kubernetes.io/name: argo-workflows-server
             io.kubernetes.pod.namespace: argo
+        - matchLabels:
+            app.kubernetes.io/name: nextcloud
+            io.kubernetes.pod.namespace: nextcloud
       toPorts:
         - ports:
             - port: "8333"

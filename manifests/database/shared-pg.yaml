@@ -22,8 +22,10 @@ spec:
       postInitSQL:
         - "CREATE ROLE grafana LOGIN;"
         - "CREATE ROLE argo LOGIN;"
+        - "CREATE ROLE nextcloud LOGIN;"
         - "CREATE DATABASE grafana OWNER grafana;"
         - "CREATE DATABASE argo OWNER argo;"
+        - "CREATE DATABASE nextcloud OWNER nextcloud;"
   backup:
     barmanObjectStore:
       destinationPath: s3://home-cluster-backup/cnpg/
@@ -56,3 +58,10 @@ spec:
         login: true
         passwordSecret:
           name: argo-pg-credentials
+      - name: nextcloud
+        ensure: present
+        connectionLimit: -1
+        inherit: true
+        login: true
+        passwordSecret:
+          name: nextcloud-pg-credentials

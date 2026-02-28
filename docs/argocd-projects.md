@@ -11,6 +11,7 @@ ArgoCD AppProject でアプリケーションをドメインごとに分離し�
 | monitoring | Observability (Prometheus, Loki, Alloy, Tempo) | monitoring, kube-system | 5 |
 | argo | Argo エコシステム (Events, Workflows) | argo, default | 3 |
 | security | Secret 管理 (1Password, OAuth2 Proxy, Kanidm) | `*` | 6 |
+| apps | ユーザー向けアプリケーション (Nextcloud) | nextcloud | 1 |
 | storage | ストレージ (SeaweedFS, CNPG, QNAP CSI, NFS) | cnpg-system, database, nfs-provisioner, seaweedfs, trident | 6 |
 
 ## クラスタスコープリソースの許可 (clusterResourceWhitelist)
@@ -80,6 +81,7 @@ clusterResourceWhitelist:
 
 ```
 manifests/argocd/
+├── appproject-apps.yaml
 ├── appproject-platform.yaml
 ├── appproject-networking.yaml
 ├── appproject-monitoring.yaml

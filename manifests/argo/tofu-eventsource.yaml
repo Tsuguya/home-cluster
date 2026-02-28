@@ -38,6 +38,7 @@ spec:
         method: POST
       events:
         - push
+        - pull_request
       webhookSecret:
         name: home-cloudflare-github-webhook
         key: credential
@@ -105,7 +106,7 @@ spec:
       eventName: push
       filters:
         script: |-
-          if event.body == nil or event.body.commits == nil then
+          if event.body == nil or event.body.ref ~= "refs/heads/main" or event.body.commits == nil then
             return false
           end
           for _, c in ipairs(event.body.commits) do

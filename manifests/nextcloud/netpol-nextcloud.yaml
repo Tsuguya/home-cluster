@@ -63,6 +63,8 @@ spec:
               protocol: TCP
     - toFQDNs:
         - matchPattern: "*.nextcloud.com"
+        - matchPattern: "*.github.com"
+        - matchPattern: "*.githubusercontent.com"
       toPorts:
         - ports:
             - port: "443"

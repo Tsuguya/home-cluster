@@ -1,0 +1,323 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-hubble-http
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  hubble-http.json: |
+    {
+      "annotations": {"list": []},
+      "editable": true,
+      "graphTooltip": 1,
+      "links": [],
+      "refresh": "30s",
+      "schemaVersion": 39,
+      "tags": ["cilium", "hubble", "http", "l7"],
+      "time": {"from": "now-1h", "to": "now"},
+      "timezone": "browser",
+      "title": "Hubble HTTP (L7)",
+      "uid": "hubble-http-l7",
+      "templating": {
+        "list": [
+          {
+            "current": {"selected": true, "text": "All", "value": "$__all"},
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "definition": "label_values(hubble_http_requests_total, destination_namespace)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "name": "destination_namespace",
+            "label": "Destination Namespace",
+            "query": {"query": "label_values(hubble_http_requests_total, destination_namespace)"},
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "current": {"selected": true, "text": "All", "value": "$__all"},
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "definition": "label_values(hubble_http_requests_total{destination_namespace=~\"$destination_namespace\"}, destination_workload)",
+            "includeAll": true,
+            "allValue": ".*",
+            "multi": true,
+            "name": "destination_workload",
+            "label": "Destination Workload",
+            "query": {"query": "label_values(hubble_http_requests_total{destination_namespace=~\"$destination_namespace\"}, destination_workload)"},
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
+          },
+          {
+            "current": {"selected": false, "text": "server", "value": "server"},
+            "datasource": {"type": "prometheus", "uid": "prometheus"},
+            "definition": "label_values(hubble_http_requests_total, reporter)",
+            "includeAll": false,
+            "multi": false,
+            "name": "reporter",
+            "label": "Reporter",
+            "query": {"query": "label_values(hubble_http_requests_total, reporter)"},
+            "refresh": 2,
+            "sort": 1,
+            "type": "query"
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Request Rate",
+          "gridPos": {"h": 6, "w": 4, "x": 0, "y": 0},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum(rate(hubble_http_requests_total{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\"}[$__rate_interval]))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null}
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"]},
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Error Rate (4xx+5xx)",
+          "gridPos": {"h": 6, "w": 4, "x": 4, "y": 0},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum(rate(hubble_http_requests_total{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\",status=~\"[45].*\"}[$__rate_interval])) / sum(rate(hubble_http_requests_total{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\"}[$__rate_interval]))",
+              "refId": "A"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {"color": "green", "value": null},
+                  {"color": "yellow", "value": 0.01},
+                  {"color": "red", "value": 0.05}
+                ]
+              },
+              "noValue": "0%"
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": {"calcs": ["lastNotNull"]},
+            "colorMode": "background",
+            "graphMode": "area"
+          }
+        },
+        {
+          "id": 3,
+          "type": "piechart",
+          "title": "Requests by Method",
+          "gridPos": {"h": 6, "w": 6, "x": 8, "y": 0},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum by (method) (rate(hubble_http_requests_total{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\"}[$__rate_interval]))",
+              "refId": "A",
+              "legendFormat": "{{method}}"
+            }
+          ],
+          "fieldConfig": {"defaults": {}, "overrides": []},
+          "options": {
+            "legend": {"displayMode": "table", "placement": "right", "values": ["percent", "value"]},
+            "pieType": "donut",
+            "reduceOptions": {"calcs": ["lastNotNull"]}
+          }
+        },
+        {
+          "id": 4,
+          "type": "piechart",
+          "title": "Requests by Status Code",
+          "gridPos": {"h": 6, "w": 10, "x": 14, "y": 0},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum by (status) (rate(hubble_http_requests_total{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\"}[$__rate_interval]))",
+              "refId": "A",
+              "legendFormat": "{{status}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {"matcher": {"id": "byRegexp", "options": "/^2/"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "green"}}]},
+              {"matcher": {"id": "byRegexp", "options": "/^3/"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "blue"}}]},
+              {"matcher": {"id": "byRegexp", "options": "/^4/"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "yellow"}}]},
+              {"matcher": {"id": "byRegexp", "options": "/^5/"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]}
+            ]
+          },
+          "options": {
+            "legend": {"displayMode": "table", "placement": "right", "values": ["percent", "value"]},
+            "pieType": "donut",
+            "reduceOptions": {"calcs": ["lastNotNull"]}
+          }
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "Requests Over Time by Status",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 6},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum by (status) (rate(hubble_http_requests_total{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\"}[$__rate_interval]))",
+              "refId": "A",
+              "legendFormat": "{{status}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"fillOpacity": 20, "stacking": {"mode": "normal"}},
+              "unit": "reqps"
+            },
+            "overrides": [
+              {"matcher": {"id": "byRegexp", "options": "/^2/"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "green"}}]},
+              {"matcher": {"id": "byRegexp", "options": "/^3/"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "blue"}}]},
+              {"matcher": {"id": "byRegexp", "options": "/^4/"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "yellow"}}]},
+              {"matcher": {"id": "byRegexp", "options": "/^5/"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]}
+            ]
+          },
+          "options": {
+            "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Request Duration (p50 / p95 / p99)",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum by (le, destination_workload) (rate(hubble_http_request_duration_seconds_bucket{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\"}[$__rate_interval])))",
+              "refId": "A",
+              "legendFormat": "p50 {{destination_workload}}"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, destination_workload) (rate(hubble_http_request_duration_seconds_bucket{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\"}[$__rate_interval])))",
+              "refId": "B",
+              "legendFormat": "p95 {{destination_workload}}"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le, destination_workload) (rate(hubble_http_request_duration_seconds_bucket{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\"}[$__rate_interval])))",
+              "refId": "C",
+              "legendFormat": "p99 {{destination_workload}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "custom": {"fillOpacity": 10},
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {"displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"]},
+            "tooltip": {"mode": "multi", "sort": "desc"}
+          }
+        },
+        {
+          "id": 7,
+          "type": "table",
+          "title": "Top Destinations",
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 22},
+          "datasource": {"type": "prometheus", "uid": "prometheus"},
+          "targets": [
+            {
+              "expr": "sum by (destination_namespace, destination_workload) (rate(hubble_http_requests_total{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\"}[$__rate_interval]))",
+              "refId": "A",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "sum by (destination_namespace, destination_workload) (rate(hubble_http_requests_total{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\",status=~\"[45].*\"}[$__rate_interval])) / sum by (destination_namespace, destination_workload) (rate(hubble_http_requests_total{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\"}[$__rate_interval]))",
+              "refId": "B",
+              "format": "table",
+              "instant": true
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le, destination_namespace, destination_workload) (rate(hubble_http_request_duration_seconds_bucket{destination_namespace=~\"$destination_namespace\",destination_workload=~\"$destination_workload\",reporter=~\"$reporter\"}[$__rate_interval])))",
+              "refId": "C",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {
+                "matcher": {"id": "byName", "options": "Value #A"},
+                "properties": [
+                  {"id": "displayName", "value": "Req/s"},
+                  {"id": "unit", "value": "reqps"},
+                  {"id": "decimals", "value": 2}
+                ]
+              },
+              {
+                "matcher": {"id": "byName", "options": "Value #B"},
+                "properties": [
+                  {"id": "displayName", "value": "Error Rate"},
+                  {"id": "unit", "value": "percentunit"},
+                  {"id": "decimals", "value": 2},
+                  {"id": "custom.cellOptions", "value": {"type": "color-background"}},
+                  {"id": "thresholds", "value": {"mode": "absolute", "steps": [{"color": "transparent", "value": null}, {"color": "yellow", "value": 0.01}, {"color": "red", "value": 0.05}]}}
+                ]
+              },
+              {
+                "matcher": {"id": "byName", "options": "Value #C"},
+                "properties": [
+                  {"id": "displayName", "value": "p95 Latency"},
+                  {"id": "unit", "value": "s"},
+                  {"id": "decimals", "value": 3}
+                ]
+              },
+              {
+                "matcher": {"id": "byName", "options": "Time"},
+                "properties": [{"id": "custom.hidden", "value": true}]
+              }
+            ]
+          },
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "sortBy",
+              "options": {"fields": [{"desc": true, "displayName": "Value #A"}]}
+            }
+          ],
+          "options": {
+            "sortBy": [{"displayName": "Req/s", "desc": true}],
+            "footer": {"enablePagination": true}
+          }
+        }
+      ]
+    }

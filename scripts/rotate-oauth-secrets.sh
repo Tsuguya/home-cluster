@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+OP=$(command -v op || command -v op.exe) || { echo "op CLI not found"; exit 1; }
+
 KANIDM_URL="https://idm.tgy.io"
 KANIDM_USER="idm_admin"
 OP_VAULT="am37jjl6mctaze6xsytbxdhu5y"
@@ -55,7 +57,7 @@ for client in "${!CLIENTS[@]}"; do
     -p "{\"data\":{\"$secret_key\":\"$ENCODED\"}}"
   echo "  Patched $namespace/$secret_name ($secret_key)"
 
-  op.exe item edit "$op_item" --vault "$OP_VAULT" "$secret_key=$NEW_SECRET"
+  $OP item edit "$op_item" --vault "$OP_VAULT" "$secret_key=$NEW_SECRET"
   echo "  Updated 1Password ($secret_key)"
 
   if [ "$type" = "proxy" ]; then
@@ -64,7 +66,7 @@ for client in "${!CLIENTS[@]}"; do
       -p "{\"data\":{\"cookie-secret\":\"$(echo -n "$COOKIE" | base64 -w0)\"}}"
     echo "  Patched cookie-secret"
 
-    op.exe item edit "$op_item" --vault "$OP_VAULT" "cookie-secret=$COOKIE"
+    $OP item edit "$op_item" --vault "$OP_VAULT" "cookie-secret=$COOKIE"
     echo "  Updated 1Password (cookie-secret)"
   fi
 done

@@ -23,9 +23,18 @@ kind: ClusterRole
 metadata:
   name: pluto-checker
 rules:
-  - apiGroups: ["*"]
+  # Core API - secrets excluded (scoped via namespace Roles below)
+  - apiGroups: [""]
+    resources: [configmaps, endpoints, events, limitranges, namespaces, nodes, persistentvolumeclaims, persistentvolumes, pods, podtemplates, replicationcontrollers, resourcequotas, serviceaccounts, services]
+    verbs: [get, list]
+  # Built-in API groups
+  - apiGroups: [apps, batch, autoscaling, policy, networking.k8s.io, rbac.authorization.k8s.io, storage.k8s.io, apiextensions.k8s.io, admissionregistration.k8s.io, apiregistration.k8s.io, authentication.k8s.io, authorization.k8s.io, certificates.k8s.io, coordination.k8s.io, discovery.k8s.io, events.k8s.io, flowcontrol.apiserver.k8s.io, node.k8s.io, resource.k8s.io, scheduling.k8s.io, snapshot.storage.k8s.io, groupsnapshot.storage.k8s.io, metrics.k8s.io]
     resources: ["*"]
-    verbs: ["get", "list"]
+    verbs: [get, list]
+  # CRD API groups
+  - apiGroups: [cilium.io, argoproj.io, cert-manager.io, acme.cert-manager.io, postgresql.cnpg.io, onepassword.com, gateway.networking.k8s.io, externaldns.k8s.io, monitoring.coreos.com, monitoring.grafana.com, aquasecurity.github.io, objectbucket.io, trident.qnap.io]
+    resources: ["*"]
+    verbs: [get, list]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -35,6 +44,55 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: pluto-checker
+subjects:
+  - kind: ServiceAccount
+    name: pluto-checker
+    namespace: argo
+---
+# Helm release secrets access - scoped to namespaces with Helm releases
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pluto-checker-helm-secrets
+  namespace: argocd
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pluto-checker-helm-secrets
+  namespace: argocd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pluto-checker-helm-secrets
+subjects:
+  - kind: ServiceAccount
+    name: pluto-checker
+    namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pluto-checker-helm-secrets
+  namespace: kube-system
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pluto-checker-helm-secrets
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: pluto-checker-helm-secrets
 subjects:
   - kind: ServiceAccount
     name: pluto-checker

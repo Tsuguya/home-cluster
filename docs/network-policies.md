@@ -173,6 +173,12 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **scan-jobs** (managed-by: trivy-operator) | deny world | 0.0.0.0/0:443 — registry CDN backends (S3, R2, CloudFront, etc.) are too numerous and dynamic for toFQDNs. Ephemeral pods, HTTPS only |
 | **node-collector** (app: node-collector) | deny world | kube-apiserver |
 
+## nfs-provisioner (1 policy)
+
+| Component | Ingress | Egress |
+|---|---|---|
+| **nfs-provisioner** | deny world | kube-apiserver, 192.168.0.241:2049 (QNAP NFS) |
+
 ## trident (2 policies)
 
 | Component | Ingress | Egress |

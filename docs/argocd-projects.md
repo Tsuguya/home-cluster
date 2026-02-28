@@ -11,7 +11,7 @@ ArgoCD AppProject でアプリケーションをドメインごとに分離し�
 | monitoring | Observability (Prometheus, Loki, Alloy, Tempo) | monitoring, kube-system | 5 |
 | argo | Argo エコシステム (Events, Workflows) | argo, default | 3 |
 | security | Secret 管理 (1Password, OAuth2 Proxy, Kanidm) | `*` | 6 |
-| storage | ストレージ (SeaweedFS, CNPG, QNAP CSI) | cnpg-system, database, seaweedfs, trident | 5 |
+| storage | ストレージ (SeaweedFS, CNPG, QNAP CSI, NFS) | cnpg-system, database, nfs-provisioner, seaweedfs, trident | 6 |
 
 ## クラスタスコープリソースの許可 (clusterResourceWhitelist)
 

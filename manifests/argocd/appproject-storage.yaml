@@ -4,10 +4,11 @@ metadata:
   name: storage
   namespace: argocd
 spec:
-  description: Storage components (seaweedfs, cnpg, qnap-csi)
+  description: Storage components (seaweedfs, cnpg, qnap-csi, nfs-provisioner)
   sourceRepos:
     - https://cloudnative-pg.github.io/charts
     - https://github.com/qnap-dev/QNAP-CSI-PlugIn.git
+    - https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner
     - https://seaweedfs.github.io/seaweedfs/helm
     - https://github.com/Tsuguya/home-cluster.git
   destinations:
@@ -15,6 +16,8 @@ spec:
       namespace: cnpg-system
     - server: https://kubernetes.default.svc
       namespace: database
+    - server: https://kubernetes.default.svc
+      namespace: nfs-provisioner
     - server: https://kubernetes.default.svc
       namespace: seaweedfs
     - server: https://kubernetes.default.svc

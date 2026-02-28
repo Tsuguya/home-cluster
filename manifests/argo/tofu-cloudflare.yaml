@@ -121,6 +121,11 @@ spec:
               secretKeyRef:
                 name: cloudflare-tofu-credentials
                 key: zone_id
+          - name: TF_VAR_discord_webhook_url
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-tofu-credentials
+                key: discord_webhook_url
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
@@ -230,3 +235,8 @@ spec:
               secretKeyRef:
                 name: cloudflare-tofu-credentials
                 key: zone_id
+          - name: TF_VAR_discord_webhook_url
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-tofu-credentials
+                key: discord_webhook_url

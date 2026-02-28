@@ -1,7 +1,10 @@
 alloy:
   securityContext:
-    runAsUser: 65534
-    runAsGroup: 65534
+    capabilities:
+      add:
+        - DAC_READ_SEARCH
+      drop:
+        - ALL
   resources:
     requests:
       cpu: 25m

@@ -68,7 +68,7 @@ spec:
           emptyDir: {}
       initContainers:
         - name: git-clone
-          image: alpine/git:v2.47.2
+          image: alpine/git:v2.52.0
           command: [git, clone, --depth, "1"]
           args: ["https://$(GITHUB_TOKEN)@github.com/Tsuguya/home-cloudflare.git", /workspace]
           env:
@@ -149,7 +149,7 @@ spec:
           emptyDir: {}
       initContainers:
         - name: git-clone
-          image: alpine/git:v2.47.2
+          image: alpine/git:v2.52.0
           command: [sh, -c]
           args:
             - git clone --depth 1 -b "${BRANCH}" "https://${GITHUB_TOKEN}@github.com/Tsuguya/home-cloudflare.git" /workspace

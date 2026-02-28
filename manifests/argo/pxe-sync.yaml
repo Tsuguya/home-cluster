@@ -155,12 +155,12 @@ spec:
               fi
             }
 
-            map_config "58-47-ca-76-07-c4" "cp-01.cluster.home.tgy.io"
-            map_config "58-47-ca-76-09-95" "cp-02.cluster.home.tgy.io"
-            map_config "58-47-ca-76-08-d2" "cp-03.cluster.home.tgy.io"
-            map_config "7c-83-34-be-c0-b4" "wn-01.cluster.home.tgy.io"
-            map_config "68-1d-ef-36-c6-e3" "wn-02.cluster.home.tgy.io"
-            map_config "58-47-ca-73-ce-2a" "wn-03.cluster.home.tgy.io"
+            map_config "58-47-ca-76-07-c4" "cp-01.cluster.internal"
+            map_config "58-47-ca-76-09-95" "cp-02.cluster.internal"
+            map_config "58-47-ca-76-08-d2" "cp-03.cluster.internal"
+            map_config "7c-83-34-be-c0-b4" "wn-01.cluster.internal"
+            map_config "68-1d-ef-36-c6-e3" "wn-02.cluster.internal"
+            map_config "58-47-ca-73-ce-2a" "wn-03.cluster.internal"
 
             echo "=== Done ==="
             ls -lh "${CONFIG_DIR}/"

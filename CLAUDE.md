@@ -31,9 +31,13 @@ docs/              # 運用ドキュメント
 ```yaml
 egress:
   # 1. DNS は CCNP で共通適用済み — 個別 CNP には不要
-  # 2. kube-apiserver が必要なら toEntities で
+  # 2. kube-apiserver が必要なら toEntities で（必ず port: 6443 を指定）
   - toEntities:
       - kube-apiserver
+    toPorts:
+      - ports:
+          - port: "6443"
+            protocol: TCP
   # 3. 外部 HTTPS は toFQDNs で必要なドメインだけ許可
   - toFQDNs:
       - matchName: "example.com"

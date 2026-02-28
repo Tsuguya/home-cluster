@@ -20,7 +20,16 @@ spec:
   egress:
     - toFQDNs:
         - matchName: "github.com"
-        - matchPattern: "*.github.io"
+        - matchName: "argoproj.github.io"
+        - matchName: "1password.github.io"
+        - matchName: "grafana.github.io"
+        - matchName: "oauth2-proxy.github.io"
+        - matchName: "aquasecurity.github.io"
+        - matchName: "cloudnative-pg.github.io"
+        - matchName: "kubernetes-sigs.github.io"
+        - matchName: "prometheus-community.github.io"
+        - matchName: "seaweedfs.github.io"
+        - matchName: "stakater.github.io"
         - matchPattern: "*.githubusercontent.com"
         - matchName: "charts.jetstack.io"
         - matchName: "helm.cilium.io"

@@ -13,11 +13,15 @@ spec:
   egress:
     - toEntities:
         - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
     - toFQDNs:
         - matchPattern: "*.r2.cloudflarestorage.com"
         - matchName: "dl.k8s.io"
         - matchPattern: "*.dl.k8s.io"
-        - matchPattern: "*.alpinelinux.org"
+        - matchName: "dl-cdn.alpinelinux.org"
       toPorts:
         - ports:
             - port: "443"

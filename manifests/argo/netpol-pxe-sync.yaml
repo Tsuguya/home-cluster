@@ -13,11 +13,15 @@ spec:
   egress:
     - toEntities:
         - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
     - toFQDNs:
         - matchName: "github.com"
-        - matchPattern: "*.github.com"
+        - matchName: "api.github.com"
         - matchPattern: "*.githubusercontent.com"
-        - matchPattern: "*.alpinelinux.org"
+        - matchName: "dl-cdn.alpinelinux.org"
       toPorts:
         - ports:
             - port: "443"

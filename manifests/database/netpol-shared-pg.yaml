@@ -48,6 +48,10 @@ spec:
   egress:
     - toEntities:
         - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
     - toEndpoints:
         - matchLabels:
             cnpg.io/cluster: shared-pg

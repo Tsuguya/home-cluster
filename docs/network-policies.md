@@ -59,7 +59,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **server** | ingress, cloudflared → 8080 | kube-apiserver, repo-server:8081, kanidm (kanidm):8443, redis:6379 |
 | **application-controller** | (none) | kube-apiserver, repo-server:8081, redis:6379 |
-| **repo-server** | server, app-controller → 8081 | github.com + *.github.io + *.githubusercontent.com + charts.jetstack.io + helm.cilium.io:443, redis:6379 |
+| **repo-server** | server, app-controller → 8081 | github.com + {argoproj,1password,grafana,oauth2-proxy,aquasecurity,cloudnative-pg,kubernetes-sigs,prometheus-community,seaweedfs,stakater}.github.io + *.githubusercontent.com + charts.jetstack.io + helm.cilium.io:443, redis:6379 |
 | **redis** | server, repo-server, app-controller → 6379 | (none) |
 | **applicationset-controller** | (none) | kube-apiserver |
 | **notifications-controller** | (none) | kube-apiserver, discord.com:443 |
@@ -78,9 +78,9 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
 | **workflow-pods** (backup-workflow, pxe-sync, talos-build, kanidm-repl-exchange, kanidm-backup除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
 | **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver, *.r2.cloudflarestorage.com + github.com + *.githubusercontent.com + dl.min.io :443, CP nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
-| **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + *.github.com + *.githubusercontent.com + *.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.0.241):2049 (NFS) |
+| **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + api.github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.0.241):2049 (NFS) |
 | **talos-build** (talos-build=true) | (none) | kube-apiserver, ghcr.io + github.com + api.github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333 |
-| **kanidm-backup** (kanidm-backup=true) | (deny world) | kube-apiserver, *.r2.cloudflarestorage.com + dl.k8s.io + *.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333 |
+| **kanidm-backup** (kanidm-backup=true) | (deny world) | kube-apiserver, *.r2.cloudflarestorage.com + dl.k8s.io + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333 |
 | **kanidm-repl-exchange** (kanidm-repl-exchange=true) | (deny world) | kube-apiserver, seaweedfs-filer (seaweedfs):8333 |
 
 ## monitoring (11 policies)
@@ -113,7 +113,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Component | Ingress | Egress |
 |---|---|---|
 | **coredns** | cluster/host/remote-node → 53; prometheus (monitoring) → 9153 | host:53 (upstream), kube-apiserver |
-| **hubble-relay** | host → 4222; hubble-ui → 4245 | host/remote-node/kube-apiserver:4244 |
+| **hubble-relay** | host → 4222; hubble-ui → 4245 | host/remote-node:4244, kube-apiserver:6443 |
 | **hubble-ui** | oauth2-proxy-hubble (oauth2-proxy)/host → 8081 | kube-apiserver, hubble-relay:4245 |
 | **metrics-server** | host/remote-node/kube-apiserver → 10250 | kube-apiserver, host/remote-node:10250 |
 | **reloader** | host → 9090 (probes) | kube-apiserver |

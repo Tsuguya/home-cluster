@@ -31,7 +31,7 @@ domainFilters:
 
 excludeDomains:
   - idm.tgy.io
-  - tools.tgy.io
+  - nc.tgy.io
 
 securityContext:
   allowPrivilegeEscalation: false

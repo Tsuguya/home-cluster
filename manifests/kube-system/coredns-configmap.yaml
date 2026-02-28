@@ -17,7 +17,7 @@ data:
         prometheus :9153
 
         rewrite name idm.tgy.io kanidm.kanidm.svc.cluster.local
-        rewrite name nc.tools.tgy.io nextcloud.nextcloud.svc.cluster.local
+        rewrite name nc.tgy.io nextcloud.nextcloud.svc.cluster.local
 
         kubernetes cluster.local in-addr.arpa ip6.arpa {
             pods insecure

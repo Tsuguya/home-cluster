@@ -1,16 +1,16 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: http-redirect-tools
+  name: http-redirect-nc
   namespace: gateway
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
       name: main-gateway
-      sectionName: http-tools
+      sectionName: http-nc
   hostnames:
-    - "*.tools.tgy.io"
+    - "nc.tgy.io"
   rules:
     - matches:
         - path:

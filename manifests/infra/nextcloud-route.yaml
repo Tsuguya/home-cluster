@@ -9,9 +9,9 @@ spec:
       kind: Gateway
       name: main-gateway
       namespace: gateway
-      sectionName: https-tools
+      sectionName: https-nc
   hostnames:
-    - nc.tools.tgy.io
+    - nc.tgy.io
   rules:
     - matches:
         - path:

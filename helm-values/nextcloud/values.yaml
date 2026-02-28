@@ -1,7 +1,7 @@
 nextcloud:
-  host: nc.tools.tgy.io
+  host: nc.tgy.io
   trustedDomains:
-    - nc.tools.tgy.io
+    - nc.tgy.io
   existingSecret:
     enabled: true
     secretName: nextcloud-admin-credentials
@@ -38,7 +38,7 @@ nextcloud:
       $CONFIG = array(
         'trusted_proxies' => array('10.0.0.0/8'),
         'overwriteprotocol' => 'https',
-        'overwrite.cli.url' => 'https://nc.tools.tgy.io',
+        'overwrite.cli.url' => 'https://nc.tgy.io',
         'default_phone_region' => 'JP',
         'memcache.local' => '\\OC\\Memcache\\APCu',
         'memcache.distributed' => '\\OC\\Memcache\\Redis',

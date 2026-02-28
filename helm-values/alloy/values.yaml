@@ -72,7 +72,7 @@ alloy:
       // K8s API audit logs (control plane nodes only)
       local.file_match "audit" {
         path_targets = [{
-          __path__ = "/var/log/audit/kube/kube-apiserver*.log",
+          __path__ = "/var/log/audit/kube/kube-apiserver.log",
           job       = "audit",
         }]
       }

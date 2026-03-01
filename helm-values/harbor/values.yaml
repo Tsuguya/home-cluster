@@ -35,6 +35,9 @@ imageChartStorage:
     existingSecret: harbor-s3-credentials
   disableredirect: true
 
+persistence:
+  enabled: false
+
 trivy:
   enabled: false
 

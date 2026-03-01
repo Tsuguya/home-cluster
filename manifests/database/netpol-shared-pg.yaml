@@ -29,6 +29,10 @@ spec:
             app: harbor
             component: exporter
             io.kubernetes.pod.namespace: harbor
+        - matchLabels:
+            app: harbor
+            component: jobservice
+            io.kubernetes.pod.namespace: harbor
       toPorts:
         - ports:
             - port: "5432"

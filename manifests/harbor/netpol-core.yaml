@@ -23,6 +23,14 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: prometheus
+            io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "8001"
+              protocol: TCP
   egress:
     - toEndpoints:
         - matchLabels:
@@ -47,6 +55,16 @@ spec:
       toPorts:
         - ports:
             - port: "5000"
+              protocol: TCP
+            - port: "8080"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: portal
+      toPorts:
+        - ports:
+            - port: "8080"
               protocol: TCP
     - toEndpoints:
         - matchLabels:

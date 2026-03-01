@@ -17,6 +17,14 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: prometheus
+            io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "8001"
+              protocol: TCP
   egress:
     - toEndpoints:
         - matchLabels:
@@ -41,4 +49,12 @@ spec:
       toPorts:
         - ports:
             - port: "5000"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
+      toPorts:
+        - ports:
+            - port: "5432"
               protocol: TCP

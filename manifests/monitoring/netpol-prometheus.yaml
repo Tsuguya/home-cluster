@@ -93,6 +93,14 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            io.kubernetes.pod.namespace: harbor
+      toPorts:
+        - ports:
+            - port: "8001"
+              protocol: TCP
     - toEntities:
         - host
         - remote-node

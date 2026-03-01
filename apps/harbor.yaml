@@ -27,6 +27,10 @@ spec:
       kind: Deployment
       jqPathExpressions:
         - .spec.template.metadata.annotations
+    - group: ""
+      kind: Secret
+      jqPathExpressions:
+        - .data
   syncPolicy:
     automated:
       prune: true

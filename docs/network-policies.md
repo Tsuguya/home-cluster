@@ -197,6 +197,12 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **nextcloud** | ingress, cloudflared (argocd) → 80 | kube-apiserver, shared-pg (database):5432, seaweedfs-filer (seaweedfs):8333, kanidm (kanidm):8443, valkey:6379 |
 | **valkey** | nextcloud → 6379 | (none) |
 
+## spin-operator (1 policy)
+
+| Component | Ingress | Egress |
+|---|---|---|
+| **spin-operator** | kube-apiserver/host/remote-node → 9443 (webhook) | kube-apiserver |
+
 ## trident (2 policies)
 
 | Component | Ingress | Egress |

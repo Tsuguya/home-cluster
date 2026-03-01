@@ -10,6 +10,7 @@ spec:
     - https://helm.cilium.io
     - https://kubernetes-sigs.github.io/metrics-server
     - https://stakater.github.io/stakater-charts
+    - ghcr.io/spinframework/charts/*
     - https://github.com/Tsuguya/home-cluster.git
   destinations:
     - server: https://kubernetes.default.svc
@@ -18,6 +19,8 @@ spec:
       namespace: kube-system
     - server: https://kubernetes.default.svc
       namespace: cilium-secrets
+    - server: https://kubernetes.default.svc
+      namespace: spin-operator
   clusterResourceWhitelist:
     - group: '*'
       kind: CustomResourceDefinition
@@ -35,5 +38,7 @@ spec:
       kind: GatewayClass
     - group: '*'
       kind: Namespace
+    - group: node.k8s.io
+      kind: RuntimeClass
     - group: cilium.io
       kind: TracingPolicy

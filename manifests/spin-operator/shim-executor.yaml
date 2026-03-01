@@ -1,0 +1,9 @@
+apiVersion: core.spinkube.dev/v1alpha1
+kind: SpinAppExecutor
+metadata:
+  name: containerd-shim-spin
+  namespace: spin-operator
+spec:
+  createDeployment: true
+  deploymentConfig:
+    runtimeClassName: wasmtime-spin-v2

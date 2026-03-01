@@ -22,6 +22,11 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: harbor
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jqPathExpressions:
+        - .spec.template.metadata.annotations
   syncPolicy:
     automated:
       prune: true

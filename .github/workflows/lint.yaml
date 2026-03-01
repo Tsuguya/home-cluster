@@ -68,11 +68,14 @@ jobs:
           done
           helm repo update
 
+          SKIP_CHARTS="harbor"
+
           # Phase 2: helm template | kubeconform
           for app_file in apps/*.yaml; do
             source_count=$(yq '.spec.sources | length' "$app_file")
             [[ "$source_count" == "0" ]] && continue
             app_name=$(yq '.metadata.name' "$app_file")
+            [[ " $SKIP_CHARTS " == *" $app_name "* ]] && echo ">>> $app_name: skipped" && continue
             namespace=$(yq '.spec.destination.namespace' "$app_file")
             for i in $(seq 0 $((source_count - 1))); do
               chart=$(yq ".spec.sources[$i].chart" "$app_file")

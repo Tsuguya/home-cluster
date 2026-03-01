@@ -200,8 +200,8 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Component | Ingress | Egress |
 |---|---|---|
 | **nginx** | ingress, cloudflared (argocd) → 8080; prometheus (monitoring) → 8001 | core:8080, portal:8080 |
-| **core** | nginx, jobservice, exporter → 8080; prometheus (monitoring) → 8001 | shared-pg (database):5432, redis:6379, registry:5000/8080, portal:8080, kanidm (kanidm):8443, kube-apiserver |
-| **portal** | nginx → 8080 | (none) |
+| **core** | nginx, jobservice, exporter → 8080; prometheus (monitoring) → 8001 | shared-pg (database):5432, redis:6379, registry:5000/8080, portal:8080, jobservice:8080, kanidm (kanidm):8443, kube-apiserver |
+| **portal** | nginx, core → 8080 | (none) |
 | **registry** | core, jobservice → 5000/8080; prometheus (monitoring) → 8001 | seaweedfs-filer (seaweedfs):8333, redis:6379 |
 | **jobservice** | core → 8080; prometheus (monitoring) → 8001 | core:8080, redis:6379, registry:5000, shared-pg (database):5432 |
 | **redis** | core, registry, jobservice, exporter → 6379 | (none) |

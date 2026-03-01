@@ -32,6 +32,7 @@ domainFilters:
 excludeDomains:
   - idm.tgy.io
   - nc.tgy.io
+  - registry.infra.tgy.io
 
 securityContext:
   allowPrivilegeEscalation: false

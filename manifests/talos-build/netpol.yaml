@@ -21,6 +21,7 @@ spec:
         - matchName: "ghcr.io"
         - matchName: "github.com"
         - matchName: "api.github.com"
+        - matchName: "uploads.github.com"
         - matchPattern: "*.githubusercontent.com"
         - matchName: "dl-cdn.alpinelinux.org"
         - matchName: "discord.com"

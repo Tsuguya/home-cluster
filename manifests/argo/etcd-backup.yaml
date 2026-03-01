@@ -51,11 +51,13 @@ spec:
             set -euo pipefail
 
             TALOS_VERSION="v1.12.4"
-            echo "=== Installing talosctl ${TALOS_VERSION} and mc ==="
+            echo "=== Installing talosctl ${TALOS_VERSION} and curl ==="
             wget -qO /tmp/talosctl "https://github.com/siderolabs/talos/releases/download/${TALOS_VERSION}/talosctl-linux-amd64" \
               && chmod +x /tmp/talosctl
-            wget -qO /tmp/mc "https://dl.min.io/client/mc/release/linux-amd64/mc" \
-              && chmod +x /tmp/mc
+            _apk=/tmp/apk; mkdir -p $_apk/etc/apk; cp -r /etc/apk/keys $_apk/etc/apk/
+            apk add --root $_apk --initdb --usermode --no-cache \
+              --repositories-file /etc/apk/repositories curl > /dev/null
+            export PATH="$_apk/usr/bin:$PATH" LD_LIBRARY_PATH="$_apk/usr/lib:$_apk/lib"
 
             echo "=== Taking etcd snapshot ==="
             TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
@@ -65,8 +67,11 @@ spec:
             echo "Snapshot size: ${SNAPSHOT_SIZE} bytes"
 
             echo "=== Uploading to R2 ==="
-            /tmp/mc alias set r2 "${R2_ENDPOINT}" "${AWS_ACCESS_KEY_ID}" "${AWS_SECRET_ACCESS_KEY}"
-            /tmp/mc cp /tmp/etcd-snapshot.db "r2/home-cluster-backup/etcd/${TIMESTAMP}.db"
+            curl -fsSL --aws-sigv4 "aws:amz:auto:s3" \
+              --user "${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}" \
+              -H "Content-Type: application/octet-stream" \
+              -T /tmp/etcd-snapshot.db \
+              "${R2_ENDPOINT}/home-cluster-backup/etcd/${TIMESTAMP}.db"
 
             echo "=== Done ==="
             echo "Uploaded: etcd/${TIMESTAMP}.db (${SNAPSHOT_SIZE} bytes)"

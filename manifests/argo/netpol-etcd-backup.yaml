@@ -21,7 +21,7 @@ spec:
         - matchPattern: "*.r2.cloudflarestorage.com"
         - matchName: "github.com"
         - matchPattern: "*.githubusercontent.com"
-        - matchName: "dl.min.io"
+        - matchName: "dl-cdn.alpinelinux.org"
       toPorts:
         - ports:
             - port: "443"

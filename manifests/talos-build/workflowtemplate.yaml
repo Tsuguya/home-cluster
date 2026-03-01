@@ -176,6 +176,8 @@ spec:
               secretKeyRef:
                 name: github-pat-talos-build
                 key: credential
+          - name: DOCKER_CONFIG
+            value: /tmp
         resources:
           requests:
             cpu: 50m

@@ -34,6 +34,7 @@ spec:
         - matchPattern: "*.githubusercontent.com"
         - matchName: "charts.jetstack.io"
         - matchName: "helm.cilium.io"
+        - matchName: "helm.goharbor.io"
       toPorts:
         - ports:
             - port: "443"

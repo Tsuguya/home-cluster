@@ -30,6 +30,7 @@ spec:
         - matchName: "prometheus-community.github.io"
         - matchName: "seaweedfs.github.io"
         - matchName: "stakater.github.io"
+        - matchName: "ghcr.io"
         - matchPattern: "*.githubusercontent.com"
         - matchName: "charts.jetstack.io"
         - matchName: "helm.cilium.io"

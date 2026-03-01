@@ -21,6 +21,14 @@ spec:
         - matchLabels:
             app.kubernetes.io/name: nextcloud
             io.kubernetes.pod.namespace: nextcloud
+        - matchLabels:
+            app: harbor
+            component: core
+            io.kubernetes.pod.namespace: harbor
+        - matchLabels:
+            app: harbor
+            component: exporter
+            io.kubernetes.pod.namespace: harbor
       toPorts:
         - ports:
             - port: "5432"

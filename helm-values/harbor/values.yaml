@@ -1,0 +1,102 @@
+expose:
+  type: clusterIP
+  tls:
+    enabled: false
+  clusterIP:
+    name: harbor
+
+externalURL: https://registry.infra.tgy.io
+
+existingSecretAdminPassword: harbor-admin-credentials
+existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
+existingSecretSecretKey: harbor-core-secret
+
+database:
+  type: external
+  external:
+    host: shared-pg-rw.database.svc
+    port: "5432"
+    username: harbor
+    coreDatabase: harbor
+    existingSecret: harbor-pg-credentials
+    sslmode: disable
+
+redis:
+  type: internal
+
+imageChartStorage:
+  type: s3
+  s3:
+    region: us-east-1
+    bucket: harbor
+    regionendpoint: http://seaweedfs-filer.seaweedfs.svc:8333
+    secure: false
+    v4auth: true
+    existingSecret: harbor-s3-credentials
+  disableredirect: true
+
+trivy:
+  enabled: false
+
+core:
+  extraEnvVars:
+    - name: OIDC_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: harbor-kanidm-oauth
+          key: clientSecret
+    - name: CONFIG_OVERWRITE_JSON
+      value: '{"auth_mode":"oidc_auth","oidc_name":"Kanidm","oidc_endpoint":"https://idm.tgy.io/oauth2/openid/harbor","oidc_client_id":"harbor","oidc_client_secret":"$(OIDC_CLIENT_SECRET)","oidc_scope":"openid,profile,email","oidc_verify_cert":"true","oidc_auto_onboard":"true","oidc_user_claim":"preferred_username"}'
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+portal:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+registry:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+jobservice:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+nginx:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+exporter:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prometheus-stack

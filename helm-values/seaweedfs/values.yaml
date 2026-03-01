@@ -137,6 +137,7 @@ filer:
       - name: tempo-storage
       - name: argo-artifacts
       - name: nextcloud
+      - name: harbor
   extraEnvironmentVars:
     WEED_LEVELDB2_ENABLED: "true"
     WEED_FILER_OPTIONS_RECURSIVE_DELETE: "false"

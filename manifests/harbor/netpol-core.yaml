@@ -1,0 +1,64 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: harbor-core
+  namespace: harbor
+spec:
+  endpointSelector:
+    matchLabels:
+      app: harbor
+      component: core
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: harbor
+            component: nginx
+        - matchLabels:
+            app: harbor
+            component: jobservice
+        - matchLabels:
+            app: harbor
+            component: exporter
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: redis
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: registry
+      toPorts:
+        - ports:
+            - port: "5000"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: kanidm
+            io.kubernetes.pod.namespace: kanidm
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP

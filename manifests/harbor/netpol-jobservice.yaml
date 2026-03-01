@@ -1,0 +1,44 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: harbor-jobservice
+  namespace: harbor
+spec:
+  endpointSelector:
+    matchLabels:
+      app: harbor
+      component: jobservice
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: harbor
+            component: core
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: core
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: redis
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: registry
+      toPorts:
+        - ports:
+            - port: "5000"
+              protocol: TCP

@@ -8,10 +8,13 @@ spec:
   sourceRepos:
     - https://nextcloud.github.io/helm/
     - https://valkey.io/valkey-helm/
+    - https://helm.goharbor.io
     - https://github.com/Tsuguya/home-cluster.git
   destinations:
     - server: https://kubernetes.default.svc
       namespace: nextcloud
+    - server: https://kubernetes.default.svc
+      namespace: harbor
   clusterResourceWhitelist:
     - group: '*'
       kind: CustomResourceDefinition

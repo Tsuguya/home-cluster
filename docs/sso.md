@@ -11,6 +11,7 @@
 | Argo Workflows | OIDC | Kanidm (コンフィデンシャル) | kanidm-argo-workflows-oauth (argo) | `helm-values/argo-workflows/values.yaml` |
 | Hubble UI | oauth2-proxy (OIDC) | Kanidm (コンフィデンシャル) | oauth2-proxy-hubble-oauth (oauth2-proxy) | `helm-values/oauth2-proxy-hubble/values.yaml` |
 | SeaweedFS UI | oauth2-proxy (OIDC) | Kanidm (コンフィデンシャル) | oauth2-proxy-seaweedfs-oauth (oauth2-proxy) | `helm-values/oauth2-proxy-seaweedfs/values.yaml` |
+| Harbor | CONFIG_OVERWRITE_JSON (OIDC) | Kanidm (コンフィデンシャル) | harbor-kanidm-oauth (harbor) | `helm-values/harbor/values.yaml` |
 
 ArgoCD は Kanidm パブリッククライアント (PKCE S256) を使用するため、clientSecret 不要。
 
@@ -122,6 +123,29 @@ kanidm system oauth2 show-basic-secret oauth2-proxy-seaweedfs --url https://idm.
 
 oauth2-proxy 経由で認証。clientSecret + cookieSecret を 1Password (oauth2-proxy-seaweedfs-oauth) に保存。
 
+### Harbor (コンフィデンシャルクライアント)
+
+```bash
+kanidm system oauth2 create harbor "Harbor Registry" https://registry.infra.tgy.io --url https://idm.tgy.io
+
+kanidm system oauth2 add-redirect-url harbor https://registry.infra.tgy.io/c/oidc/callback --url https://idm.tgy.io
+
+kanidm group create harbor_users --url https://idm.tgy.io
+kanidm group add-members harbor_users tsuguya --url https://idm.tgy.io
+
+kanidm system oauth2 update-scope-map harbor harbor_users openid profile email --url https://idm.tgy.io
+
+kanidm system oauth2 prefer-short-username harbor --url https://idm.tgy.io
+
+kanidm system oauth2 warning-insecure-client-disable-pkce harbor --url https://idm.tgy.io
+
+kanidm system oauth2 show-basic-secret harbor --url https://idm.tgy.io
+```
+
+Harbor は PKCE 未サポートのため `warning-insecure-client-disable-pkce` が必要。
+OIDC 設定は `CONFIG_OVERWRITE_JSON` 環境変数で core コンテナに注入。`$(OIDC_CLIENT_SECRET)` は Kubernetes の env 展開で secretKeyRef から解決される（定義順が重要）。
+clientSecret は 1Password (harbor-kanidm-oauth) に保存し、OnePasswordItem 経由でデプロイ。
+
 ## 1Password アイテム
 
 | アイテム | Secret 名 | Namespace | キー |
@@ -130,6 +154,7 @@ oauth2-proxy 経由で認証。clientSecret + cookieSecret を 1Password (oauth2
 | kanidm-argo-workflows-oauth | kanidm-argo-workflows-oauth | argo | clientID, clientSecret |
 | oauth2-proxy-hubble-oauth | oauth2-proxy-hubble-oauth | oauth2-proxy | client-id, client-secret, cookie-secret |
 | oauth2-proxy-seaweedfs-oauth | oauth2-proxy-seaweedfs-oauth | oauth2-proxy | client-id, client-secret, cookie-secret |
+| harbor-kanidm-oauth | harbor-kanidm-oauth | harbor | clientID, clientSecret |
 
 ArgoCD はパブリッククライアントのため 1Password アイテム不要。
 oauth2-proxy の Secret キーは chart の `existingSecret` が期待する `client-id`, `client-secret`, `cookie-secret`。

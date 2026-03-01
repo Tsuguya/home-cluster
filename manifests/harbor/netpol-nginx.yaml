@@ -1,0 +1,42 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: harbor-nginx
+  namespace: harbor
+spec:
+  endpointSelector:
+    matchLabels:
+      app: harbor
+      component: nginx
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            app: cloudflared
+            io.kubernetes.pod.namespace: argocd
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: core
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: portal
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

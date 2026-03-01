@@ -33,6 +33,10 @@ spec:
         - matchLabels:
             app.kubernetes.io/name: nextcloud
             io.kubernetes.pod.namespace: nextcloud
+        - matchLabels:
+            app: harbor
+            component: registry
+            io.kubernetes.pod.namespace: harbor
       toPorts:
         - ports:
             - port: "8333"

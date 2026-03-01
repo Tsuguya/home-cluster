@@ -55,3 +55,12 @@ spec:
         - ports:
             - port: "80"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: nginx
+            io.kubernetes.pod.namespace: harbor
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

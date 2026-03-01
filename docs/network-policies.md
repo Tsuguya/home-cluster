@@ -45,6 +45,11 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Nextcloud (nextcloud) | SeaweedFS filer (seaweedfs) | 8333 | S3 object storage |
 | Nextcloud (nextcloud) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | Cloudflared (argocd) | Nextcloud (nextcloud) | 80 | Cloudflare Tunnel → Nextcloud |
+| Cloudflared (argocd) | Harbor nginx (harbor) | 8080 | Cloudflare Tunnel → Harbor |
+| Harbor core (harbor) | shared-pg (database) | 5432 | Harbor database |
+| Harbor exporter (harbor) | shared-pg (database) | 5432 | Metrics collection |
+| Harbor registry (harbor) | SeaweedFS filer (seaweedfs) | 8333 | S3 image storage |
+| Harbor core (harbor) | Kanidm (kanidm) | 8443 | OIDC token exchange |
 | shared-pg (database) | Cloudflare R2 (external) | 443 | CNPG barman backup/WAL archiving |
 
 ## Excluded Pods (hostNetwork: true)
@@ -70,7 +75,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **applicationset-controller** | (none) | kube-apiserver |
 | **notifications-controller** | (none) | kube-apiserver, discord.com:443 |
 | **redis-secret-init** (Job) | (none) | kube-apiserver |
-| **cloudflared** | (none) | *.v2.argotunnel.com + cftunnel.com:443/7844, server:8080, eventsource (argo):12000, nextcloud (nextcloud):80 |
+| **cloudflared** | (none) | *.v2.argotunnel.com + cftunnel.com:443/7844, server:8080, eventsource (argo):12000, nextcloud (nextcloud):80, harbor-nginx (harbor):8080 |
 
 ## argo (10 policies)
 
@@ -116,7 +121,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **master** | master/volume/filer/bucket-hook → 9333/19333; prometheus (monitoring) → 9327 | master (self):9333/19333, volume:8080/18080, filer:8888/18888 |
 | **volume** | master/filer → 8080/18080; prometheus (monitoring) → 9327 | master:9333/19333, volume (self):8080/18080 |
-| **filer** | loki (monitoring), tempo (monitoring), workflow-pods (argo), workflow-pods (talos-build), workflows-server (argo), etcd-backup (argo), pxe-sync (argo), kanidm-backup (argo), nextcloud (nextcloud) → 8333; filer/master/bucket-hook/oauth2-proxy-seaweedfs (oauth2-proxy) → 8888/18888; prometheus (monitoring) → 9327 | master:9333/19333, volume:8080/18080, filer (self):8888/18888 |
+| **filer** | loki (monitoring), tempo (monitoring), workflow-pods (argo), workflow-pods (talos-build), workflows-server (argo), etcd-backup (argo), pxe-sync (argo), kanidm-backup (argo), nextcloud (nextcloud), harbor-registry (harbor) → 8333; filer/master/bucket-hook/oauth2-proxy-seaweedfs (oauth2-proxy) → 8888/18888; prometheus (monitoring) → 9327 | master:9333/19333, volume:8080/18080, filer (self):8888/18888 |
 | **bucket-hook** (Job) | (none) | master:9333, filer:8888 |
 
 ## kube-system (6 policies)
@@ -134,7 +139,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo), nextcloud (nextcloud) → 5432; self → 5432/8000 (replication); cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000, *.r2.cloudflarestorage.com:443 (backup) |
+| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo), nextcloud (nextcloud), harbor-core (harbor), harbor-exporter (harbor) → 5432; self → 5432/8000 (replication); cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000, *.r2.cloudflarestorage.com:443 (backup) |
 
 ## cert-manager (4 policies)
 
@@ -167,7 +172,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443; argocd-server (argocd) → 8443; argo-workflows-server (argo) → 8443; oauth2-proxy-hubble (oauth2-proxy) → 8443; oauth2-proxy-seaweedfs (oauth2-proxy) → 8443; nextcloud (nextcloud) → 8443; self → 8444 (replication) | self:8444 (replication), kube-apiserver |
+| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443; argocd-server (argocd) → 8443; argo-workflows-server (argo) → 8443; oauth2-proxy-hubble (oauth2-proxy) → 8443; oauth2-proxy-seaweedfs (oauth2-proxy) → 8443; nextcloud (nextcloud) → 8443; harbor-core (harbor) → 8443; self → 8444 (replication) | self:8444 (replication), kube-apiserver |
 
 ## oauth2-proxy (2 policies)
 
@@ -189,6 +194,18 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Component | Ingress | Egress |
 |---|---|---|
 | **nfs-provisioner** | deny world | kube-apiserver, 192.168.0.241:2049 (QNAP NFS) |
+
+## harbor (7 policies)
+
+| Component | Ingress | Egress |
+|---|---|---|
+| **nginx** | ingress, cloudflared (argocd) → 8080 | core:8080, portal:8080 |
+| **core** | nginx, jobservice, exporter → 8080 | shared-pg (database):5432, redis:6379, registry:5000, kanidm (kanidm):8443, kube-apiserver |
+| **portal** | nginx → 8080 | (none) |
+| **registry** | core, jobservice → 5000/8080 | seaweedfs-filer (seaweedfs):8333, redis:6379 |
+| **jobservice** | core → 8080 | core:8080, redis:6379, registry:5000 |
+| **redis** | core, registry, jobservice, exporter → 6379 | (none) |
+| **exporter** | prometheus (monitoring) → 8001 | core:8080, redis:6379, shared-pg (database):5432 |
 
 ## nextcloud (2 policies)
 

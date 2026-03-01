@@ -1,0 +1,28 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: harbor-redis
+  namespace: harbor
+spec:
+  endpointSelector:
+    matchLabels:
+      app: harbor
+      component: redis
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: harbor
+            component: core
+        - matchLabels:
+            app: harbor
+            component: registry
+        - matchLabels:
+            app: harbor
+            component: jobservice
+        - matchLabels:
+            app: harbor
+            component: exporter
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP

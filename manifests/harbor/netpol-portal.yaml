@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: harbor-portal
+  namespace: harbor
+spec:
+  endpointSelector:
+    matchLabels:
+      app: harbor
+      component: portal
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: harbor
+            component: nginx
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

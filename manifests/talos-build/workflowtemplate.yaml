@@ -165,6 +165,9 @@ spec:
       container:
         image: alpine:3.23
         command: [sh, /scripts/push-installer.sh]
+        securityContext:
+          runAsUser: 65532
+          runAsNonRoot: true
         env:
           - name: VERSION
             value: "{{workflow.parameters.version}}"
@@ -194,6 +197,9 @@ spec:
       container:
         image: alpine:3.23
         command: [sh, /scripts/push-iso.sh]
+        securityContext:
+          runAsUser: 65532
+          runAsNonRoot: true
         env:
           - name: VERSION
             value: "{{workflow.parameters.version}}"
@@ -222,6 +228,9 @@ spec:
       container:
         image: alpine:3.23
         command: [sh, /scripts/finalize-release.sh]
+        securityContext:
+          runAsUser: 65532
+          runAsNonRoot: true
         env:
           - name: VERSION
             value: "{{workflow.parameters.version}}"

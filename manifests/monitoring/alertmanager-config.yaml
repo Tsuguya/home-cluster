@@ -19,11 +19,6 @@ spec:
       - receiver: discord-low
         matchers:
           - name: alertname
-            value: TrivyCriticalVulnerability
-            matchType: "="
-      - receiver: discord-low
-        matchers:
-          - name: alertname
             value: Watchdog
             matchType: "="
       - receiver: discord

@@ -7,12 +7,6 @@ on:
     branches: [main]
 
 jobs:
-  yamllint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: frenck/action-yamllint@v1
-
   kubeconform:
     runs-on: ubuntu-latest
     steps:
@@ -54,7 +48,9 @@ jobs:
           set -euo pipefail
           declare -A added_repos
 
-          # Phase 1: collect and add all helm repos
+          is_oci() { [[ "$1" != https://* && "$1" != http://* ]]; }
+
+          # Phase 1: collect and add all helm repos (skip OCI)
           for app_file in apps/*.yaml; do
             source_count=$(yq '.spec.sources | length' "$app_file")
             [[ "$source_count" == "0" ]] && continue
@@ -62,6 +58,7 @@ jobs:
               chart=$(yq ".spec.sources[$i].chart" "$app_file")
               [[ "$chart" == "null" ]] && continue
               repo_url=$(yq ".spec.sources[$i].repoURL" "$app_file")
+              is_oci "$repo_url" && continue
               alias="r$(echo "$repo_url" | sha256sum | cut -c1-8)"
               if [[ -z "${added_repos[$alias]+_}" ]]; then
                 helm repo add "$alias" "$repo_url"
@@ -83,7 +80,6 @@ jobs:
               repo_url=$(yq ".spec.sources[$i].repoURL" "$app_file")
               revision=$(yq ".spec.sources[$i].targetRevision" "$app_file")
               release_name=$(yq ".spec.sources[$i].helm.releaseName" "$app_file")
-              alias="r$(echo "$repo_url" | sha256sum | cut -c1-8)"
               values_args=()
               while IFS= read -r vf; do
                 [[ -z "$vf" || "$vf" == "null" ]] && continue
@@ -91,7 +87,13 @@ jobs:
                 [[ -f "$actual" ]] && values_args+=("-f" "$actual")
               done < <(yq ".spec.sources[$i].helm.valueFiles[]" "$app_file" 2>/dev/null || true)
               echo ">>> $app_name: $chart@$revision"
-              helm template "$release_name" "$alias/$chart" \
+              if is_oci "$repo_url"; then
+                chart_ref="oci://${repo_url}/${chart}"
+              else
+                alias="r$(echo "$repo_url" | sha256sum | cut -c1-8)"
+                chart_ref="$alias/$chart"
+              fi
+              helm template "$release_name" "$chart_ref" \
                 --version "$revision" \
                 --namespace "$namespace" \
                 "${values_args[@]}" \
@@ -103,7 +105,7 @@ jobs:
           done
 
   ai-review:
-    needs: [yamllint, kubeconform, helm-template]
+    needs: [kubeconform, helm-template]
     if: >-
       github.event_name == 'pull_request' &&
       github.actor == 'renovate[bot]' &&

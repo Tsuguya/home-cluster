@@ -1,5 +1,12 @@
 controllerManager:
   manager:
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      seccompProfile:
+        type: RuntimeDefault
     resources:
       requests:
         cpu: 10m

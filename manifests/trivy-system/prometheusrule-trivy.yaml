@@ -19,7 +19,7 @@ spec:
             ) > 0
           for: 1h
           labels:
-            severity: critical
+            severity: warning
           annotations:
             summary: "Critical vulnerabilities in {{ $labels.image_repository }}:{{ $labels.image_tag }}"
             description: "{{ $value }} critical vulnerabilities (with fixes available) in {{ $labels.image_repository }}:{{ $labels.image_tag }}"

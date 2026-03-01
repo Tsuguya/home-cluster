@@ -16,6 +16,16 @@ spec:
           - name: alertname
             value: InfoInhibitor
             matchType: "="
+      - receiver: discord-low
+        matchers:
+          - name: alertname
+            value: TrivyCriticalVulnerability
+            matchType: "="
+      - receiver: discord-low
+        matchers:
+          - name: alertname
+            value: Watchdog
+            matchType: "="
       - receiver: discord
         continue: true
   inhibitRules:
@@ -43,5 +53,11 @@ spec:
       discordConfigs:
         - apiURL:
             name: discord-webhook-alertmanager
+            key: url
+          sendResolved: true
+    - name: discord-low
+      discordConfigs:
+        - apiURL:
+            name: discord-webhook-alertmanager-low
             key: url
           sendResolved: true

@@ -103,6 +103,8 @@ spec:
           - amd64
           - --system-extension-image
           - ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
+          - --system-extension-image
+          - ghcr.io/siderolabs/spin:v0.22.0
           - --base-installer-image
           - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
           - --extra-kernel-arg

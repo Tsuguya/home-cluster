@@ -100,6 +100,25 @@ spec:
       inputs:
         parameters:
           - name: output-type
+      volumes:
+        - name: docker-config
+          emptyDir: {}
+      initContainers:
+        - name: setup-registry-auth
+          image: alpine:3.23
+          command: [sh, -c]
+          args:
+            - |
+              printf '{"auths":{"ghcr.io":{"auth":"%s"}}}' "$(printf '%s:%s' tsuguya "$GITHUB_TOKEN" | base64)" > /docker-config/config.json
+          env:
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat-talos-build
+                  key: credential
+          volumeMounts:
+            - name: docker-config
+              mountPath: /docker-config
       container:
         image: "ghcr.io/tsuguya/imager:{{workflow.parameters.version}}"
         command: [/bin/imager]
@@ -117,6 +136,9 @@ spec:
           - "-lockdown"
           - --extra-kernel-arg
           - "lockdown=integrity"
+        env:
+          - name: DOCKER_CONFIG
+            value: /docker-config
         resources:
           requests:
             cpu: 100m
@@ -126,6 +148,9 @@ spec:
         volumeMounts:
           - name: secureboot-keys
             mountPath: /secureboot
+            readOnly: true
+          - name: docker-config
+            mountPath: /docker-config
             readOnly: true
       outputs:
         artifacts:

@@ -23,6 +23,7 @@ spec:
         - matchName: "api.github.com"
         - matchPattern: "*.githubusercontent.com"
         - matchName: "dl-cdn.alpinelinux.org"
+        - matchName: "discord.com"
       toPorts:
         - ports:
             - port: "443"

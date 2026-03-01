@@ -22,6 +22,11 @@ spec:
               operator: Exists
           matchLabels:
             io.kubernetes.pod.namespace: argo
+        - matchExpressions:
+            - key: workflows.argoproj.io/workflow
+              operator: Exists
+          matchLabels:
+            io.kubernetes.pod.namespace: talos-build
         - matchLabels:
             app.kubernetes.io/name: argo-workflows-server
             io.kubernetes.pod.namespace: argo

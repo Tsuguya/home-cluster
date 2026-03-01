@@ -13,6 +13,8 @@ spec:
       namespace: argo
     - server: https://kubernetes.default.svc
       namespace: default
+    - server: https://kubernetes.default.svc
+      namespace: talos-build
   clusterResourceWhitelist:
     - group: '*'
       kind: CustomResourceDefinition

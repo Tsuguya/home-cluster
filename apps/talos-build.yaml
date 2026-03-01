@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: talos-build
+  namespace: argocd
+spec:
+  project: argo
+  source:
+    repoURL: https://github.com/Tsuguya/home-cluster.git
+    targetRevision: main
+    path: manifests/talos-build
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: talos-build
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

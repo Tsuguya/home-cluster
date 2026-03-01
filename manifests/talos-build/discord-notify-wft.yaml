@@ -1,0 +1,68 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: discord-notify
+  namespace: talos-build
+spec:
+  templates:
+    - name: send
+      container:
+        image: alpine:3.23
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 128Mi
+        command: [sh, -c]
+        args:
+          - |
+            wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
+            chmod +x /tmp/jq
+            export PATH="/tmp:$PATH"
+
+            STATUS="{{workflow.status}}"
+            WF_NAME="{{workflow.name}}"
+            NS="{{workflow.namespace}}"
+            URL="https://argo.infra.tgy.io/workflows/${NS}/${WF_NAME}"
+            TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+
+            if [ "$STATUS" = "Succeeded" ]; then
+              COLOR=65280
+            else
+              COLOR=16711680
+            fi
+
+            FIELDS=$(jq -n \
+              --arg ns "$NS" \
+              '[{name: "Namespace", value: $ns, inline: true}]')
+
+            if [ "$STATUS" != "Succeeded" ]; then
+              cat <<'FAILURES_EOF' > /tmp/failures.json
+            {{workflow.failures}}
+            FAILURES_EOF
+              ERRORS=$(jq -r '
+                [.[] | "\(.displayName): \(.message)"] | join("\n")
+              ' /tmp/failures.json 2>/dev/null | head -c 1024 || echo "Unknown error")
+              if [ -z "$ERRORS" ]; then
+                ERRORS="Unknown error"
+              fi
+              FIELDS=$(echo "$FIELDS" | jq --arg errors "$ERRORS" '. + [{name: "Errors", value: $errors}]')
+            fi
+
+            PAYLOAD=$(jq -n \
+              --arg title "Workflow ${STATUS}: ${WF_NAME}" \
+              --arg url "$URL" \
+              --argjson color "$COLOR" \
+              --argjson fields "$FIELDS" \
+              --arg ts "$TIMESTAMP" \
+              '{embeds: [{title: $title, url: $url, color: $color, fields: $fields, timestamp: $ts}]}')
+
+            wget -qO /dev/null --header="Content-Type: application/json" \
+              --post-data="$PAYLOAD" "$DISCORD_WEBHOOK_URL"
+        env:
+          - name: DISCORD_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+                name: discord-webhook-argo
+                key: url

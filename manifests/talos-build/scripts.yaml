@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: talos-build-scripts
-  namespace: argo
+  namespace: talos-build
 data:
   push-installer.sh: |
     #!/bin/sh

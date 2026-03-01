@@ -49,7 +49,7 @@ spec:
               kind: Workflow
               metadata:
                 generateName: talos-secureboot-
-                namespace: argo
+                namespace: talos-build
               spec:
                 workflowTemplateRef:
                   name: talos-secureboot-build

@@ -169,8 +169,8 @@ spec:
               memory: 64Mi
       container:
         image: gcr.io/kaniko-project/executor:v1.24.0
-        command: [/kaniko/executor]
-        args:
+        command:
+          - /kaniko/executor
           - --dockerfile=Dockerfile
           - --context=dir:///workspace/{{inputs.parameters.image-dir}}
           - --destination=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:latest

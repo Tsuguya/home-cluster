@@ -7,7 +7,7 @@ spec:
   templates:
     - name: send
       container:
-        image: alpine:3.23
+        image: registry.infra.tgy.io/tools/argo-tools:latest
         resources:
           requests:
             cpu: 10m
@@ -17,10 +17,6 @@ spec:
         command: [sh, -c]
         args:
           - |
-            wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
-            chmod +x /tmp/jq
-            export PATH="/tmp:$PATH"
-
             STATUS="{{workflow.status}}"
             WF_NAME="{{workflow.name}}"
             NS="{{workflow.namespace}}"

@@ -178,7 +178,6 @@ spec:
         volumeMounts:
           - name: workspace
             mountPath: /workspace
-            readOnly: true
           - name: docker-config
             mountPath: /kaniko/.docker
             readOnly: true

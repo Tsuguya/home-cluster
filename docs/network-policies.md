@@ -120,7 +120,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **image-build** (image-build=true) | (deny world) | kube-apiserver, github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org + dl.k8s.io + *.dl.k8s.io + registry.infra.tgy.io + gcr.io + *.gcr.io + registry-1.docker.io + auth.docker.io + production.cloudflare.docker.com :443, seaweedfs-filer (seaweedfs):8333 |
+| **image-build** (image-build=true) | (deny world) | kube-apiserver, github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org + dl.k8s.io + *.dl.k8s.io + registry.infra.tgy.io :443, seaweedfs-filer (seaweedfs):8333 |
 
 ## seaweedfs (4 policies)
 

@@ -24,6 +24,9 @@ spec:
         - matchName: "dl.k8s.io"
         - matchPattern: "*.dl.k8s.io"
         - matchName: "registry.infra.tgy.io"
+        - matchName: "registry-1.docker.io"
+        - matchName: "auth.docker.io"
+        - matchName: "production.cloudflare.docker.com"
       toPorts:
         - ports:
             - port: "443"

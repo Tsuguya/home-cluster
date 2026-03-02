@@ -63,7 +63,7 @@ spec:
         args:
           - |
             cd /tmp
-            git clone https://github.com/Tsuguya/images.git repo
+            git clone https://${GITHUB_TOKEN}@github.com/Tsuguya/images.git repo
             cd repo
             if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
               find . -name Dockerfile -not -path './.git/*' | sed 's|^./||;s|/Dockerfile$||' | sort -u
@@ -75,6 +75,11 @@ spec:
             value: "{{workflow.parameters.before-sha}}"
           - name: AFTER
             value: "{{workflow.parameters.commit-sha}}"
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-pat-images
+                key: credential
         resources:
           requests:
             cpu: 10m
@@ -105,10 +110,15 @@ spec:
           image: alpine/git:2.47.2
           command: [sh, -c]
           args:
-            - git clone https://github.com/Tsuguya/images.git /workspace && cd /workspace && git checkout "$COMMIT_SHA"
+            - git clone https://${GITHUB_TOKEN}@github.com/Tsuguya/images.git /workspace && cd /workspace && git checkout "$COMMIT_SHA"
           env:
             - name: COMMIT_SHA
               value: "{{workflow.parameters.commit-sha}}"
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat-images
+                  key: credential
           securityContext:
             runAsUser: 65532
             runAsNonRoot: true

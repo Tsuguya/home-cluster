@@ -32,7 +32,7 @@ spec:
     parameters:
       - name: issue-number
       - name: prompt
-        default: ""
+        default: "none"
   podMetadata:
     labels:
       claude-code: "true"
@@ -74,9 +74,8 @@ spec:
           command: [sh, -c]
           args:
             - |
-              git clone https://github.com/Tsuguya/home-rss.git /workspace
+              git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-rss.git" /workspace
               cd /workspace
-              git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-rss.git"
               git checkout -b "issue-${ISSUE_NUMBER}"
               git config user.name "claude-code[bot]"
               git config user.email "claude-code[bot]@users.noreply.github.com"
@@ -117,7 +116,7 @@ spec:
         command: [sh, -c]
         args:
           - |
-            if [ -n "$CUSTOM_PROMPT" ]; then
+            if [ "$CUSTOM_PROMPT" != "none" ] && [ -n "$CUSTOM_PROMPT" ]; then
               PROMPT="$CUSTOM_PROMPT"
             else
               PROMPT="GitHub issue #${ISSUE_NUMBER} を読んで要件を理解し、実装してください。完了したらコミット・プッシュして PR を作成してください。"

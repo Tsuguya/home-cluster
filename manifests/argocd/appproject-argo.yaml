@@ -17,6 +17,8 @@ spec:
       namespace: talos-build
     - server: https://kubernetes.default.svc
       namespace: image-build
+    - server: https://kubernetes.default.svc
+      namespace: claude-code
   clusterResourceWhitelist:
     - group: '*'
       kind: CustomResourceDefinition

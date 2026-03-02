@@ -1,0 +1,158 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: claude-code-executor
+  namespace: claude-code
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: claude-code-executor
+  namespace: claude-code
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-edit
+subjects:
+  - kind: ServiceAccount
+    name: claude-code-executor
+    namespace: claude-code
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: claude-code
+  namespace: claude-code
+spec:
+  activeDeadlineSeconds: 3600
+  serviceAccountName: claude-code-executor
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: issue-number
+      - name: prompt
+        default: ""
+  podMetadata:
+    labels:
+      claude-code: "true"
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+    - name: workspace
+      emptyDir: {}
+    - name: claude-home
+      emptyDir: {}
+    - name: claude-config
+      configMap:
+        name: claude-code-config
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - wn-03
+  templates:
+    - name: main
+      steps:
+        - - name: run
+            template: claude-code
+    - name: claude-code
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      initContainers:
+        - name: setup
+          image: alpine/git:2.47.2
+          command: [sh, -c]
+          args:
+            - |
+              git clone https://github.com/Tsuguya/home-rss.git /workspace
+              cd /workspace
+              git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-rss.git"
+              git checkout -b "issue-${ISSUE_NUMBER}"
+              git config user.name "claude-code[bot]"
+              git config user.email "claude-code[bot]@users.noreply.github.com"
+              mkdir -p /claude-home/.claude
+              cp /claude-config/CLAUDE.md /claude-home/.claude/CLAUDE.md
+          env:
+            - name: HOME
+              value: /tmp
+            - name: ISSUE_NUMBER
+              value: "{{workflow.parameters.issue-number}}"
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-pat-claude-code
+                  key: credential
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: claude-home
+              mountPath: /claude-home
+            - name: claude-config
+              mountPath: /claude-config
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+      container:
+        image: registry.infra.tgy.io/tools/claude-code:latest
+        command: [sh, -c]
+        args:
+          - |
+            if [ -n "$CUSTOM_PROMPT" ]; then
+              PROMPT="$CUSTOM_PROMPT"
+            else
+              PROMPT="GitHub issue #${ISSUE_NUMBER} を読んで要件を理解し、実装してください。完了したらコミット・プッシュして PR を作成してください。"
+            fi
+            cd /workspace
+            claude -p "$PROMPT" --allowedTools "Bash,Read,Write,Edit,Glob,Grep"
+        env:
+          - name: HOME
+            value: /claude-home
+          - name: ISSUE_NUMBER
+            value: "{{workflow.parameters.issue-number}}"
+          - name: CUSTOM_PROMPT
+            value: "{{workflow.parameters.prompt}}"
+          - name: CLAUDE_CODE_OAUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: claude-code-token
+                key: credential
+          - name: GITHUB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: github-pat-claude-code
+                key: credential
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+          - name: claude-home
+            mountPath: /claude-home
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 4Gi

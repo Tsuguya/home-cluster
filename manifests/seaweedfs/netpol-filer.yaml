@@ -32,6 +32,11 @@ spec:
               operator: Exists
           matchLabels:
             io.kubernetes.pod.namespace: image-build
+        - matchExpressions:
+            - key: workflows.argoproj.io/workflow
+              operator: Exists
+          matchLabels:
+            io.kubernetes.pod.namespace: claude-code
         - matchLabels:
             app.kubernetes.io/name: argo-workflows-server
             io.kubernetes.pod.namespace: argo

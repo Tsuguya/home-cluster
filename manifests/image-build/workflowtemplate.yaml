@@ -112,6 +112,8 @@ spec:
           args:
             - git config --global --add safe.directory /workspace && git clone https://${GITHUB_TOKEN}@github.com/Tsuguya/images.git /workspace && cd /workspace && git checkout "$COMMIT_SHA"
           env:
+            - name: HOME
+              value: /tmp
             - name: COMMIT_SHA
               value: "{{workflow.parameters.commit-sha}}"
             - name: GITHUB_TOKEN

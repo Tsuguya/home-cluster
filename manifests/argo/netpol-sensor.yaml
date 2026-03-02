@@ -13,6 +13,7 @@ spec:
           - upgrade-k8s
           - pxe-sync
           - talos-build
+          - images-build
   ingressDeny:
     - fromEntities:
         - world

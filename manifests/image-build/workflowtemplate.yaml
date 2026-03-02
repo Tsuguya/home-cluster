@@ -1,0 +1,177 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: image-build-executor
+  namespace: image-build
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: image-build-executor
+  namespace: image-build
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-edit
+subjects:
+  - kind: ServiceAccount
+    name: image-build-executor
+    namespace: image-build
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: image-build
+  namespace: image-build
+spec:
+  activeDeadlineSeconds: 1800
+  serviceAccountName: image-build-executor
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: commit-sha
+      - name: before-sha
+  podMetadata:
+    labels:
+      image-build: "true"
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  templates:
+    - name: main
+      steps:
+        - - name: detect-changes
+            template: detect-changes
+        - - name: build
+            template: build-image
+            arguments:
+              parameters:
+                - name: image-dir
+                  value: "{{item}}"
+            withParam: "{{steps.detect-changes.outputs.parameters.changed-dirs}}"
+
+    - name: detect-changes
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      container:
+        image: alpine/git:2.47.2
+        command: [sh, -c]
+        args:
+          - |
+            cd /tmp
+            git clone https://github.com/Tsuguya/images.git repo
+            cd repo
+            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              find . -name Dockerfile -not -path './.git/*' | sed 's|^./||;s|/Dockerfile$||' | sort -u
+            else
+              git diff --name-only "$BEFORE".."$AFTER" -- '*/Dockerfile' | sed 's|/Dockerfile$||' | sort -u
+            fi | awk 'BEGIN{printf "["} NR>1{printf ","} {printf "\"%s\"",$0} END{print "]"}' > /tmp/changed-dirs
+        env:
+          - name: BEFORE
+            value: "{{workflow.parameters.before-sha}}"
+          - name: AFTER
+            value: "{{workflow.parameters.commit-sha}}"
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
+      outputs:
+        parameters:
+          - name: changed-dirs
+            valueFrom:
+              path: /tmp/changed-dirs
+
+    - name: build-image
+      inputs:
+        parameters:
+          - name: image-dir
+      securityContext:
+        runAsUser: 0
+        runAsNonRoot: false
+        fsGroup: 0
+      volumes:
+        - name: workspace
+          emptyDir: {}
+        - name: docker-config
+          emptyDir: {}
+      initContainers:
+        - name: clone-repo
+          image: alpine/git:2.47.2
+          command: [sh, -c]
+          args:
+            - git clone https://github.com/Tsuguya/images.git /workspace && cd /workspace && git checkout "$COMMIT_SHA"
+          env:
+            - name: COMMIT_SHA
+              value: "{{workflow.parameters.commit-sha}}"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+        - name: setup-registry-auth
+          image: alpine:3.23
+          command: [sh, -c]
+          args:
+            - printf '{"auths":{"registry.infra.tgy.io":{"auth":"%s"}}}' "$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64)" > /docker-config/config.json
+          env:
+            - name: HARBOR_USER
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-robot-images
+                  key: username
+            - name: HARBOR_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-robot-images
+                  key: credential
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: docker-config
+              mountPath: /docker-config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      container:
+        image: gcr.io/kaniko-project/executor:v1.24.0
+        args:
+          - --dockerfile=Dockerfile
+          - --context=dir:///workspace/{{inputs.parameters.image-dir}}
+          - --destination=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:latest
+          - --destination=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}}
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+            readOnly: true
+          - name: docker-config
+            mountPath: /kaniko/.docker
+            readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 2Gi

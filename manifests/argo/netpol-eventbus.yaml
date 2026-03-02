@@ -19,6 +19,8 @@ spec:
             sensor-name: pxe-sync
         - matchLabels:
             sensor-name: talos-build
+        - matchLabels:
+            sensor-name: images-build
       toPorts:
         - ports:
             - port: "4222"

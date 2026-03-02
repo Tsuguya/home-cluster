@@ -1,0 +1,77 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: images-build
+  namespace: argo
+spec:
+  template:
+    serviceAccountName: workflow-executor
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    container:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+  dependencies:
+    - name: push
+      eventSourceName: github-webhook
+      eventName: images
+      filters:
+        script: |-
+          if event.body == nil or event.body.ref ~= "refs/heads/main" or event.body.commits == nil then
+            return false
+          end
+          for _, c in ipairs(event.body.commits) do
+            for _, list in ipairs({c.added or {}, c.modified or {}, c.removed or {}}) do
+              for _, f in ipairs(list) do
+                if string.find(f, "Dockerfile", 1, true) then
+                  return true
+                end
+              end
+            end
+          end
+          return false
+  triggers:
+    - template:
+        name: image-build
+        conditions: "push"
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: image-build-
+                namespace: image-build
+              spec:
+                workflowTemplateRef:
+                  name: image-build
+                arguments:
+                  parameters:
+                    - name: commit-sha
+                      value: ""
+                    - name: before-sha
+                      value: ""
+          parameters:
+            - src:
+                dependencyName: push
+                dataKey: body.after
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: push
+                dataKey: body.before
+              dest: spec.arguments.parameters.1.value

@@ -15,6 +15,8 @@ spec:
       namespace: default
     - server: https://kubernetes.default.svc
       namespace: talos-build
+    - server: https://kubernetes.default.svc
+      namespace: image-build
   clusterResourceWhitelist:
     - group: '*'
       kind: CustomResourceDefinition

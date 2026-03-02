@@ -72,6 +72,20 @@ spec:
         key: credential
       active: false
       contentType: json
+    images:
+      owner: Tsuguya
+      repository: images
+      webhook:
+        endpoint: /images
+        port: "12000"
+        method: POST
+      events:
+        - push
+      webhookSecret:
+        name: images-github-webhook
+        key: credential
+      active: false
+      contentType: json
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor

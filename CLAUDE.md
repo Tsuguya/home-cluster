@@ -71,6 +71,7 @@ egress:
 1. `kubectl get pods -A` — 全 Pod が Running
 2. `hubble observe --verdict DROPPED` — 意図しない drop がないこと
 3. ノードリブート後も正常復帰すること
+4. `/lint` — push 前の静的チェック（`/lint --all` で全ファイル監査）
 
 ## 注意事項
 

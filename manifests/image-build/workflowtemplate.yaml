@@ -175,6 +175,11 @@ spec:
           - --context=dir:///workspace/{{inputs.parameters.image-dir}}
           - --destination=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:latest
           - --destination=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            add: [CHOWN, FOWNER, SETUID, SETGID]
+            drop: [ALL]
         volumeMounts:
           - name: workspace
             mountPath: /workspace

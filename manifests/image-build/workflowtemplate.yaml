@@ -110,7 +110,7 @@ spec:
           image: alpine/git:2.47.2
           command: [sh, -c]
           args:
-            - git clone https://${GITHUB_TOKEN}@github.com/Tsuguya/images.git /workspace && cd /workspace && git checkout "$COMMIT_SHA"
+            - git config --global --add safe.directory /workspace && git clone https://${GITHUB_TOKEN}@github.com/Tsuguya/images.git /workspace && cd /workspace && git checkout "$COMMIT_SHA"
           env:
             - name: COMMIT_SHA
               value: "{{workflow.parameters.commit-sha}}"

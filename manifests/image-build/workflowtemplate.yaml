@@ -140,7 +140,7 @@ spec:
           image: alpine:3.23
           command: [sh, -c]
           args:
-            - printf '{"auths":{"registry.infra.tgy.io":{"auth":"%s"}}}' "$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64)" > /docker-config/config.json
+            - printf '{"auths":{"harbor.harbor.svc":{"auth":"%s"}}}' "$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64)" > /docker-config/config.json
           env:
             - name: HARBOR_USER
               valueFrom:
@@ -173,8 +173,9 @@ spec:
           - /kaniko/executor
           - --dockerfile=Dockerfile
           - --context=dir:///workspace/{{inputs.parameters.image-dir}}
-          - --destination=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:latest
-          - --destination=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}}
+          - --destination=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:latest
+          - --destination=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}}
+          - --insecure
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

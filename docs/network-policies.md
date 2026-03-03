@@ -48,6 +48,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Nextcloud (nextcloud) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | Cloudflared (argocd) | Nextcloud (nextcloud) | 80 | Cloudflare Tunnel → Nextcloud |
 | Cloudflared (argocd) | Harbor nginx (harbor) | 8080 | Cloudflare Tunnel → Harbor |
+| Workflow pods (image-build) | Harbor nginx (harbor) | 8080 | Internal image push |
 | Harbor core (harbor) | shared-pg (database) | 5432 | Harbor database |
 | Harbor exporter (harbor) | shared-pg (database) | 5432 | Metrics collection |
 | Harbor registry (harbor) | SeaweedFS filer (seaweedfs) | 8333 | S3 image storage |
@@ -127,7 +128,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **image-build** (image-build=true) | (deny world) | kube-apiserver, 0.0.0.0/0:443 — registry CDN backends (R2, CloudFront, etc.) are too numerous and dynamic for toFQDNs. Ephemeral pods, HTTPS only, seaweedfs-filer (seaweedfs):8333 |
+| **image-build** (image-build=true) | (deny world) | kube-apiserver, 0.0.0.0/0:443, harbor-nginx (harbor):8080 (internal push), seaweedfs-filer (seaweedfs):8333 |
 
 ## seaweedfs (4 policies)
 
@@ -213,7 +214,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **nginx** | ingress, cloudflared (argocd) → 8080; prometheus (monitoring) → 8001 | core:8080, portal:8080 |
+| **nginx** | ingress, cloudflared (argocd), image-build (image-build) → 8080; prometheus (monitoring) → 8001 | core:8080, portal:8080 |
 | **core** | nginx, jobservice, exporter → 8080; prometheus (monitoring) → 8001 | shared-pg (database):5432, redis:6379, registry:5000/8080, portal:8080, jobservice:8080, kanidm (kanidm):8443, kube-apiserver |
 | **portal** | nginx, core → 8080 | (none) |
 | **registry** | core, jobservice → 5000/8080; prometheus (monitoring) → 8001 | seaweedfs-filer (seaweedfs):8333, redis:6379 |

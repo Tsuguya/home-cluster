@@ -19,6 +19,9 @@ spec:
         - matchLabels:
             app: cloudflared
             io.kubernetes.pod.namespace: argocd
+        - matchLabels:
+            image-build: "true"
+            io.kubernetes.pod.namespace: image-build
       toPorts:
         - ports:
             - port: "8080"

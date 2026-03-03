@@ -25,6 +25,15 @@ spec:
               protocol: TCP
     - toEndpoints:
         - matchLabels:
+            app: harbor
+            component: nginx
+            io.kubernetes.pod.namespace: harbor
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
             app.kubernetes.io/name: seaweedfs
             app.kubernetes.io/component: filer
             io.kubernetes.pod.namespace: seaweedfs

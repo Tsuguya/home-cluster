@@ -6,7 +6,7 @@ ArgoCD GitOps で管理するホーム Kubernetes クラスタの構成リポジ
 
 | Category | Tool |
 |----------|------|
-| OS | Talos Linux |
+| OS | Talos Linux (SecureBoot + TPM disk encryption) |
 | CNI | Cilium (kube-proxy replacement) |
 | GitOps | ArgoCD |
 | Storage | SeaweedFS, QNAP CSI |
@@ -14,10 +14,13 @@ ArgoCD GitOps で管理するホーム Kubernetes クラスタの構成リポジ
 | Certificates | cert-manager (Let's Encrypt) |
 | DNS | external-dns (Cloudflare) |
 | IdP | Kanidm |
-| Secrets | 1Password Operator |
+| Secrets | External Secrets Operator (1Password SDK) |
 | Database | CloudNativePG |
 | CI/CD | Argo Workflows, Argo Events |
 | Gateway | Cilium Gateway API |
+| Registry | Harbor |
+| Security | Tetragon, Trivy Operator |
+| Wasm | Spin Operator (SpinKube) |
 
 ## Nodes
 
@@ -34,6 +37,7 @@ ArgoCD GitOps で管理するホーム Kubernetes クラスタの構成リポジ
 apps/          # ArgoCD Application definitions
 helm-values/   # Helm chart values
 manifests/     # Raw K8s manifests
+kustomize/     # Kustomize-based manifests (QNAP CSI)
 docs/          # Operational docs
 manual/        # Manual bootstrap steps
 ```
@@ -44,5 +48,9 @@ manual/        # Manual bootstrap steps
 - [サービス一覧](docs/services.md) — 外部/内部エンドポイント
 - [SSO設定](docs/sso.md) — Kanidm OIDC 設定・新サービス追加手順
 - [ネットワークポリシー](docs/network-policies.md) — CNP/CCNP 全ポリシー一覧
+- [Pod Security](docs/pod-security.md) — PSA 設定・namespace 一覧
+- [ArgoCD Projects](docs/argocd-projects.md) — AppProject 構成・新サービス追加時の確認
 - [リソース設定](docs/resource-limits.md) — requests/limits 一覧と実測値
+- [SecureBoot](docs/secureboot.md) — Talos SecureBoot + TPM ディスク暗号化
+- [災害復旧](docs/disaster-recovery.md) — PostgreSQL, etcd, Kanidm の復旧手順
 - [既知の問題](docs/known-issues.md) — 初回構築時の注意点など

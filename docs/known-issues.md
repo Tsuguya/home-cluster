@@ -94,6 +94,12 @@ kubectl -n trident logs <trident-node-pod> -c trident-main | grep -i iscsi
 - upstream が修正されたらミラー版から公式版に戻すこと
 - TODO: siderolabs/extensions に issue 提出
 
+## 1Password Operator → External Secrets Operator (ESO) 移行（解決済み）
+
+1Password Operator (OnePasswordItem CRD) は生成する Secret にカスタム labels/annotations を付与できない。ArgoCD 自体の Secret（`argocd-secret` 等）を 1Password で管理する場合、ArgoCD が要求する識別ラベル（`app.kubernetes.io/part-of: argocd` 等）を Secret に付与できず、ArgoCD が自身の設定 Secret を正しく認識できない問題があった。
+
+**対策**: External Secrets Operator (ESO) に移行。ESO の ExternalSecret CRD は `target` で生成する Secret の labels/annotations を自由に指定できるため、ArgoCD が必要とするラベルを付与可能。加えて ExternalSecret CRD 自体を ArgoCD の tracking 対象とし、専用の `secrets` Application で全 ExternalSecret を一元管理する構成に変更した。
+
 ## QNAP Trident iSCSI: ノード移動時の LUN リフォーマット
 
 Pod がノード間を移動した際に、Trident CSI が iSCSI LUN を再フォーマットしてデータを全消失させるバグ。2026-02-27 の K8s v1.35.2 アップグレード時に SeaweedFS volume で発生。

@@ -12,6 +12,7 @@
 | Hubble UI | oauth2-proxy (OIDC) | Kanidm (コンフィデンシャル) | oauth2-proxy-hubble-oauth (oauth2-proxy) | `helm-values/oauth2-proxy-hubble/values.yaml` |
 | SeaweedFS UI | oauth2-proxy (OIDC) | Kanidm (コンフィデンシャル) | oauth2-proxy-seaweedfs-oauth (oauth2-proxy) | `helm-values/oauth2-proxy-seaweedfs/values.yaml` |
 | Harbor | CONFIG_OVERWRITE_JSON (OIDC) | Kanidm (コンフィデンシャル) | harbor-kanidm-oauth (harbor) | `helm-values/harbor/values.yaml` |
+| Nextcloud | user_oidc app (OIDC) | Kanidm (コンフィデンシャル) | nextcloud-kanidm-oauth (nextcloud) | `helm-values/nextcloud/values.yaml` |
 
 ArgoCD は Kanidm パブリッククライアント (PKCE S256) を使用するため、clientSecret 不要。
 
@@ -61,7 +62,7 @@ kanidm system oauth2 update-claim-map-join grafana grafana_role csv --url https:
 ID トークンに `"grafana_role": "Admin"` が含まれるようになる（`grafana_users` グループのメンバーのみ）。
 Grafana 側は `role_attribute_path: grafana_role` でこの値を参照する。
 
-clientSecret は 1Password (kanidm-grafana-oauth) に保存し、OnePasswordItem 経由でデプロイ。
+clientSecret は 1Password (kanidm-grafana-oauth) に保存し、ExternalSecret 経由でデプロイ。
 
 ### Argo Workflows (コンフィデンシャルクライアント)
 
@@ -83,7 +84,7 @@ kanidm system oauth2 show-basic-secret argo-workflows --url https://idm.tgy.io
 ```
 
 Argo Workflows は PKCE 未サポートのため `warning-insecure-client-disable-pkce` が必要。
-clientSecret は 1Password (kanidm-argo-workflows-oauth) に保存し、OnePasswordItem 経由でデプロイ。
+clientSecret は 1Password (kanidm-argo-workflows-oauth) に保存し、ExternalSecret 経由でデプロイ。
 
 ### Hubble UI (oauth2-proxy, コンフィデンシャルクライアント)
 
@@ -144,7 +145,28 @@ kanidm system oauth2 show-basic-secret harbor --url https://idm.tgy.io
 
 Harbor は PKCE 未サポートのため `warning-insecure-client-disable-pkce` が必要。
 OIDC 設定は `CONFIG_OVERWRITE_JSON` 環境変数で core コンテナに注入。`$(OIDC_CLIENT_SECRET)` は Kubernetes の env 展開で secretKeyRef から解決される（定義順が重要）。
-clientSecret は 1Password (harbor-kanidm-oauth) に保存し、OnePasswordItem 経由でデプロイ。
+clientSecret は 1Password (harbor-kanidm-oauth) に保存し、ExternalSecret 経由でデプロイ。
+
+### Nextcloud (user_oidc, コンフィデンシャルクライアント)
+
+Kanidm クライアント作成・user_oidc インストールの詳細手順は [Bootstrap 手順 (manual/README.md)](../manual/README.md) の「Nextcloud OIDC 設定」セクションを参照。
+
+```bash
+kanidm system oauth2 create nextcloud "Nextcloud" https://nc.tgy.io --url https://idm.tgy.io
+
+kanidm system oauth2 add-redirect-url nextcloud https://nc.tgy.io/apps/user_oidc/code --url https://idm.tgy.io
+
+kanidm group create nextcloud_users --url https://idm.tgy.io
+kanidm group add-members nextcloud_users tsuguya --url https://idm.tgy.io
+
+kanidm system oauth2 update-scope-map nextcloud nextcloud_users openid profile email --url https://idm.tgy.io
+
+kanidm system oauth2 prefer-short-username nextcloud --url https://idm.tgy.io
+
+kanidm system oauth2 show-basic-secret nextcloud --url https://idm.tgy.io
+```
+
+clientSecret は 1Password (nextcloud-kanidm-oauth) に保存し、ExternalSecret 経由でデプロイ。
 
 ## 1Password アイテム
 
@@ -155,6 +177,7 @@ clientSecret は 1Password (harbor-kanidm-oauth) に保存し、OnePasswordItem 
 | oauth2-proxy-hubble-oauth | oauth2-proxy-hubble-oauth | oauth2-proxy | client-id, client-secret, cookie-secret |
 | oauth2-proxy-seaweedfs-oauth | oauth2-proxy-seaweedfs-oauth | oauth2-proxy | client-id, client-secret, cookie-secret |
 | harbor-kanidm-oauth | harbor-kanidm-oauth | harbor | clientID, clientSecret |
+| nextcloud-kanidm-oauth | nextcloud-kanidm-oauth | nextcloud | password |
 
 ArgoCD はパブリッククライアントのため 1Password アイテム不要。
 oauth2-proxy の Secret キーは chart の `existingSecret` が期待する `client-id`, `client-secret`, `cookie-secret`。
@@ -187,7 +210,7 @@ kanidm system oauth2 prefer-short-username <client_name> --url https://idm.tgy.i
 kanidm system oauth2 show-basic-secret <client_name> --url https://idm.tgy.io
 ```
 
-1Password に API Credential として保存し、`manifests/secrets/` に OnePasswordItem を作成する。
+1Password に API Credential として保存し、`manifests/secrets/` に ExternalSecret を作成する。
 
 ### 4. CNP に Kanidm egress を追加
 

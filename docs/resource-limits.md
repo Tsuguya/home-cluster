@@ -84,7 +84,9 @@
 | external-dns | | 10m / 32Mi | 128Mi | 低負荷 |
 | metrics-server | | 10m / 32Mi | 128Mi | 低負荷 |
 | cnpg | operator | 10m / 64Mi | 256Mi | 4m / 38Mi |
-| onepassword | operator | 10m / 64Mi | 256Mi | 1m / 119Mi |
+| external-secrets | operator | 10m / 64Mi | 256Mi | 未計測 |
+| external-secrets | webhook | 10m / 32Mi | 128Mi | 低負荷 |
+| external-secrets | certController | 10m / 32Mi | 128Mi | 低負荷 |
 | argo-workflows | controller | 10m / 64Mi | 256Mi | 2m / 19Mi |
 | argo-workflows | server | 10m / 64Mi | 256Mi | 1m / 21Mi |
 | argo-events | controller | 10m / 64Mi | 256Mi | 2m / 27Mi |
@@ -92,6 +94,16 @@
 | seaweedfs | volume | 50m / 128Mi | 512Mi | 未計測 |
 | seaweedfs | filer | 25m / 128Mi | 512Mi | 未計測 |
 | trivy-operator | operator | 50m / 100Mi | 256Mi | 低負荷 |
+| kanidm | server ×2 | 50m / 128Mi | 256Mi | 未計測 |
+| harbor | nginx | 10m / 32Mi | 128Mi | 未計測 |
+| harbor | core | 50m / 128Mi | 512Mi | 未計測 |
+| harbor | portal | 10m / 32Mi | 128Mi | 未計測 |
+| harbor | registry | 50m / 128Mi | 512Mi | 未計測 |
+| harbor | jobservice | 10m / 64Mi | 256Mi | 未計測 |
+| harbor | exporter | 10m / 32Mi | 128Mi | 未計測 |
+| nextcloud | nextcloud | 100m / 256Mi | 1Gi | 未計測 |
+| reloader | controller | 10m / 32Mi | 128Mi | 低負荷 |
+| spin-operator | controller | 10m / 64Mi | 128Mi | 低負荷 |
 
 ## CRD マニフェスト
 
@@ -125,6 +137,14 @@
 | discord-notify | send (curl) | 10m / 16Mi | 64Mi |
 | node-shutdown | resolve-nodes | 10m / 16Mi | 64Mi |
 | node-shutdown | shutdown-nodes (talosctl) | 10m / 32Mi | 64Mi |
+| talos-secureboot-build | run-imager | 100m / 512Mi | 2Gi |
+| talos-secureboot-build | push-installer | 50m / 256Mi | 1Gi |
+| talos-secureboot-build | push-iso | 50m / 256Mi | 1Gi |
+| talos-secureboot-build | finalize-release | 10m / 64Mi | 128Mi |
+| claude-code | setup (init) | 10m / 64Mi | 256Mi |
+| claude-code | claude-code (main) | 100m / 512Mi | 4Gi |
+| image-build | detect-changes | 10m / 64Mi | 256Mi |
+| image-build | build-image (kaniko) | 100m / 512Mi | 2Gi |
 
 ### QNAP CSI (trident)
 

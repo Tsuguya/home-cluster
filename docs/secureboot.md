@@ -43,7 +43,7 @@ GHA (talos-custom-build)              Argo Workflows (argo namespace)
 | `KEK.auth` | Key Exchange Key |
 | `db.auth` | Signature Database |
 
-OnePasswordItem: `manifests/secrets/argo-secureboot-signing-keys.yaml`
+ExternalSecret: `manifests/secrets/talos-build-secureboot-signing-keys.yaml`
 
 ## ビルドパイプライン
 

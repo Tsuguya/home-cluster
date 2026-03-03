@@ -6,7 +6,6 @@ Cluster-wide default is **restricted enforce** (configured in Talos `admissionCo
 
 | Namespace | enforce | Reason |
 |---|---|---|
-| 1password | restricted | |
 | argo | restricted | init container + static binary DL で apk add 脱却 |
 | argocd | restricted | |
 | cert-manager | restricted | |
@@ -15,6 +14,7 @@ Cluster-wide default is **restricted enforce** (configured in Talos `admissionCo
 | database | restricted | |
 | default | restricted | Pod なし |
 | external-dns | restricted | |
+| external-secrets | (default) | Helm chart が namespace 作成。クラスタデフォルトで restricted |
 | gateway | restricted | Pod なし（Cilium agent 内 Envoy で処理） |
 | kanidm | restricted | |
 | nfs-provisioner | restricted | |
@@ -22,6 +22,12 @@ Cluster-wide default is **restricted enforce** (configured in Talos `admissionCo
 | kube-public | restricted | Pod なし |
 | oauth2-proxy | restricted | |
 | seaweedfs | restricted | |
+| claude-code | baseline | Argo Workflows コンテナ要件 |
+| harbor | baseline | Harbor コンテナが restricted 非対応 |
+| image-build | baseline | kaniko が root + capabilities 必須 |
+| nextcloud | baseline | Nextcloud コンテナが restricted 非対応 |
+| spin-operator | baseline | SpinKube shim executor 要件 |
+| talos-build | baseline | Talos imager が root + capabilities 必須 |
 | kube-system | privileged | Cilium, Tetragon, コントロールプレーン static pods |
 | monitoring | privileged | node-exporter が hostPID/hostPath 必須 |
 | trident | privileged | CSI ドライバが hostNetwork/hostPath/SYS_ADMIN 必須 |

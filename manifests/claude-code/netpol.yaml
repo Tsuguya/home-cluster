@@ -24,6 +24,7 @@ spec:
         - matchPattern: "*.githubusercontent.com"
         - matchName: "index.crates.io"
         - matchName: "static.crates.io"
+        - matchName: "discord.com"
       toPorts:
         - ports:
             - port: "443"

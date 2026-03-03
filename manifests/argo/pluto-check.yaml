@@ -139,7 +139,7 @@ spec:
           set -euo pipefail
 
           echo "=== Installing dependencies ==="
-          apk add --no-cache git github-cli curl tar python3 jq >/dev/null 2>&1
+          apk add --no-cache git github-cli curl tar python3 jq
 
           echo "=== Generating GitHub App installation token ==="
           echo "$GITHUB_APP_PRIVATE_KEY" > /tmp/app-key.pem

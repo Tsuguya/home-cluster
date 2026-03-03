@@ -104,6 +104,19 @@ alloy:
         forward_to = [loki.write.default.receiver]
       }
 
+      // Hubble DROPPED flow export
+      local.file_match "hubble" {
+        path_targets = [{
+          __path__ = "/var/run/cilium/hubble/events.log",
+          job       = "hubble",
+        }]
+      }
+
+      loki.source.file "hubble" {
+        targets    = local.file_match.hubble.targets
+        forward_to = [loki.write.default.receiver]
+      }
+
       // Write to Loki
       loki.write "default" {
         endpoint {
@@ -113,6 +126,10 @@ alloy:
 
   mounts:
     varlog: true
+    extra:
+      - name: hubble-export
+        mountPath: /var/run/cilium/hubble
+        readOnly: true
 
 configReloader:
   resources:
@@ -123,6 +140,12 @@ configReloader:
       memory: 64Mi
 
 controller:
+  volumes:
+    extra:
+      - name: hubble-export
+        hostPath:
+          path: /var/run/cilium/hubble
+          type: DirectoryOrCreate
   tolerations:
     - key: node-role.kubernetes.io/control-plane
       operator: Exists

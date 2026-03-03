@@ -122,7 +122,6 @@
 | pluto-check | ai-fix (node + claude) | 100m / 256Mi | 1Gi |
 | pluto-check | fail-if-deprecated | 10m / 16Mi | 64Mi |
 | upgrade-k8s | validate/upgrade/remaining/verify | 10m / 64Mi | 256Mi |
-| cnp-coverage-check | main | 10m / 64Mi | 128Mi |
 | discord-notify | send (curl) | 10m / 16Mi | 64Mi |
 | node-shutdown | resolve-nodes | 10m / 16Mi | 64Mi |
 | node-shutdown | shutdown-nodes (talosctl) | 10m / 32Mi | 64Mi |

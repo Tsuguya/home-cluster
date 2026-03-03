@@ -70,6 +70,26 @@ l2announcements:
 
 hubble:
   enabled: true
+  export:
+    fileMaxSizeMb: 10
+    fileMaxBackups: 5
+    static:
+      enabled: true
+      filePath: /var/run/cilium/hubble/events.log
+      allowList:
+        - '{"verdict":["DROPPED"]}'
+      fieldMask:
+        - time
+        - source
+        - destination
+        - verdict
+        - drop_reason
+        - drop_reason_desc
+        - l4
+        - IP
+        - node_name
+        - event_type
+        - Summary
   metrics:
     enabled:
       - dns:query;ignoreAAAA;labelsContext=source_namespace,destination_namespace

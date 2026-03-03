@@ -74,6 +74,7 @@ spec:
           command: [sh, -c]
           args:
             - |
+              git config --global --add safe.directory /workspace
               git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-rss.git" /workspace
               cd /workspace
               git checkout -b "issue-${ISSUE_NUMBER}"

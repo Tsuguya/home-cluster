@@ -57,20 +57,21 @@ kubectl apply -f manifests/argocd/appproject-*.yaml
 kubectl apply -f argocd/app-of-apps.yaml
 ```
 
-## 4. External Secrets Operator Token
+## 4. 1Password Connect Server Credentials
 
-1Password Service Account Token を手動で作成する。
-トークンは git 管理外とし、1Password 側で発行・管理する。
+1Password Connect Server の credentials を手動で作成する。
+credentials は git 管理外とし、1Password Web UI の「Integrations > Connect Server」で発行する。
 
 ```bash
 kubectl create namespace external-secrets
-kubectl create secret generic onepassword-token \
+kubectl create secret generic onepassword-connect \
   --namespace external-secrets \
-  --from-literal=token="<SERVICE_ACCOUNT_TOKEN>"
+  --from-file=1password-credentials.json="<PATH_TO_CREDENTIALS_JSON>" \
+  --from-literal=token="<CONNECT_SERVER_ACCESS_TOKEN>"
 ```
 
-app-of-apps が `apps/external-secrets.yaml` を検出し、ESO を自動デプロイする。
-ESO が起動すると、ClusterSecretStore 経由で 1Password SDK に接続し、
+app-of-apps が `apps/external-secrets.yaml` を検出し、ESO と Connect Server を自動デプロイする。
+ESO が起動すると、ClusterSecretStore 経由でクラスタ内の Connect Server に接続し、
 `manifests/secrets/` の ExternalSecret から各 namespace に Secret を自動生成する。
 ExternalSecret は専用の `secrets` ArgoCD Application で管理され、他 app の reconcile から隔離する。
 

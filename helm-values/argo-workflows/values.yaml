@@ -12,6 +12,10 @@ artifactRepository:
       key: AWS_SECRET_ACCESS_KEY
 
 controller:
+  links:
+    - name: Grafana Logs
+      scope: workflow
+      url: "https://grafana.infra.tgy.io/explore?schemaVersion=1&panes=%7B%22main%22:%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22loki%22%7D,%22editorMode%22:%22code%22,%22expr%22:%22%7Bnamespace%3D%5C%22${metadata.namespace}%5C%22,%20pod%3D~%5C%22${metadata.name}-.%2B%5C%22%7D%22,%22queryType%22:%22range%22%7D%5D,%22range%22:%7B%22from%22:%22${status.startedAtEpoch}%22,%22to%22:%22${status.finishedAtEpoch}%22%7D%7D%7D&orgId=1"
   resources:
     requests:
       cpu: 10m
@@ -80,10 +84,6 @@ executor:
         - ALL
 
 server:
-  links:
-    - name: Grafana Logs
-      scope: workflow
-      url: "https://grafana.infra.tgy.io/explore?schemaVersion=1&panes=%7B%22main%22:%7B%22datasource%22:%22loki%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22loki%22%7D,%22editorMode%22:%22code%22,%22expr%22:%22%7Bnamespace%3D%5C%22${metadata.namespace}%5C%22,%20pod%3D~%5C%22${metadata.name}-.%2B%5C%22%7D%22,%22queryType%22:%22range%22%7D%5D,%22range%22:%7B%22from%22:%22${status.startedAtEpoch}%22,%22to%22:%22${status.finishedAtEpoch}%22%7D%7D%7D&orgId=1"
   resources:
     requests:
       cpu: 10m

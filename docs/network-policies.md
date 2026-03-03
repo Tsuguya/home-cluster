@@ -54,6 +54,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Harbor registry (harbor) | SeaweedFS filer (seaweedfs) | 8333 | S3 image storage |
 | Harbor core (harbor) | Kanidm (kanidm) | 8443 | OIDC token exchange |
 | shared-pg (database) | Cloudflare R2 (external) | 443 | CNPG barman backup/WAL archiving |
+| CloudNative-PG (cnpg-system) | rss-pg (rss) | 8000 | Health probes |
 
 ## Excluded Pods (hostNetwork: true)
 
@@ -175,7 +176,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **cloudnative-pg** | kube-apiserver/host/remote-node → 9443 | kube-apiserver, shared-pg (database):8000 |
+| **cloudnative-pg** | kube-apiserver/host/remote-node → 9443 | kube-apiserver, shared-pg (database):8000, rss-pg (rss):8000 |
 
 ## external-secrets (1 policy)
 
@@ -228,6 +229,12 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **nextcloud** | ingress, cloudflared (argocd) → 80 | kube-apiserver, shared-pg (database):5432, seaweedfs-filer (seaweedfs):8333, kanidm (kanidm):8443, valkey:6379 |
 | **valkey** | nextcloud → 6379 | (none) |
+
+## rss (1 policy)
+
+| Component | Ingress | Egress |
+|---|---|---|
+| **rss-pg** | self → 5432/8000; cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000 |
 
 ## spin-operator (1 policy)
 

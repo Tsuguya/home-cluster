@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: claude-code-mcp
+  namespace: claude-code
+data:
+  mcp.json: |
+    {
+      "mcpServers": {
+        "spin-docs": {
+          "type": "sse",
+          "url": "https://gitmcp.io/fermyon/developer"
+        }
+      }
+    }

@@ -20,6 +20,7 @@ spec:
   egress:
     - toFQDNs:
         - matchName: "discord.com"
+        - matchName: "discordapp.com"
       toPorts:
         - ports:
             - port: "443"

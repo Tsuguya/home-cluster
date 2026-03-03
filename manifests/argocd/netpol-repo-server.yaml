@@ -21,7 +21,6 @@ spec:
     - toFQDNs:
         - matchName: "github.com"
         - matchName: "argoproj.github.io"
-        - matchName: "1password.github.io"
         - matchName: "grafana.github.io"
         - matchName: "oauth2-proxy.github.io"
         - matchName: "aquasecurity.github.io"
@@ -35,6 +34,7 @@ spec:
         - matchName: "charts.jetstack.io"
         - matchName: "helm.cilium.io"
         - matchName: "helm.goharbor.io"
+        - matchName: "charts.external-secrets.io"
       toPorts:
         - ports:
             - port: "443"

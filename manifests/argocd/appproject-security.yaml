@@ -6,7 +6,7 @@ metadata:
 spec:
   description: Secret management and security scanning
   sourceRepos:
-    - https://1password.github.io/connect-helm-charts
+    - https://charts.external-secrets.io
     - https://oauth2-proxy.github.io/manifests
     - https://aquasecurity.github.io/helm-charts
     - https://github.com/Tsuguya/home-cluster.git
@@ -24,3 +24,5 @@ spec:
       kind: Namespace
     - group: aquasecurity.github.io
       kind: '*'
+    - group: external-secrets.io
+      kind: ClusterSecretStore

@@ -26,6 +26,12 @@ spec:
       namespace: argocd
       jsonPointers:
         - /data/webhook.github.secret
+    - group: ""
+      kind: Secret
+      name: argocd-repo-creds-github-private
+      namespace: argocd
+      jsonPointers:
+        - /data/password
   syncPolicy:
     automated:
       prune: true

@@ -23,6 +23,11 @@ applicationSet:
       memory: 192Mi
 
 configs:
+  credentialTemplates:
+    github-private:
+      url: https://github.com/Tsuguya
+      username: Tsuguya
+      type: git
   cm:
     resource.exclusions: |
       - apiGroups:

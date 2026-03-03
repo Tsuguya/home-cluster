@@ -48,6 +48,11 @@ spec:
       configMap:
         name: talos-build-scripts
         defaultMode: 0755
+    - name: github-token
+      emptyDir: {}
+    - name: github-app-secret
+      secret:
+        secretName: github-app-private-key
   affinity:
     nodeAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -104,21 +109,45 @@ spec:
         - name: docker-config
           emptyDir: {}
       initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
         - name: setup-registry-auth
           image: alpine:3.23
           command: [sh, -c]
           args:
             - |
-              printf '{"auths":{"ghcr.io":{"auth":"%s"}}}' "$(printf '%s:%s' tsuguya "$GITHUB_TOKEN" | base64)" > /docker-config/config.json
-          env:
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: github-pat-talos-build
-                  key: credential
+              GITHUB_TOKEN=$(cat /github-token/token)
+              printf '{"auths":{"ghcr.io":{"auth":"%s"}}}' "$(printf '%s:%s' x-access-token "$GITHUB_TOKEN" | base64)" > /docker-config/config.json
           volumeMounts:
             - name: docker-config
               mountPath: /docker-config
+            - name: github-token
+              mountPath: /github-token
+              readOnly: true
       container:
         image: "ghcr.io/tsuguya/imager:{{workflow.parameters.version}}"
         command: [/bin/imager]
@@ -162,6 +191,39 @@ spec:
         artifacts:
           - name: artifact
             path: /tmp/artifact/
+      volumes:
+        - name: github-token
+          emptyDir: {}
+        - name: github-app-secret
+          secret:
+            secretName: github-app-private-key
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
       container:
         image: alpine:3.23
         command: [sh, /scripts/push-installer.sh]
@@ -171,11 +233,6 @@ spec:
         env:
           - name: VERSION
             value: "{{workflow.parameters.version}}"
-          - name: GITHUB_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: github-pat-talos-build
-                key: credential
           - name: DOCKER_CONFIG
             value: /tmp
         resources:
@@ -188,6 +245,9 @@ spec:
           - name: scripts
             mountPath: /scripts
             readOnly: true
+          - name: github-token
+            mountPath: /github-token
+            readOnly: true
 
     - name: push-iso
       inputs:
@@ -196,6 +256,39 @@ spec:
             path: /tmp/sb-iso/
           - name: iso
             path: /tmp/iso/
+      volumes:
+        - name: github-token
+          emptyDir: {}
+        - name: github-app-secret
+          secret:
+            secretName: github-app-private-key
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
       container:
         image: alpine:3.23
         command: [sh, /scripts/push-iso.sh]
@@ -205,16 +298,6 @@ spec:
         env:
           - name: VERSION
             value: "{{workflow.parameters.version}}"
-          - name: GITHUB_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: github-pat-talos-build
-                key: credential
-          - name: GH_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: github-pat-talos-build
-                key: credential
         resources:
           requests:
             cpu: 50m
@@ -225,8 +308,44 @@ spec:
           - name: scripts
             mountPath: /scripts
             readOnly: true
+          - name: github-token
+            mountPath: /github-token
+            readOnly: true
 
     - name: finalize-release
+      volumes:
+        - name: github-token
+          emptyDir: {}
+        - name: github-app-secret
+          secret:
+            secretName: github-app-private-key
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
       container:
         image: alpine:3.23
         command: [sh, /scripts/finalize-release.sh]
@@ -236,11 +355,6 @@ spec:
         env:
           - name: VERSION
             value: "{{workflow.parameters.version}}"
-          - name: GH_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: github-pat-talos-build
-                key: credential
         resources:
           requests:
             cpu: 10m
@@ -250,4 +364,7 @@ spec:
         volumeMounts:
           - name: scripts
             mountPath: /scripts
+            readOnly: true
+          - name: github-token
+            mountPath: /github-token
             readOnly: true

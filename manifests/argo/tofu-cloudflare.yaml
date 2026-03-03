@@ -66,20 +66,51 @@ spec:
       volumes:
         - name: workspace
           emptyDir: {}
+        - name: github-token
+          emptyDir: {}
+        - name: github-app-secret
+          secret:
+            secretName: github-app-private-key
       initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
         - name: git-clone
           image: alpine/git:v2.52.0
-          command: [git, clone, --depth, "1"]
-          args: ["https://$(GITHUB_TOKEN)@github.com/Tsuguya/home-cloudflare.git", /workspace]
-          env:
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: github-pat-tofu
-                  key: credential
+          command: [sh, -c]
+          args:
+            - |
+              GITHUB_TOKEN=$(cat /github-token/token)
+              git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-cloudflare.git" /workspace
           volumeMounts:
             - name: workspace
               mountPath: /workspace
+            - name: github-token
+              mountPath: /github-token
+              readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -147,23 +178,54 @@ spec:
       volumes:
         - name: workspace
           emptyDir: {}
+        - name: github-token
+          emptyDir: {}
+        - name: github-app-secret
+          secret:
+            secretName: github-app-private-key
       initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
         - name: git-clone
           image: alpine/git:v2.52.0
           command: [sh, -c]
           args:
-            - git clone --depth 1 -b "${BRANCH}" "https://${GITHUB_TOKEN}@github.com/Tsuguya/home-cloudflare.git" /workspace
+            - |
+              GITHUB_TOKEN=$(cat /github-token/token)
+              git clone --depth 1 -b "${BRANCH}" "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-cloudflare.git" /workspace
           env:
             - name: BRANCH
               value: "{{workflow.parameters.branch}}"
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: github-pat-tofu
-                  key: credential
           volumeMounts:
             - name: workspace
               mountPath: /workspace
+            - name: github-token
+              mountPath: /github-token
+              readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -180,6 +242,7 @@ spec:
         args:
           - |
             set -uo pipefail
+            export GITHUB_TOKEN=$(cat /github-token/token)
             wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
             wget -qO /tmp/gh.tar.gz "https://github.com/cli/cli/releases/download/v2.74.1/gh_2.74.1_linux_amd64.tar.gz"
             tar xzf /tmp/gh.tar.gz -C /tmp gh_2.74.1_linux_amd64/bin/gh --strip-components=2
@@ -214,12 +277,10 @@ spec:
         volumeMounts:
           - name: workspace
             mountPath: /workspace
+          - name: github-token
+            mountPath: /github-token
+            readOnly: true
         env:
-          - name: GITHUB_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: github-pat-tofu
-                key: credential
           - name: CLOUDFLARE_API_TOKEN
             valueFrom:
               secretKeyRef:

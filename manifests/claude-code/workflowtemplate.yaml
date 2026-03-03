@@ -78,6 +78,11 @@ spec:
     - name: mcp-config
       configMap:
         name: claude-code-mcp
+    - name: github-token
+      emptyDir: {}
+    - name: github-app-secret
+      secret:
+        secretName: github-app-private-key
   affinity:
     nodeAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -100,17 +105,44 @@ spec:
         runAsGroup: 65532
         fsGroup: 65532
       initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
         - name: setup
           image: alpine/git:v2.52.0
           command: [sh, -c]
           args:
             - |
+              GITHUB_TOKEN=$(cat /github-token/token)
               git config --global --add safe.directory /workspace
               git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-rss.git" /workspace
               cd /workspace
               git checkout -b "issue-${ISSUE_NUMBER}"
-              git config user.name "claude-code[bot]"
-              git config user.email "claude-code[bot]@users.noreply.github.com"
+              git config user.name "tgy-cluster-bot[bot]"
+              git config user.email "tgy-cluster-bot[bot]@users.noreply.github.com"
               mkdir -p /claude-home/.claude
               cp /claude-config/CLAUDE.md /claude-home/.claude/CLAUDE.md
           env:
@@ -118,11 +150,6 @@ spec:
               value: /tmp
             - name: ISSUE_NUMBER
               value: "{{workflow.parameters.issue-number}}"
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: github-pat-claude-code
-                  key: credential
           securityContext:
             runAsUser: 65532
             runAsNonRoot: true
@@ -137,6 +164,9 @@ spec:
             - name: claude-config
               mountPath: /claude-config
               readOnly: true
+            - name: github-token
+              mountPath: /github-token
+              readOnly: true
           resources:
             requests:
               cpu: 10m
@@ -148,6 +178,7 @@ spec:
         command: [sh, -c]
         args:
           - |
+            export GITHUB_TOKEN=$(cat /github-token/token)
             if [ "$CUSTOM_PROMPT" != "none" ] && [ -n "$CUSTOM_PROMPT" ]; then
               PROMPT="$CUSTOM_PROMPT"
             else
@@ -167,11 +198,6 @@ spec:
               secretKeyRef:
                 name: claude-code-token
                 key: credential
-          - name: GITHUB_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: github-pat-claude-code
-                key: credential
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -183,6 +209,9 @@ spec:
             mountPath: /claude-home
           - name: mcp-config
             mountPath: /mcp-config
+            readOnly: true
+          - name: github-token
+            mountPath: /github-token
             readOnly: true
         resources:
           requests:

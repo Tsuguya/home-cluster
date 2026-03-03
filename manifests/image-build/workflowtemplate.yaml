@@ -57,13 +57,47 @@ spec:
         runAsNonRoot: true
         runAsGroup: 65532
         fsGroup: 65532
+      volumes:
+        - name: github-token
+          emptyDir: {}
+        - name: github-app-secret
+          secret:
+            secretName: github-app-private-key
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
       container:
         image: alpine/git:v2.52.0
         command: [sh, -c]
         args:
           - |
+            GITHUB_TOKEN=$(cat /github-token/token)
             cd /tmp
-            git clone https://${GITHUB_TOKEN}@github.com/Tsuguya/images.git repo
+            git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/images.git" repo
             cd repo
             if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
               find . -name Dockerfile -not -path './.git/*' | sed 's|^./||;s|/Dockerfile$||' | sort -u
@@ -75,11 +109,10 @@ spec:
             value: "{{workflow.parameters.before-sha}}"
           - name: AFTER
             value: "{{workflow.parameters.commit-sha}}"
-          - name: GITHUB_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: github-pat-images
-                key: credential
+        volumeMounts:
+          - name: github-token
+            mountPath: /github-token
+            readOnly: true
         resources:
           requests:
             cpu: 10m
@@ -105,22 +138,52 @@ spec:
           emptyDir: {}
         - name: docker-config
           emptyDir: {}
+        - name: github-token
+          emptyDir: {}
+        - name: github-app-secret
+          secret:
+            secretName: github-app-private-key
       initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
         - name: clone-repo
           image: alpine/git:v2.52.0
           command: [sh, -c]
           args:
-            - git config --global --add safe.directory /workspace && git clone https://${GITHUB_TOKEN}@github.com/Tsuguya/images.git /workspace && cd /workspace && git checkout "$COMMIT_SHA"
+            - |
+              GITHUB_TOKEN=$(cat /github-token/token)
+              git config --global --add safe.directory /workspace
+              git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/images.git" /workspace
+              cd /workspace && git checkout "$COMMIT_SHA"
           env:
             - name: HOME
               value: /tmp
             - name: COMMIT_SHA
               value: "{{workflow.parameters.commit-sha}}"
-            - name: GITHUB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: github-pat-images
-                  key: credential
           securityContext:
             runAsUser: 65532
             runAsNonRoot: true
@@ -130,6 +193,9 @@ spec:
           volumeMounts:
             - name: workspace
               mountPath: /workspace
+            - name: github-token
+              mountPath: /github-token
+              readOnly: true
           resources:
             requests:
               cpu: 10m

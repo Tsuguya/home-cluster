@@ -35,6 +35,7 @@ spec:
         - matchName: "helm.cilium.io"
         - matchName: "helm.goharbor.io"
         - matchName: "charts.external-secrets.io"
+        - matchName: "external-secrets.io"
       toPorts:
         - ports:
             - port: "443"

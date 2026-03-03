@@ -26,7 +26,7 @@ configs:
   credentialTemplates:
     github-private:
       url: https://github.com/Tsuguya
-      username: Tsuguya
+      username: x-access-token
       type: git
   cm:
     resource.exclusions: |

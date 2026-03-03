@@ -14,7 +14,7 @@ ArgoCD GitOps で管理するホーム Kubernetes クラスタの構成リポジ
 | Certificates | cert-manager (Let's Encrypt) |
 | DNS | external-dns (Cloudflare) |
 | IdP | Kanidm |
-| Secrets | External Secrets Operator (1Password SDK) |
+| Secrets | External Secrets Operator (1Password Connect) |
 | Database | CloudNativePG |
 | CI/CD | Argo Workflows, Argo Events |
 | Gateway | Cilium Gateway API |

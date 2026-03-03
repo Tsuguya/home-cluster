@@ -178,11 +178,12 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **cloudnative-pg** | kube-apiserver/host/remote-node → 9443 | kube-apiserver, shared-pg (database):8000, rss-pg (rss):8000 |
 
-## external-secrets (1 policy)
+## external-secrets (2 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **external-secrets** | kube-apiserver → 10250 | kube-apiserver, *.1password.com:443 |
+| **external-secrets** | kube-apiserver/remote-node → 10250 | kube-apiserver, onepassword-connect:8080 |
+| **onepassword-connect** | external-secrets → 8080; remote-node → 8080/8081 (probes) | *.1password.com:443 |
 
 ## kanidm (1 policy)
 

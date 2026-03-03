@@ -1,0 +1,20 @@
+connect:
+  credentialsName: onepassword-connect
+  credentialsKey: 1password-credentials.json
+  api:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 128Mi
+  sync:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 64Mi
+
+operator:
+  create: false

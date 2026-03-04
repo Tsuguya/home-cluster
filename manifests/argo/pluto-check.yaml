@@ -71,12 +71,18 @@ spec:
         - - name: ai-fix
             template: ai-fix
             when: "{{steps.detect-in-cluster.status}} == Failed || {{steps.detect-helm.status}} == Failed"
+            arguments:
+              artifacts:
+                - name: pluto-cluster
+                  from: "{{steps.detect-in-cluster.outputs.artifacts.result}}"
+                - name: pluto-helm
+                  from: "{{steps.detect-helm.outputs.artifacts.result}}"
         - - name: fail-if-deprecated
             template: fail-if-deprecated
             when: "{{steps.detect-in-cluster.status}} == Failed || {{steps.detect-helm.status}} == Failed"
 
     - name: detect-in-cluster
-      container:
+      script:
         image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.23.0
         resources:
           requests:
@@ -84,16 +90,21 @@ spec:
             memory: 64Mi
           limits:
             memory: 512Mi
-        command: [/pluto]
-        args:
-          - detect-all-in-cluster
-          - --target-versions
-          - k8s=v1.36.0
-          - -o
-          - wide
+        command: [sh]
+        source: |
+          /pluto detect-all-in-cluster --target-versions k8s=v1.36.0 -o wide > /tmp/result.txt 2>&1
+          code=$?
+          cat /tmp/result.txt
+          exit $code
+      outputs:
+        artifacts:
+          - name: result
+            path: /tmp/result.txt
+            archive:
+              none: {}
 
     - name: detect-helm
-      container:
+      script:
         image: us-docker.pkg.dev/fairwinds-ops/oss/pluto:v5.23.0
         resources:
           requests:
@@ -101,16 +112,27 @@ spec:
             memory: 32Mi
           limits:
             memory: 128Mi
-        command: [/pluto]
-        args:
-          - detect-helm
-          - --target-versions
-          - k8s=v1.36.0
-          - -o
-          - wide
+        command: [sh]
+        source: |
+          /pluto detect-helm --target-versions k8s=v1.36.0 -o wide > /tmp/result.txt 2>&1
+          code=$?
+          cat /tmp/result.txt
+          exit $code
+      outputs:
+        artifacts:
+          - name: result
+            path: /tmp/result.txt
+            archive:
+              none: {}
 
     - name: ai-fix
       timeout: "30m"
+      inputs:
+        artifacts:
+          - name: pluto-cluster
+            path: /tmp/pluto-cluster.txt
+          - name: pluto-helm
+            path: /tmp/pluto-helm.txt
       script:
         image: registry.infra.tgy.io/tools/claude-code:latest
         resources:
@@ -152,28 +174,14 @@ spec:
           export GITHUB_TOKEN
           rm -f /tmp/app-key.pem
 
-          PLUTO_VERSION=v5.22.7
-          curl -sL "https://github.com/FairwindsOps/pluto/releases/download/${PLUTO_VERSION}/pluto_${PLUTO_VERSION#v}_linux_amd64.tar.gz" \
-            | tar -xz -C /tmp pluto
-          export PATH="/tmp:$PATH"
-
           echo "=== Cloning home-cluster ==="
           git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-cluster.git" /tmp/workspace
           cd /tmp/workspace
-
-          echo "=== Running Pluto ==="
-          pluto detect-all-in-cluster --target-versions k8s=v1.36.0 -o wide 2>&1 | tee /tmp/pluto-cluster.txt || true
-          pluto detect-helm --target-versions k8s=v1.36.0 -o wide 2>&1 | tee /tmp/pluto-helm.txt || true
 
           echo "[detect-all-in-cluster]"
           cat /tmp/pluto-cluster.txt
           echo "[detect-helm]"
           cat /tmp/pluto-helm.txt
-
-          if ! grep -qE "DEPRECATED|REMOVED" /tmp/pluto-cluster.txt /tmp/pluto-helm.txt 2>/dev/null; then
-            echo "No deprecated APIs detected in ai-fix step"
-            exit 0
-          fi
 
           cat > /tmp/prompt.txt << 'PROMPT_EOF'
           Kubernetes クラスターで deprecated API が検出されました（対象: k8s v1.36.0）。

@@ -72,9 +72,6 @@ spec:
       emptyDir: {}
     - name: claude-home
       emptyDir: {}
-    - name: claude-config
-      configMap:
-        name: claude-code-config
     - name: mcp-config
       configMap:
         name: claude-code-mcp
@@ -143,8 +140,7 @@ spec:
               git checkout -b "issue-${ISSUE_NUMBER}"
               git config user.name "tgy-cluster-bot[bot]"
               git config user.email "tgy-cluster-bot[bot]@users.noreply.github.com"
-              mkdir -p /claude-home/.claude
-              cp /claude-config/CLAUDE.md /claude-home/.claude/CLAUDE.md
+              cp -R /workspace/k8s/.claude /claude-home/
           env:
             - name: HOME
               value: /tmp
@@ -161,9 +157,6 @@ spec:
               mountPath: /workspace
             - name: claude-home
               mountPath: /claude-home
-            - name: claude-config
-              mountPath: /claude-config
-              readOnly: true
             - name: github-token
               mountPath: /github-token
               readOnly: true

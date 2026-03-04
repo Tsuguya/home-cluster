@@ -185,7 +185,7 @@ spec:
               PROMPT="GitHub issue #${ISSUE_NUMBER} を読んで要件を理解し、実装してください。完了したらコミット・プッシュして PR を作成してください。"
             fi
             cd /workspace
-            claude -p "$PROMPT" --verbose --allowedTools "Bash,Read,Write,Edit,Glob,Grep" --mcp-config /mcp-config/mcp.json
+            claude -p "$PROMPT" --verbose --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent" --mcp-config /mcp-config/mcp.json
         env:
           - name: HOME
             value: /claude-home

@@ -69,7 +69,7 @@ spec:
     - name: talosconfig
       secret:
         secretName: talosconfig
-        defaultMode: 0400
+        defaultMode: 0444
   templates:
     - name: main
       steps:

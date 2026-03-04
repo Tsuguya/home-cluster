@@ -38,7 +38,7 @@ spec:
         labels:
           backup-workflow: "true"
       container:
-        image: alpine:3.23
+        image: registry.infra.tgy.io/tools/talos-tools:latest
         resources:
           requests:
             cpu: 10m
@@ -50,18 +50,9 @@ spec:
           - |
             set -euo pipefail
 
-            TALOS_VERSION="v1.12.4"
-            echo "=== Installing talosctl ${TALOS_VERSION} and curl ==="
-            wget -qO /tmp/talosctl "https://github.com/siderolabs/talos/releases/download/${TALOS_VERSION}/talosctl-linux-amd64" \
-              && chmod +x /tmp/talosctl
-            _apk=/tmp/apk; mkdir -p $_apk/etc/apk; cp -r /etc/apk/keys $_apk/etc/apk/
-            apk add --root $_apk --initdb --usermode --no-cache \
-              --repositories-file /etc/apk/repositories curl > /dev/null
-            export PATH="$_apk/usr/bin:$PATH" LD_LIBRARY_PATH="$_apk/usr/lib:$_apk/lib"
-
             echo "=== Taking etcd snapshot ==="
             TIMESTAMP=$(date -u +%Y%m%d-%H%M%S)
-            /tmp/talosctl -e 192.168.0.230 -n 192.168.0.230 etcd snapshot /tmp/etcd-snapshot.db
+            talosctl -e 192.168.0.230 -n 192.168.0.230 etcd snapshot /tmp/etcd-snapshot.db
 
             SNAPSHOT_SIZE=$(wc -c < /tmp/etcd-snapshot.db)
             echo "Snapshot size: ${SNAPSHOT_SIZE} bytes"

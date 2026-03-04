@@ -46,7 +46,7 @@ spec:
         parameters:
           - name: nodes
       script:
-        image: alpine:3.23
+        image: registry.infra.tgy.io/tools/talos-tools:latest
         resources:
           requests:
             cpu: 10m
@@ -103,14 +103,14 @@ spec:
                   - key: node-role.kubernetes.io/control-plane
                     operator: '{{= inputs.parameters["exec-role"] == "control-plane" ? "Exists" : "DoesNotExist" }}'
       container:
-        image: ghcr.io/siderolabs/talosctl:v1.12.4
+        image: registry.infra.tgy.io/tools/talos-tools:latest
         resources:
           requests:
             cpu: 10m
             memory: 32Mi
           limits:
             memory: 64Mi
-        command: [/talosctl]
+        command: [talosctl]
         args:
           - shutdown
           - --nodes

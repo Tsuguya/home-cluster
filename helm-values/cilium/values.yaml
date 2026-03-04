@@ -78,6 +78,8 @@ hubble:
       filePath: /var/run/cilium/hubble/events.log
       allowList:
         - '{"verdict":["DROPPED"]}'
+      denyList:
+        - '{"IP":{"ipVersion":"IPv6"},"l4":{"ICMPv6":{}}}'
       fieldMask:
         - time
         - source

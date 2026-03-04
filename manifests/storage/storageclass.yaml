@@ -8,6 +8,8 @@ provisioner: csi.trident.qnap.io
 parameters:
   selector: "performance=default"
   fsType: "ext4"
+mountOptions:
+  - discard
 allowVolumeExpansion: true
 reclaimPolicy: Delete
 volumeBindingMode: Immediate

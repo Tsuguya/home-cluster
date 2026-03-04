@@ -37,6 +37,7 @@ prometheus:
     logFormat: json
     enableRemoteWriteReceiver: true
     retention: 14d
+    retentionSize: 15GB
     resources:
       limits:
         memory: 2Gi

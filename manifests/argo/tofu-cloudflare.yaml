@@ -180,6 +180,8 @@ spec:
           emptyDir: {}
         - name: github-token
           emptyDir: {}
+        - name: tools
+          emptyDir: {}
         - name: github-app-secret
           secret:
             secretName: github-app-private-key
@@ -210,6 +212,26 @@ spec:
               memory: 32Mi
             limits:
               memory: 64Mi
+        - name: copy-tools
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [sh, -c]
+          args:
+            - cp /usr/local/bin/jq /usr/local/bin/gh /tools/
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: tools
+              mountPath: /tools
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 32Mi
         - name: git-clone
           image: alpine/git:v2.52.0
           command: [sh, -c]
@@ -243,11 +265,7 @@ spec:
           - |
             set -uo pipefail
             export GITHUB_TOKEN=$(cat /github-token/token)
-            wget -qO /tmp/jq "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"
-            wget -qO /tmp/gh.tar.gz "https://github.com/cli/cli/releases/download/v2.74.1/gh_2.74.1_linux_amd64.tar.gz"
-            tar xzf /tmp/gh.tar.gz -C /tmp gh_2.74.1_linux_amd64/bin/gh --strip-components=2
-            chmod +x /tmp/jq /tmp/gh
-            export PATH="/tmp:$PATH"
+            export PATH="/tools:$PATH"
 
             cd /workspace
             tofu init -input=false
@@ -279,6 +297,9 @@ spec:
             mountPath: /workspace
           - name: github-token
             mountPath: /github-token
+            readOnly: true
+          - name: tools
+            mountPath: /tools
             readOnly: true
         env:
           - name: CLOUDFLARE_API_TOKEN

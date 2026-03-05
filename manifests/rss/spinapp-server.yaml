@@ -7,6 +7,8 @@ spec:
   image: ghcr.io/tsuguya/home-rss-server:v0.0.1
   replicas: 1
   executor: containerd-shim-spin
+  imagePullSecrets:
+    - name: ghcr-pull
   resources:
     requests:
       cpu: 10m

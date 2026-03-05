@@ -18,6 +18,8 @@ spec:
         spec:
           runtimeClassName: wasmtime-spin-v2
           automountServiceAccountToken: false
+          imagePullSecrets:
+            - name: ghcr-pull
           containers:
             - name: fetcher
               image: ghcr.io/tsuguya/home-rss-fetcher:v0.0.1

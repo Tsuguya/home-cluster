@@ -46,6 +46,89 @@ spec:
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
+  name: rss-fetcher
+  namespace: rss
+spec:
+  endpointSelector:
+    matchLabels:
+      app: rss-fetcher
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            rss-cron: "true"
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: rss-pg
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: rss-cleaner
+  namespace: rss
+spec:
+  endpointSelector:
+    matchLabels:
+      app: rss-cleaner
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            rss-cron: "true"
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: rss-pg
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: rss-cron
+  namespace: rss
+spec:
+  endpointSelector:
+    matchLabels:
+      rss-cron: "true"
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            app: rss-fetcher
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: rss-cleaner
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
   name: rss-migration
   namespace: rss
 spec:

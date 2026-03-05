@@ -1,10 +1,10 @@
 apiVersion: core.spinkube.dev/v1alpha1
 kind: SpinApp
 metadata:
-  name: rss-server
+  name: rss-fetcher
   namespace: rss
 spec:
-  image: ghcr.io/tsuguya/home-rss-server:v0.0.2
+  image: ghcr.io/tsuguya/home-rss-fetcher:v0.0.2
   replicas: 1
   executor: containerd-shim-spin
   imagePullSecrets:

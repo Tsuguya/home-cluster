@@ -1,0 +1,25 @@
+apiVersion: core.spinkube.dev/v1alpha1
+kind: SpinApp
+metadata:
+  name: rss-server
+  namespace: rss
+spec:
+  image: ghcr.io/tsuguya/home-rss-server:v0.0.1
+  replicas: 1
+  executor: containerd-shim-spin
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+  runtimeConfig:
+    sqlDatabases:
+      - name: default
+        type: postgres
+        options:
+          - name: url
+            valueFrom:
+              secretKeyRef:
+                name: rss-pg-credentials
+                key: uri

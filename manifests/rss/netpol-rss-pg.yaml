@@ -19,6 +19,21 @@ spec:
               protocol: TCP
     - fromEndpoints:
         - matchLabels:
+            app: rss-server
+        - matchLabels:
+            app: rss-ui
+        - matchLabels:
+            app: rss-fetcher
+        - matchLabels:
+            app: rss-cleaner
+        - matchLabels:
+            app: rss-migration
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
             app.kubernetes.io/name: cloudnative-pg
             io.kubernetes.pod.namespace: cnpg-system
       toPorts:

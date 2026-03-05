@@ -1,0 +1,104 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: rss-server
+  namespace: rss
+spec:
+  endpointSelector:
+    matchLabels:
+      app: rss-server
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: rss-pg
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: rss-ui
+  namespace: rss
+spec:
+  endpointSelector:
+    matchLabels:
+      app: rss-ui
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/instance: oauth2-proxy-rss
+            io.kubernetes.pod.namespace: oauth2-proxy
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: rss-pg
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: rss-fetcher
+  namespace: rss
+spec:
+  endpointSelector:
+    matchLabels:
+      app: rss-fetcher
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: rss-pg
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: rss-cleaner
+  namespace: rss
+spec:
+  endpointSelector:
+    matchLabels:
+      app: rss-cleaner
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: rss-pg
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: rss-migration
+  namespace: rss
+spec:
+  endpointSelector:
+    matchLabels:
+      app: rss-migration
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: rss-pg
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP

@@ -15,13 +15,9 @@ spec:
       memory: 32Mi
     limits:
       memory: 128Mi
-  runtimeConfig:
-    sqlDatabases:
-      - name: default
-        type: postgres
-        options:
-          - name: url
-            valueFrom:
-              secretKeyRef:
-                name: rss-pg-credentials
-                key: uri
+  variables:
+    - name: db_url
+      valueFrom:
+        secretKeyRef:
+          name: rss-pg-credentials
+          key: uri

@@ -24,6 +24,7 @@ spec:
         - matchPattern: "*.githubusercontent.com"
         - matchName: "index.crates.io"
         - matchName: "static.crates.io"
+        - matchName: "registry.npmjs.org"
         - matchName: "discord.com"
         - matchName: "gitmcp.io"
       toPorts:

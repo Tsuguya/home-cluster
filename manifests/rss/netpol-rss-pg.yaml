@@ -23,10 +23,6 @@ spec:
         - matchLabels:
             app: rss-ui
         - matchLabels:
-            app: rss-fetcher
-        - matchLabels:
-            app: rss-cleaner
-        - matchLabels:
             app: rss-migration
       toPorts:
         - ports:

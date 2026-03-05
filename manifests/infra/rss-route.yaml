@@ -11,7 +11,7 @@ spec:
       namespace: gateway
       sectionName: https
   hostnames:
-    - rss.infra.tgy.io
+    - reader.tgy.io
   rules:
     - matches:
         - path:

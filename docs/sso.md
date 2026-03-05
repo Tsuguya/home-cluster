@@ -13,6 +13,7 @@
 | SeaweedFS UI | oauth2-proxy (OIDC) | Kanidm (コンフィデンシャル) | oauth2-proxy-seaweedfs-oauth (oauth2-proxy) | `helm-values/oauth2-proxy-seaweedfs/values.yaml` |
 | Harbor | CONFIG_OVERWRITE_JSON (OIDC) | Kanidm (コンフィデンシャル) | harbor-kanidm-oauth (harbor) | `helm-values/harbor/values.yaml` |
 | Nextcloud | user_oidc app (OIDC) | Kanidm (コンフィデンシャル) | nextcloud-kanidm-oauth (nextcloud) | `helm-values/nextcloud/values.yaml` |
+| RSS Reader | oauth2-proxy (OIDC) | Kanidm (コンフィデンシャル) | oauth2-proxy-rss-oauth (oauth2-proxy) | `helm-values/oauth2-proxy-rss/values.yaml` |
 
 ArgoCD は Kanidm パブリッククライアント (PKCE S256) を使用するため、clientSecret 不要。
 
@@ -168,6 +169,25 @@ kanidm system oauth2 show-basic-secret nextcloud --url https://idm.tgy.io
 
 clientSecret は 1Password (nextcloud-kanidm-oauth) に保存し、ExternalSecret 経由でデプロイ。
 
+### RSS Reader (oauth2-proxy, コンフィデンシャルクライアント)
+
+```bash
+kanidm system oauth2 create oauth2-proxy-rss "RSS Reader" https://reader.tgy.io --url https://idm.tgy.io
+
+kanidm system oauth2 add-redirect-url oauth2-proxy-rss https://reader.tgy.io/oauth2/callback --url https://idm.tgy.io
+
+kanidm group create rss_users --url https://idm.tgy.io
+kanidm group add-members rss_users tsuguya --url https://idm.tgy.io
+
+kanidm system oauth2 update-scope-map oauth2-proxy-rss rss_users openid profile email --url https://idm.tgy.io
+
+kanidm system oauth2 prefer-short-username oauth2-proxy-rss --url https://idm.tgy.io
+
+kanidm system oauth2 show-basic-secret oauth2-proxy-rss --url https://idm.tgy.io
+```
+
+oauth2-proxy 経由で認証。clientSecret + cookieSecret を 1Password (oauth2-proxy-rss-oauth) に保存。
+
 ## 1Password アイテム
 
 | アイテム | Secret 名 | Namespace | キー |
@@ -178,6 +198,7 @@ clientSecret は 1Password (nextcloud-kanidm-oauth) に保存し、ExternalSecre
 | oauth2-proxy-seaweedfs-oauth | oauth2-proxy-seaweedfs-oauth | oauth2-proxy | client-id, client-secret, cookie-secret |
 | harbor-kanidm-oauth | harbor-kanidm-oauth | harbor | clientID, clientSecret |
 | nextcloud-kanidm-oauth | nextcloud-kanidm-oauth | nextcloud | password |
+| oauth2-proxy-rss-oauth | oauth2-proxy-rss-oauth | oauth2-proxy | client-id, client-secret, cookie-secret |
 
 ArgoCD はパブリッククライアントのため 1Password アイテム不要。
 oauth2-proxy の Secret キーは chart の `existingSecret` が期待する `client-id`, `client-secret`, `cookie-secret`。

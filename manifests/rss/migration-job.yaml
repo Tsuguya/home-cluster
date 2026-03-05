@@ -22,7 +22,7 @@ spec:
       containers:
         - name: dbmate
           image: ghcr.io/amacneil/dbmate:2
-          args: ["up"]
+          args: ["--migrations-dir", "/app/db/migrations", "up"]
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

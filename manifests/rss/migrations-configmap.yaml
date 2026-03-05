@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   name: rss-migrations
   namespace: rss
+  annotations:
+    argocd.argoproj.io/hook: PreSync
 data:
   20260301000000_initial.sql: |
     -- migrate:up

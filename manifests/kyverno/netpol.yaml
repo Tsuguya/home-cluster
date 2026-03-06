@@ -35,6 +35,7 @@ spec:
               protocol: TCP
     - toFQDNs:
         - matchPattern: "*.sigstore.dev"
+        - matchName: "registry.infra.tgy.io"
       toPorts:
         - ports:
             - port: "443"

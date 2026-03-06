@@ -345,6 +345,8 @@ spec:
               --yes \
               "$IMAGE"
         env:
+          - name: HOME
+            value: /tmp
           - name: COSIGN_PASSWORD
             value: ""
           - name: DOCKER_CONFIG

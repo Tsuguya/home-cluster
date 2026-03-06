@@ -129,6 +129,26 @@ spec:
       inputs:
         parameters:
           - name: image-dir
+      steps:
+        - - name: build
+            template: kaniko-build
+            arguments:
+              parameters:
+                - name: image-dir
+                  value: "{{inputs.parameters.image-dir}}"
+        - - name: sign
+            template: cosign-sign
+            arguments:
+              parameters:
+                - name: image-dir
+                  value: "{{inputs.parameters.image-dir}}"
+                - name: digest
+                  value: "{{steps.build.outputs.parameters.digest}}"
+
+    - name: kaniko-build
+      inputs:
+        parameters:
+          - name: image-dir
       securityContext:
         runAsUser: 0
         runAsNonRoot: false
@@ -241,6 +261,7 @@ spec:
           - --context=dir:///workspace/{{inputs.parameters.image-dir}}
           - --destination=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:latest
           - --destination=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}}
+          - --digest-file=/workspace/digest
           - --insecure
         securityContext:
           allowPrivilegeEscalation: false
@@ -259,3 +280,90 @@ spec:
             memory: 512Mi
           limits:
             memory: 2Gi
+      outputs:
+        parameters:
+          - name: digest
+            valueFrom:
+              path: /workspace/digest
+
+    - name: cosign-sign
+      inputs:
+        parameters:
+          - name: image-dir
+          - name: digest
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      volumes:
+        - name: docker-config
+          emptyDir: {}
+        - name: cosign-key
+          secret:
+            secretName: cosign-signing-key
+      initContainers:
+        - name: setup-registry-auth
+          image: alpine:3.23
+          command: [sh, -c]
+          args:
+            - printf '{"auths":{"harbor.harbor.svc":{"auth":"%s"}}}' "$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64)" > /docker-config/config.json
+          env:
+            - name: HARBOR_USER
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-robot-images
+                  key: username
+            - name: HARBOR_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-robot-images
+                  key: credential
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: docker-config
+              mountPath: /docker-config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      container:
+        image: registry.infra.tgy.io/tools/argo-tools:latest
+        command: [sh, -c]
+        args:
+          - |
+            IMAGE="harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}@{{inputs.parameters.digest}}"
+            cosign sign --key /cosign/cosign.key \
+              --registry-referrers-mode=oci-1-1 \
+              --allow-insecure-registry \
+              --yes \
+              "$IMAGE"
+        env:
+          - name: COSIGN_PASSWORD
+            value: ""
+          - name: DOCKER_CONFIG
+            value: /docker-config
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: cosign-key
+            mountPath: /cosign
+            readOnly: true
+          - name: docker-config
+            mountPath: /docker-config
+            readOnly: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi

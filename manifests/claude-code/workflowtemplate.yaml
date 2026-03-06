@@ -140,7 +140,7 @@ spec:
               git checkout -b "issue-${ISSUE_NUMBER}"
               git config user.name "tgy-cluster-bot[bot]"
               git config user.email "tgy-cluster-bot[bot]@users.noreply.github.com"
-              gh issue view "${ISSUE_NUMBER}" --repo Tsuguya/home-rss --json number,title,body --jq '"# Issue #\(.number): \(.title)\n\n\(.body)"' > /workspace/ISSUE.md
+              curl -sf -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/Tsuguya/home-rss/issues/${ISSUE_NUMBER}" | jq -r '"# Issue #\(.number): \(.title)\n\n\(.body)"' > /workspace/ISSUE.md
               cp -R /workspace/k8s/.claude /claude-home/
           env:
             - name: HOME

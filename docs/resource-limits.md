@@ -77,6 +77,15 @@
 | kube-state-metrics | 10m / 32Mi | 128Mi | 低負荷 |
 | node-exporter (DS) | 10m / 32Mi | 64Mi | 低負荷 |
 
+### Kyverno
+
+| コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |
+|---|---|---|---|
+| admission-controller | 50m / 128Mi | 384Mi | 未計測 |
+| background-controller | 10m / 64Mi | 256Mi | 未計測 |
+| reports-controller | 10m / 64Mi | 256Mi | 未計測 |
+| cleanup-controller | 10m / 64Mi | 256Mi | 未計測 |
+
 ### その他
 
 | サービス | コンポーネント | requests (cpu/mem) | limits (mem) | 実測 |

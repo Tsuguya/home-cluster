@@ -185,6 +185,15 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **external-secrets** | kube-apiserver/remote-node → 10250 | kube-apiserver, onepassword-connect:8080 |
 | **onepassword-connect** | external-secrets → 8080; remote-node → 8080/8081 (probes) | *.1password.com:443 |
 
+## kyverno (4 policies)
+
+| Component | Ingress | Egress |
+|---|---|---|
+| **admission-controller** | kube-apiserver/host/remote-node → 9443 | kube-apiserver, harbor-nginx (harbor):8080, *.sigstore.dev:443, registry.infra.tgy.io:443 |
+| **background-controller** | (none) | kube-apiserver, harbor-nginx (harbor):8080 |
+| **reports-controller** | (none) | kube-apiserver |
+| **cleanup-controller** | kube-apiserver/host/remote-node → 9443 | kube-apiserver |
+
 ## kanidm (1 policy)
 
 | Component | Ingress | Egress |

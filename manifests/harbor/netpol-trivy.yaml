@@ -40,6 +40,7 @@ spec:
     - toFQDNs:
         - matchName: "ghcr.io"
         - matchPattern: "*.githubusercontent.com"
+        - matchName: "registry.infra.tgy.io"
       toPorts:
         - ports:
             - port: "443"

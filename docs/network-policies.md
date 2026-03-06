@@ -231,7 +231,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **registry** | core, jobservice → 5000/8080; prometheus (monitoring) → 8001 | seaweedfs-filer (seaweedfs):8333, redis:6379 |
 | **jobservice** | core → 8080; prometheus (monitoring) → 8001 | core:8080, redis:6379, registry:5000, trivy:8080, shared-pg (database):5432 |
 | **redis** | core, registry, jobservice, exporter, trivy → 6379 | (none) |
-| **trivy** | core, jobservice → 8080; prometheus (monitoring) → 8001 | redis:6379, ghcr.io + *.githubusercontent.com :443 |
+| **trivy** | core, jobservice → 8080; prometheus (monitoring) → 8001 | redis:6379, ghcr.io + *.githubusercontent.com + registry.infra.tgy.io :443 |
 | **exporter** | prometheus (monitoring) → 8001 | core:8080, redis:6379, shared-pg (database):5432 |
 
 ## nextcloud (2 policies)

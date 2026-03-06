@@ -6,7 +6,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: rss-server
+      core.spinkube.dev/app-name: rss-server
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -33,7 +33,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: rss-ui
+      core.spinkube.dev/app-name: rss-ui
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -60,7 +60,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: rss-fetcher
+      core.spinkube.dev/app-name: rss-fetcher
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -92,7 +92,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: rss-cleaner
+      core.spinkube.dev/app-name: rss-cleaner
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -122,14 +122,14 @@ spec:
   egress:
     - toEndpoints:
         - matchLabels:
-            app: rss-fetcher
+            core.spinkube.dev/app-name: rss-fetcher
       toPorts:
         - ports:
             - port: "80"
               protocol: TCP
     - toEndpoints:
         - matchLabels:
-            app: rss-cleaner
+            core.spinkube.dev/app-name: rss-cleaner
       toPorts:
         - ports:
             - port: "80"

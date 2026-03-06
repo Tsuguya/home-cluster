@@ -19,7 +19,7 @@ ArgoCD GitOps で管理するホーム Kubernetes クラスタの構成リポジ
 | CI/CD | Argo Workflows, Argo Events |
 | Gateway | Cilium Gateway API |
 | Registry | Harbor |
-| Security | Tetragon, Trivy Operator |
+| Security | Tetragon, Trivy Operator, Kyverno (cosign image verification) |
 | Wasm | Spin Operator (SpinKube) |
 
 ## Nodes

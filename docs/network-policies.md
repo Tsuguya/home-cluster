@@ -221,16 +221,17 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **nfs-provisioner** | deny world | kube-apiserver, 192.168.0.241:2049 (QNAP NFS) |
 
-## harbor (7 policies)
+## harbor (8 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
 | **nginx** | ingress, cloudflared (argocd), image-build (image-build) → 8080; prometheus (monitoring) → 8001 | core:8080, portal:8080 |
-| **core** | nginx, jobservice, exporter → 8080; prometheus (monitoring) → 8001 | shared-pg (database):5432, redis:6379, registry:5000/8080, portal:8080, jobservice:8080, kanidm (kanidm):8443, kube-apiserver |
+| **core** | nginx, jobservice, exporter → 8080; prometheus (monitoring) → 8001 | shared-pg (database):5432, redis:6379, registry:5000/8080, portal:8080, jobservice:8080, trivy:8080, kanidm (kanidm):8443, kube-apiserver |
 | **portal** | nginx, core → 8080 | (none) |
 | **registry** | core, jobservice → 5000/8080; prometheus (monitoring) → 8001 | seaweedfs-filer (seaweedfs):8333, redis:6379 |
 | **jobservice** | core → 8080; prometheus (monitoring) → 8001 | core:8080, redis:6379, registry:5000, shared-pg (database):5432 |
 | **redis** | core, registry, jobservice, exporter → 6379 | (none) |
+| **trivy** | core → 8080; prometheus (monitoring) → 8001 | ghcr.io + *.githubusercontent.com :443 |
 | **exporter** | prometheus (monitoring) → 8001 | core:8080, redis:6379, shared-pg (database):5432 |
 
 ## nextcloud (2 policies)

@@ -65,6 +65,9 @@ spec:
         - matchLabels:
             app: harbor
             component: jobservice
+        - matchLabels:
+            app: harbor
+            component: trivy
       toPorts:
         - ports:
             - port: "8080"

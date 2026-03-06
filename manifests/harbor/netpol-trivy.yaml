@@ -13,6 +13,9 @@ spec:
         - matchLabels:
             app: harbor
             component: core
+        - matchLabels:
+            app: harbor
+            component: jobservice
       toPorts:
         - ports:
             - port: "8080"

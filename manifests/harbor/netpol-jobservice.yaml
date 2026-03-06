@@ -52,6 +52,14 @@ spec:
               protocol: TCP
     - toEndpoints:
         - matchLabels:
+            app: harbor
+            component: trivy
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
             cnpg.io/cluster: shared-pg
             io.kubernetes.pod.namespace: database
       toPorts:

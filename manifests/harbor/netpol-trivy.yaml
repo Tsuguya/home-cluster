@@ -26,6 +26,14 @@ spec:
             - port: "8001"
               protocol: TCP
   egress:
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: redis
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
     - toFQDNs:
         - matchName: "ghcr.io"
         - matchPattern: "*.githubusercontent.com"

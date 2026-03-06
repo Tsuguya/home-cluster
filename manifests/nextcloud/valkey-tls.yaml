@@ -1,0 +1,22 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: valkey-tls
+  namespace: nextcloud
+spec:
+  secretName: valkey-tls
+  duration: 8760h
+  renewBefore: 720h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  dnsNames:
+    - valkey
+    - valkey-headless
+    - valkey.nextcloud.svc
+    - valkey-headless.nextcloud.svc
+    - valkey.nextcloud.svc.cluster.local
+    - valkey-headless.nextcloud.svc.cluster.local
+  issuerRef:
+    name: pg-ca-issuer
+    kind: ClusterIssuer

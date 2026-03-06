@@ -1,3 +1,10 @@
+tls:
+  enabled: true
+  existingSecret: valkey-tls
+  serverPublicKey: tls.crt
+  serverKey: tls.key
+  caPublicKey: ca.crt
+
 resources:
   requests:
     cpu: 10m

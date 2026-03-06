@@ -19,9 +19,16 @@ nextcloud:
     - name: pg-ca-cert
       secret:
         secretName: pg-ca-cert
+    - name: valkey-tls
+      secret:
+        secretName: valkey-tls
   extraVolumeMounts:
     - name: pg-ca-cert
       mountPath: /etc/ssl/pg/ca.crt
+      subPath: ca.crt
+      readOnly: true
+    - name: valkey-tls
+      mountPath: /etc/ssl/valkey/ca.crt
       subPath: ca.crt
       readOnly: true
   configs:
@@ -58,8 +65,12 @@ nextcloud:
         'memcache.distributed' => '\\OC\\Memcache\\Redis',
         'memcache.locking' => '\\OC\\Memcache\\Redis',
         'redis' => array(
-          'host' => 'valkey',
+          'host' => 'tls://valkey',
           'port' => 6379,
+          'ssl_context' => array(
+            'cafile' => '/etc/ssl/valkey/ca.crt',
+            'verify_peer_name' => true,
+          ),
         ),
       );
   extraEnv:

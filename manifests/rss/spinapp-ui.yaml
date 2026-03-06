@@ -4,7 +4,7 @@ metadata:
   name: rss-ui
   namespace: rss
 spec:
-  image: ghcr.io/tsuguya/home-rss-ui:v0.0.2
+  image: ghcr.io/tsuguya/home-rss-ui:v0.0.3
   replicas: 1
   executor: containerd-shim-spin
   imagePullSecrets:

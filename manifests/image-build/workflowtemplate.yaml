@@ -341,7 +341,6 @@ spec:
           - |
             IMAGE="harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}@{{inputs.parameters.digest}}"
             cosign sign --key /cosign/cosign.key \
-              --registry-referrers-mode=oci-1-1 \
               --allow-insecure-registry \
               --yes \
               "$IMAGE"

@@ -24,6 +24,7 @@ spec:
         - matchName: "grafana.github.io"
         - matchName: "oauth2-proxy.github.io"
         - matchName: "aquasecurity.github.io"
+        - matchName: "kyverno.github.io"
         - matchName: "cloudnative-pg.github.io"
         - matchName: "kubernetes-sigs.github.io"
         - matchName: "prometheus-community.github.io"

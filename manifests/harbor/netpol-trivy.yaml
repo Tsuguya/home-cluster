@@ -41,6 +41,7 @@ spec:
         - matchName: "ghcr.io"
         - matchPattern: "*.githubusercontent.com"
         - matchName: "registry.infra.tgy.io"
+        - matchName: "mirror.gcr.io"
       toPorts:
         - ports:
             - port: "443"

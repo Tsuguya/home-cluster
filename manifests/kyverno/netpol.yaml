@@ -11,6 +11,7 @@ spec:
   ingress:
     - fromEntities:
         - kube-apiserver
+        - host
         - remote-node
       toPorts:
         - ports:
@@ -31,6 +32,12 @@ spec:
       toPorts:
         - ports:
             - port: "8080"
+              protocol: TCP
+    - toFQDNs:
+        - matchPattern: "*.sigstore.dev"
+      toPorts:
+        - ports:
+            - port: "443"
               protocol: TCP
 ---
 apiVersion: cilium.io/v2
@@ -91,6 +98,7 @@ spec:
   ingress:
     - fromEntities:
         - kube-apiserver
+        - host
         - remote-node
       toPorts:
         - ports:

@@ -1,0 +1,103 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kyverno-admission-controller
+  namespace: kyverno
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/component: admission-controller
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "9443"
+              protocol: TCP
+  egress:
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: nginx
+            io.kubernetes.pod.namespace: harbor
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kyverno-background-controller
+  namespace: kyverno
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/component: background-controller
+  egress:
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: nginx
+            io.kubernetes.pod.namespace: harbor
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kyverno-reports-controller
+  namespace: kyverno
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/component: reports-controller
+  egress:
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kyverno-cleanup-controller
+  namespace: kyverno
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/component: cleanup-controller
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "9443"
+              protocol: TCP
+  egress:
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP

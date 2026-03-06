@@ -55,6 +55,18 @@ controller:
           templateRef:
             name: discord-notify
             template: send
+  extraEnv:
+    - name: PGSSLROOTCERT
+      value: /etc/ssl/certs/pg-ca.crt
+  volumes:
+    - name: pg-ca-cert
+      secret:
+        secretName: pg-ca-cert
+  volumeMounts:
+    - name: pg-ca-cert
+      mountPath: /etc/ssl/certs/pg-ca.crt
+      subPath: ca.crt
+      readOnly: true
   persistence:
     archive: true
     postgresql:
@@ -68,6 +80,8 @@ controller:
       passwordSecret:
         name: argo-pg-credentials
         key: password
+      ssl: true
+      sslMode: verify-full
 
 mainContainer:
   securityContext:
@@ -84,6 +98,18 @@ executor:
         - ALL
 
 server:
+  extraEnv:
+    - name: PGSSLROOTCERT
+      value: /etc/ssl/certs/pg-ca.crt
+  volumes:
+    - name: pg-ca-cert
+      secret:
+        secretName: pg-ca-cert
+  volumeMounts:
+    - name: pg-ca-cert
+      mountPath: /etc/ssl/certs/pg-ca.crt
+      subPath: ca.crt
+      readOnly: true
   resources:
     requests:
       cpu: 10m

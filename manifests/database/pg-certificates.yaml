@@ -1,0 +1,29 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: shared-pg-server-tls
+  namespace: database
+spec:
+  secretName: shared-pg-server-tls
+  duration: 8760h # 1 year
+  renewBefore: 720h # 30 days
+  commonName: shared-pg-rw
+  dnsNames:
+    - shared-pg-rw
+    - shared-pg-rw.database
+    - shared-pg-rw.database.svc
+    - shared-pg-rw.database.svc.cluster.local
+    - shared-pg-r
+    - shared-pg-r.database
+    - shared-pg-r.database.svc
+    - shared-pg-r.database.svc.cluster.local
+    - shared-pg-ro
+    - shared-pg-ro.database
+    - shared-pg-ro.database.svc
+    - shared-pg-ro.database.svc.cluster.local
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: pg-ca-issuer
+    kind: ClusterIssuer

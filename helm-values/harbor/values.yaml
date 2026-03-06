@@ -7,6 +7,8 @@ expose:
 
 externalURL: https://registry.infra.tgy.io
 
+caBundleSecretName: pg-ca-cert
+
 existingSecretAdminPassword: harbor-admin-credentials
 existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
 existingSecretSecretKey: harbor-core-secret
@@ -19,7 +21,7 @@ database:
     username: harbor
     coreDatabase: harbor
     existingSecret: harbor-pg-credentials
-    sslmode: disable
+    sslmode: verify-full
 
 redis:
   type: internal

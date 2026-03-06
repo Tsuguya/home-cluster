@@ -4,6 +4,9 @@ metadata:
   name: shared-pg
   namespace: database
 spec:
+  certificates:
+    serverCASecret: shared-pg-server-tls
+    serverTLSSecret: shared-pg-server-tls
   instances: 2
   resources:
     requests:

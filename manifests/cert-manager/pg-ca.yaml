@@ -1,0 +1,32 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: pg-selfsigned
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pg-ca
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: shared-pg-ca
+  secretName: pg-ca-secret
+  duration: 87600h # 10 years
+  renewBefore: 2160h # 90 days
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: pg-selfsigned
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: pg-ca-issuer
+spec:
+  ca:
+    secretName: pg-ca-secret

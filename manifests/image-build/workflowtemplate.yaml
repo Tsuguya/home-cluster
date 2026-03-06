@@ -307,7 +307,7 @@ spec:
           image: alpine:3.23
           command: [sh, -c]
           args:
-            - printf '{"auths":{"harbor.harbor.svc:8080":{"auth":"%s"}}}' "$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64)" > /docker-config/config.json
+            - printf '{"auths":{"harbor.harbor.svc":{"auth":"%s"}}}' "$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64)" > /docker-config/config.json
           env:
             - name: HARBOR_USER
               valueFrom:
@@ -339,7 +339,7 @@ spec:
         command: [sh, -c]
         args:
           - |
-            IMAGE="harbor.harbor.svc:8080/tools/{{inputs.parameters.image-dir}}@{{inputs.parameters.digest}}"
+            IMAGE="harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}@{{inputs.parameters.digest}}"
             cosign sign --key /cosign/cosign.key \
               --allow-insecure-registry \
               --allow-http-registry \

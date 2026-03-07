@@ -1,0 +1,229 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: claude-code-generic
+  namespace: claude-code
+spec:
+  activeDeadlineSeconds: 3600
+  serviceAccountName: claude-code-executor
+  entrypoint: main
+  onExit: notify
+  arguments:
+    parameters:
+      - name: repo
+      - name: branch
+      - name: prompt
+      - name: skip-if-pr-exists
+        default: "true"
+  podMetadata:
+    labels:
+      claude-code: "true"
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+    - name: workspace
+      emptyDir: {}
+    - name: claude-home
+      emptyDir: {}
+    - name: github-token
+      emptyDir: {}
+    - name: github-app-secret
+      secret:
+        secretName: github-app-private-key
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - wn-03
+  templates:
+    - name: main
+      steps:
+        - - name: check-existing-pr
+            template: check-existing-pr
+            when: "{{workflow.parameters.skip-if-pr-exists}} == true"
+        - - name: run-audit
+            template: claude-code
+            when: "'{{workflow.parameters.skip-if-pr-exists}}' != 'true' || '{{steps.check-existing-pr.outputs.result}}' == 'no-pr'"
+
+    - name: check-existing-pr
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      script:
+        image: registry.infra.tgy.io/tools/argo-tools:latest
+        command: [sh]
+        source: |
+          export GITHUB_TOKEN=$(cat /github-token/token)
+          REPO="{{workflow.parameters.repo}}"
+          BRANCH="{{workflow.parameters.branch}}"
+          OWNER=$(echo "$REPO" | cut -d'/' -f1)
+          OPEN_PRS=$(wget -qO- --header="Authorization: token ${GITHUB_TOKEN}" \
+            --header="Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/pulls?state=open&head=${OWNER}:${BRANCH}" \
+            | jq 'length')
+          if [ "$OPEN_PRS" -gt 0 ]; then
+            echo "has-pr"
+          else
+            echo "no-pr"
+          fi
+        securityContext:
+          runAsUser: 65532
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: github-token
+            mountPath: /github-token
+            readOnly: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
+
+    - name: claude-code
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+        - name: setup
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [sh, -c]
+          args:
+            - |
+              export GITHUB_TOKEN=$(cat /github-token/token)
+              REPO="{{workflow.parameters.repo}}"
+              BRANCH="{{workflow.parameters.branch}}"
+              git config --global --add safe.directory /workspace
+              git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git" /workspace
+              cd /workspace
+              git checkout -b "${BRANCH}"
+              git config user.name "tgy-cluster-bot[bot]"
+              git config user.email "tgy-cluster-bot[bot]@users.noreply.github.com"
+          env:
+            - name: HOME
+              value: /tmp
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: claude-home
+              mountPath: /claude-home
+            - name: github-token
+              mountPath: /github-token
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+      container:
+        image: registry.infra.tgy.io/tools/claude-code:latest
+        command: [sh, -c]
+        args:
+          - |
+            export GITHUB_TOKEN=$(cat /github-token/token)
+            cd /workspace
+            claude --model sonnet -p "$PROMPT" --verbose --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent"
+        env:
+          - name: HOME
+            value: /claude-home
+          - name: PROMPT
+            value: "{{workflow.parameters.prompt}}"
+          - name: CLAUDE_CODE_OAUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: claude-code-token
+                key: credential
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+          - name: claude-home
+            mountPath: /claude-home
+          - name: github-token
+            mountPath: /github-token
+            readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 4Gi
+
+    - name: notify
+      templateRef:
+        name: discord-notify
+        template: send

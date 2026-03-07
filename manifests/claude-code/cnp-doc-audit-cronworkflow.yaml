@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: cnp-doc-audit
+  namespace: claude-code
+spec:
+  schedule: "0 15 * * *"
+  timezone: Asia/Tokyo
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  workflowSpec:
+    workflowTemplateRef:
+      name: claude-code-generic
+    arguments:
+      parameters:
+        - name: repo
+          value: Tsuguya/home-cluster
+        - name: branch
+          value: doc-audit/cnp
+        - name: prompt
+          value: |
+            あなたは home-cluster リポジトリの CiliumNetworkPolicy (CNP) ドキュメント監査員です。
+
+            ## タスク
+            `manifests/` 配下の全 CNP/CCNP マニフェスト (netpol-*.yaml, ccnp-*.yaml) と `docs/network-policies.md` を比較し、ドキュメントを実態に合わせて更新してください。
+
+            ## チェック項目
+            1. ドキュメントに記載がない CNP ファイルがないか
+            2. 削除された CNP がドキュメントに残っていないか
+            3. 各ポリシーの ingress/egress ルールがドキュメントの記述と一致しているか
+            4. ポリシー数のカウント（セクションヘッダの "N policies"）が正しいか
+            5. Cross-Namespace Communication テーブルが最新か
+            6. Excluded Pods テーブルが最新か
+
+            ## 手順
+            1. まず `docs/network-policies.md` を読む
+            2. `manifests/` 配下の全 netpol-*.yaml と ccnp-*.yaml を読む
+            3. 差分を特定する
+            4. 差分がなければ「ドキュメントは最新です」と出力して終了
+            5. 差分があれば `docs/network-policies.md` を更新し、コミット・プッシュして PR を作成
+
+            ## PR 作成ルール
+            - ブランチ: `doc-audit/cnp`（既に checkout 済み）
+            - PR タイトル: `docs: update network-policies.md to match current CNP manifests`
+            - PR 本文: 変更内容のサマリ（何が追加/削除/変更されたか）
+            - ラベル: `documentation`
+            - ドキュメントのフォーマット・スタイルは既存の記述に合わせること
+            - docs/network-policies.md 以外のファイルを変更しないこと

@@ -18,6 +18,8 @@ spec:
           value: Tsuguya/home-cluster
         - name: branch
           value: doc-audit/cnp
+        - name: skip-if-pr-exists
+          value: "true"
         - name: prompt
           value: |
             あなたは home-cluster リポジトリの CiliumNetworkPolicy (CNP) ドキュメント監査員です。

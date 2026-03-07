@@ -79,7 +79,7 @@ hubble:
       allowList:
         - '{"verdict":["DROPPED"]}'
       denyList:
-        - '{"IP":{"ipVersion":"IPv6"},"l4":{"ICMPv6":{}}}'
+        - '{"ip_version":["IPv6"]}'
       fieldMask:
         - time
         - source

@@ -21,6 +21,12 @@ spec:
           - name: alertname
             value: Watchdog
             matchType: "="
+      - receiver: discord-critical
+        matchers:
+          - name: severity
+            value: critical
+            matchType: "="
+        continue: true
       - receiver: discord
         continue: true
   inhibitRules:
@@ -48,6 +54,12 @@ spec:
       discordConfigs:
         - apiURL:
             name: discord-webhook-alertmanager
+            key: url
+          sendResolved: true
+    - name: discord-critical
+      discordConfigs:
+        - apiURL:
+            name: discord-webhook-alertmanager-critical
             key: url
           sendResolved: true
     - name: discord-low

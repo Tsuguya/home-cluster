@@ -224,6 +224,8 @@ spec:
             memory: 4Gi
 
     - name: notify
-      templateRef:
-        name: discord-notify
-        template: send
+      steps:
+        - - name: send
+            templateRef:
+              name: discord-notify
+              template: send

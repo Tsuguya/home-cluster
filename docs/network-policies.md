@@ -43,6 +43,8 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | oauth2-proxy-hubble (oauth2-proxy) | Kanidm (kanidm) | 8443 | OIDC token exchange |
 | oauth2-proxy-seaweedfs (oauth2-proxy) | SeaweedFS filer (seaweedfs) | 8888 | Reverse proxy upstream |
 | oauth2-proxy-seaweedfs (oauth2-proxy) | Kanidm (kanidm) | 8443 | OIDC token exchange |
+| oauth2-proxy-rss (oauth2-proxy) | rss-ui (rss) | 80 | Reverse proxy upstream |
+| oauth2-proxy-rss (oauth2-proxy) | Kanidm (kanidm) | 8443 | OIDC token exchange |
 | Nextcloud (nextcloud) | shared-pg (database) | 5432 | Database |
 | Nextcloud (nextcloud) | SeaweedFS filer (seaweedfs) | 8333 | S3 object storage |
 | Nextcloud (nextcloud) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
@@ -185,7 +187,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **external-secrets** | kube-apiserver/remote-node → 10250 | kube-apiserver, onepassword-connect:8080 |
 | **onepassword-connect** | external-secrets → 8080; remote-node → 8080/8081 (probes) | *.1password.com:443 |
 
-## kyverno (4 policies)
+## kyverno (5 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
@@ -193,6 +195,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **background-controller** | (none) | kube-apiserver, harbor-nginx (harbor):8080 |
 | **reports-controller** | (none) | kube-apiserver |
 | **cleanup-controller** | kube-apiserver/host/remote-node → 9443 | kube-apiserver |
+| **migrate-resources** (Job) | (none) | kube-apiserver |
 
 ## kanidm (1 policy)
 
@@ -200,12 +203,13 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443; argocd-server (argocd) → 8443; argo-workflows-server (argo) → 8443; oauth2-proxy-hubble (oauth2-proxy) → 8443; oauth2-proxy-seaweedfs (oauth2-proxy) → 8443; nextcloud (nextcloud) → 8443; harbor-core (harbor) → 8443; self → 8444 (replication) | self:8444 (replication), kube-apiserver |
 
-## oauth2-proxy (2 policies)
+## oauth2-proxy (3 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
 | **oauth2-proxy-hubble** | ingress → 4180 (L7 HTTP) | hubble-ui (kube-system):8081, kanidm (kanidm):8443 |
 | **oauth2-proxy-seaweedfs** | ingress → 4180 (L7 HTTP) | seaweedfs-filer (seaweedfs):8888, kanidm (kanidm):8443 |
+| **oauth2-proxy-rss** | ingress → 4180 (L7 HTTP) | rss-ui (rss):80, kanidm (kanidm):8443 |
 
 ## trivy-system (3 policies)
 
@@ -241,11 +245,17 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **nextcloud** | ingress, cloudflared (argocd) → 80 | kube-apiserver, shared-pg (database):5432, seaweedfs-filer (seaweedfs):8333, kanidm (kanidm):8443, valkey:6379 |
 | **valkey** | nextcloud → 6379 | (none) |
 
-## rss (1 policy)
+## rss (7 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **rss-pg** | self → 5432/8000; cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000 |
+| **rss-pg** | self → 5432/8000; rss-server/rss-ui/rss-fetcher/rss-cleaner/rss-migration → 5432; cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000 |
+| **rss-server** | oauth2-proxy-rss (oauth2-proxy) → 80 | rss-pg:5432 |
+| **rss-ui** | oauth2-proxy-rss (oauth2-proxy) → 80 | rss-pg:5432 |
+| **rss-fetcher** | rss-cron → 80 | rss-pg:5432, world:443 |
+| **rss-cleaner** | rss-cron → 80 | rss-pg:5432 |
+| **rss-cron** | (none) | rss-fetcher:80, rss-cleaner:80 |
+| **rss-migration** (Job) | (none) | rss-pg:5432 |
 
 ## spin-operator (1 policy)
 

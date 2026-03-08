@@ -76,14 +76,14 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **server** | ingress, cloudflared → 8080 | kube-apiserver, repo-server:8081, kanidm (kanidm):8443, redis:6379 |
 | **application-controller** | (none) | kube-apiserver, repo-server:8081, redis:6379 |
-| **repo-server** | server, app-controller → 8081 | github.com + ghcr.io + {argoproj,grafana,oauth2-proxy,aquasecurity,cloudnative-pg,kubernetes-sigs,prometheus-community,seaweedfs,stakater}.github.io + *.githubusercontent.com + charts.jetstack.io + helm.cilium.io + helm.goharbor.io + charts.external-secrets.io:443, redis:6379 |
+| **repo-server** | server, app-controller → 8081 | github.com + ghcr.io + {argoproj,grafana,oauth2-proxy,aquasecurity,kyverno,cloudnative-pg,kubernetes-sigs,prometheus-community,seaweedfs,stakater}.github.io + *.githubusercontent.com + charts.jetstack.io + helm.cilium.io + helm.goharbor.io + charts.external-secrets.io + external-secrets.io:443, redis:6379 |
 | **redis** | server, repo-server, app-controller → 6379 | (none) |
 | **applicationset-controller** | (none) | kube-apiserver |
 | **notifications-controller** | (none) | kube-apiserver, discord.com:443 |
 | **redis-secret-init** (Job) | (none) | kube-apiserver |
-| **cloudflared** | (none) | *.v2.argotunnel.com + cftunnel.com:443/7844, server:8080, eventsource (argo):12000, nextcloud (nextcloud):80, harbor-nginx (harbor):8080 |
+| **cloudflared** | (none) | *.v2.argotunnel.com + cftunnel.com + h2.cftunnel.com + quic.cftunnel.com:443/7844, server:8080, eventsource (argo):12000, kanidm (kanidm):8443, nextcloud (nextcloud):80, harbor-nginx (harbor):8080 |
 
-## argo (10 policies)
+## argo (11 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
@@ -93,10 +93,10 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **events-controller** | (none) | kube-apiserver, eventbus:8222 |
 | **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
-| **workflow-pods** (backup-workflow, pxe-sync, kanidm-repl-exchange, kanidm-backup除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
-| **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver, *.r2.cloudflarestorage.com + github.com + *.githubusercontent.com + dl.min.io :443, CP nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
+| **workflow-pods** (backup-workflow, pxe-sync, talos-build, kanidm-repl-exchange, kanidm-backup除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
+| **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver:6443/50000 (Talos apid), *.r2.cloudflarestorage.com:443, seaweedfs-filer (seaweedfs):8333 |
 | **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + api.github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.0.241):2049 (NFS) |
-| **kanidm-backup** (kanidm-backup=true) | (deny world) | kube-apiserver, *.r2.cloudflarestorage.com + dl.k8s.io + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333 |
+| **kanidm-backup** (kanidm-backup=true) | (deny world) | kube-apiserver, *.r2.cloudflarestorage.com:443, seaweedfs-filer (seaweedfs):8333 |
 | **kanidm-repl-exchange** (kanidm-repl-exchange=true) | (deny world) | kube-apiserver, seaweedfs-filer (seaweedfs):8333 |
 
 ## monitoring (11 policies)
@@ -125,7 +125,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **claude-code** (claude-code=true) | (deny world) | kube-apiserver, api.anthropic.com + github.com + api.github.com + *.githubusercontent.com + index.crates.io + static.crates.io + discord.com :443, seaweedfs-filer (seaweedfs):8333 |
+| **claude-code** (claude-code=true) | (deny world) | kube-apiserver, api.anthropic.com + github.com + api.github.com + *.githubusercontent.com + index.crates.io + static.crates.io + registry.npmjs.org + discord.com + gitmcp.io :443, seaweedfs-filer (seaweedfs):8333 |
 
 ## image-build (1 policy)
 
@@ -201,7 +201,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **kanidm** | ingress → 8443 (TLS Passthrough); grafana (monitoring) → 8443; argocd-server (argocd) → 8443; argo-workflows-server (argo) → 8443; oauth2-proxy-hubble (oauth2-proxy) → 8443; oauth2-proxy-seaweedfs (oauth2-proxy) → 8443; nextcloud (nextcloud) → 8443; harbor-core (harbor) → 8443; self → 8444 (replication) | self:8444 (replication), kube-apiserver |
+| **kanidm** | ingress → 8443 (TLS Passthrough); cloudflared (argocd) → 8443; grafana (monitoring) → 8443; argocd-server (argocd) → 8443; argo-workflows-server (argo) → 8443; oauth2-proxy-hubble (oauth2-proxy) → 8443; oauth2-proxy-seaweedfs (oauth2-proxy) → 8443; oauth2-proxy-rss (oauth2-proxy) → 8443; nextcloud (nextcloud) → 8443; harbor-core (harbor) → 8443; self → 8444 (replication) | self:8444 (replication), kube-apiserver |
 
 ## oauth2-proxy (3 policies)
 

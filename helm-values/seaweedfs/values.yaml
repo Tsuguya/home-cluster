@@ -95,9 +95,7 @@ volume:
 filer:
   replicas: 1
   data:
-    type: "persistentVolumeClaim"
-    size: "5Gi"
-    storageClass: "qnap-iscsi"
+    type: "emptyDir"
   logs:
     type: "emptyDir"
   resources:

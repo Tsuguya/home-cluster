@@ -1,5 +1,5 @@
 nfs:
-  server: 192.168.0.241
+  server: 192.168.0.240
   path: /kubernetes-nfs
   mountOptions:
     - nfsvers=4.1

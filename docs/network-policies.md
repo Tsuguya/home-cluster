@@ -36,6 +36,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | PXE sync pods (argo) | SeaweedFS filer (seaweedfs) | 8333 | Artifact/log storage |
 | Argo Workflows server (argo) | SeaweedFS filer (seaweedfs) | 8333 | Archived log retrieval |
 | Prometheus (monitoring) | Trivy Operator (trivy-system) | 8080 | Metrics scrape |
+| Prometheus (monitoring) | Harbor (harbor) | 8001 | Metrics scrape |
 | Grafana (monitoring) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | ArgoCD server (argocd) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | Argo Workflows server (argo) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
@@ -75,7 +76,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Component | Ingress | Egress |
 |---|---|---|
 | **server** | ingress, cloudflared → 8080 | kube-apiserver, repo-server:8081, kanidm (kanidm):8443, redis:6379 |
-| **application-controller** | (none) | kube-apiserver, repo-server:8081, redis:6379 |
+| **application-controller** | host → 8082 | kube-apiserver, repo-server:8081, redis:6379 |
 | **repo-server** | server, app-controller → 8081 | github.com + ghcr.io + {argoproj,grafana,oauth2-proxy,aquasecurity,kyverno,cloudnative-pg,kubernetes-sigs,prometheus-community,seaweedfs,stakater}.github.io + *.githubusercontent.com + charts.jetstack.io + helm.cilium.io + helm.goharbor.io + charts.external-secrets.io + external-secrets.io:443, redis:6379 |
 | **redis** | server, repo-server, app-controller → 6379 | (none) |
 | **applicationset-controller** | (none) | kube-apiserver |
@@ -91,9 +92,9 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **workflows-controller** | (none) | kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
 | **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
-| **events-controller** | (none) | kube-apiserver, eventbus:8222 |
+| **events-controller** | host → 8081 | kube-apiserver, eventbus:8222 |
 | **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
-| **workflow-pods** (backup-workflow, pxe-sync, talos-build, kanidm-repl-exchange, kanidm-backup除外) | (none) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
+| **workflow-pods** (backup-workflow, pxe-sync, talos-build, kanidm-repl-exchange, kanidm-backup除外) | (deny world) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
 | **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver:6443/50000 (Talos apid), *.r2.cloudflarestorage.com:443, seaweedfs-filer (seaweedfs):8333 |
 | **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + api.github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.0.241):2049 (NFS) |
 | **kanidm-backup** (kanidm-backup=true) | (deny world) | kube-apiserver, *.r2.cloudflarestorage.com:443, seaweedfs-filer (seaweedfs):8333 |
@@ -110,8 +111,8 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | kube-apiserver |
 | **loki** | loki-gateway, loki-canary → 3100 | kube-apiserver, seaweedfs-filer (seaweedfs):8333, self:7946 (memberlist) |
 | **loki-gateway** | grafana, alloy, loki-canary → 8080 | loki:3100 |
-| **loki-canary** | (none) | loki-gateway:8080, loki:3100 |
-| **alloy** | (none) | kube-apiserver, loki-gateway:8080 |
+| **loki-canary** | host → 3500 | loki-gateway:8080, loki:3100 |
+| **alloy** | host → 12345 | kube-apiserver, loki-gateway:8080 |
 | **tempo** | grafana, prometheus → 3200 | seaweedfs-filer (seaweedfs):8333, prometheus:9090 (metrics remote_write) |
 | **prometheus-admission** (Job) | (none) | kube-apiserver |
 

@@ -29,6 +29,8 @@ spec:
         - "CREATE DATABASE grafana OWNER grafana;"
         - "CREATE DATABASE argo OWNER argo;"
         - "CREATE DATABASE nextcloud OWNER nextcloud;"
+        - "CREATE ROLE seaweedfs LOGIN;"
+        - "CREATE DATABASE seaweedfs OWNER seaweedfs;"
   backup:
     barmanObjectStore:
       destinationPath: s3://home-cluster-backup/cnpg/
@@ -68,3 +70,10 @@ spec:
         login: true
         passwordSecret:
           name: nextcloud-pg-credentials
+      - name: seaweedfs
+        ensure: present
+        connectionLimit: -1
+        inherit: true
+        login: true
+        passwordSecret:
+          name: seaweedfs-pg-credentials

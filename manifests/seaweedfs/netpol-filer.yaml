@@ -108,3 +108,11 @@ spec:
               protocol: TCP
             - port: "18888"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP

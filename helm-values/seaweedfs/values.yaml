@@ -127,6 +127,15 @@ filer:
     capabilities:
       drop:
         - ALL
+  secretExtraEnvironmentVars:
+    WEED_POSTGRES2_USERNAME:
+      secretKeyRef:
+        name: seaweedfs-pg-credentials
+        key: username
+    WEED_POSTGRES2_PASSWORD:
+      secretKeyRef:
+        name: seaweedfs-pg-credentials
+        key: password
   s3:
     enabled: true
     port: 8333
@@ -139,15 +148,30 @@ filer:
       - name: nextcloud
       - name: harbor
   extraEnvironmentVars:
-    WEED_LEVELDB2_ENABLED: "true"
+    WEED_LEVELDB2_ENABLED: "false"
+    WEED_POSTGRES2_ENABLED: "true"
+    WEED_POSTGRES2_HOSTNAME: "shared-pg-rw.database"
+    WEED_POSTGRES2_PORT: "5432"
+    WEED_POSTGRES2_DATABASE: "seaweedfs"
+    WEED_POSTGRES2_SSLMODE: "verify-full"
+    WEED_POSTGRES2_SSLROOTCERT: "/etc/ssl/certs/pg-ca.crt"
+    WEED_POSTGRES2_CONNECTION_MAX_IDLE: "5"
+    WEED_POSTGRES2_CONNECTION_MAX_OPEN: "10"
     WEED_FILER_OPTIONS_RECURSIVE_DELETE: "false"
     WEED_FILER_BUCKETS_FOLDER: "/buckets"
   extraVolumes: |
     - name: tmp
       emptyDir: {}
+    - name: pg-ca-cert
+      secret:
+        secretName: pg-ca-cert
   extraVolumeMounts: |
     - name: tmp
       mountPath: /tmp
+    - name: pg-ca-cert
+      mountPath: /etc/ssl/certs/pg-ca.crt
+      subPath: ca.crt
+      readOnly: true
 
 s3:
   enabled: false

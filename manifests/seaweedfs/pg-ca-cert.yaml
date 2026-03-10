@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: pg-ca-cert
+  namespace: seaweedfs
+spec:
+  secretName: pg-ca-cert
+  commonName: pg-ca-seaweedfs
+  duration: 8760h
+  renewBefore: 720h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: pg-ca-issuer
+    kind: ClusterIssuer

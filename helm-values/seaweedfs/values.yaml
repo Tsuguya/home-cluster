@@ -150,6 +150,7 @@ filer:
   extraEnvironmentVars:
     WEED_LEVELDB2_ENABLED: "false"
     WEED_POSTGRES2_ENABLED: "true"
+    WEED_POSTGRES2_CREATETABLE: 'CREATE TABLE IF NOT EXISTS "%s" (dirhash BIGINT, name VARCHAR(65535), directory VARCHAR(65535), meta bytea, PRIMARY KEY (dirhash, name));'
     WEED_POSTGRES2_HOSTNAME: "shared-pg-rw.database"
     WEED_POSTGRES2_PORT: "5432"
     WEED_POSTGRES2_DATABASE: "seaweedfs"
@@ -157,6 +158,8 @@ filer:
     WEED_POSTGRES2_SSLROOTCERT: "/etc/ssl/certs/pg-ca.crt"
     WEED_POSTGRES2_CONNECTION_MAX_IDLE: "5"
     WEED_POSTGRES2_CONNECTION_MAX_OPEN: "10"
+    WEED_POSTGRES2_ENABLEUPSERT: "true"
+    WEED_POSTGRES2_UPSERTQUERY: 'INSERT INTO "%[1]s" (dirhash, name, directory, meta) VALUES($1, $2, $3, $4) ON CONFLICT (dirhash, name) DO UPDATE SET directory=EXCLUDED.directory, meta=EXCLUDED.meta'
     WEED_FILER_OPTIONS_RECURSIVE_DELETE: "false"
     WEED_FILER_BUCKETS_FOLDER: "/buckets"
   extraVolumes: |

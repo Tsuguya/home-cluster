@@ -68,6 +68,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: kyverno
       app.kubernetes.io/component: background-controller
+  ingress: []
   egress:
     - toEntities:
         - kube-apiserver
@@ -95,6 +96,7 @@ spec:
     matchLabels:
       app.kubernetes.io/instance: kyverno
       app.kubernetes.io/component: reports-controller
+  ingress: []
   egress:
     - toEntities:
         - kube-apiserver

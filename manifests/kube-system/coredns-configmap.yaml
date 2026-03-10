@@ -21,6 +21,7 @@ data:
             192.168.0.191  argocd.infra.tgy.io
             192.168.0.190  nc.tgy.io
             192.168.0.190  reader.tgy.io
+            10.107.133.63  registry.infra.tgy.io
             fallthrough
         }
 

@@ -62,5 +62,5 @@ spec:
             io.kubernetes.pod.namespace: harbor
       toPorts:
         - ports:
-            - port: "8080"
+            - port: "8443"
               protocol: TCP

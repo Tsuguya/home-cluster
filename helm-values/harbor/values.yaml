@@ -1,9 +1,13 @@
 expose:
   type: clusterIP
   tls:
-    enabled: false
+    enabled: true
+    certSource: secret
+    secret:
+      secretName: harbor-tls
   clusterIP:
     name: harbor
+    staticClusterIP: "10.107.133.63"
 
 externalURL: https://registry.infra.tgy.io
 

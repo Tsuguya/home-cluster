@@ -10,10 +10,17 @@ spec:
       component: nginx
   ingress:
     - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP
+    - fromEntities:
         - ingress
       toPorts:
         - ports:
-            - port: "8080"
+            - port: "8443"
               protocol: TCP
     - fromEndpoints:
         - matchLabels:
@@ -22,9 +29,15 @@ spec:
         - matchLabels:
             image-build: "true"
             io.kubernetes.pod.namespace: image-build
+        - matchLabels:
+            app.kubernetes.io/component: admission-controller
+            io.kubernetes.pod.namespace: kyverno
+        - matchLabels:
+            app.kubernetes.io/component: background-controller
+            io.kubernetes.pod.namespace: kyverno
       toPorts:
         - ports:
-            - port: "8080"
+            - port: "8443"
               protocol: TCP
     - fromEndpoints:
         - matchLabels:

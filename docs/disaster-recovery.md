@@ -184,3 +184,120 @@ talosctl -n 192.168.0.230 health \
 - `talosctl bootstrap --recover-from` は**クラスタが完全に壊れた場合**のみ使う
 - 既存 etcd が動いている状態では実行しない
 - リカバリ後、ArgoCD が全リソースを再 sync するため一時的に Pod の再起動が発生する
+
+## NAS IP 変更時の iSCSI 復旧
+
+NAS の IP が変わった場合（VLAN 移行、NAS 買い替え等）、Trident backend の Secret 更新だけでは不十分。旧 IP が 3 箇所に残る。
+
+### 前提
+
+- 1Password の `qnap-backend-secret` の `storageAddress` を新 IP に更新済み
+- ESO が Secret を同期済み（`kubectl annotate es qnap-backend-secret -n trident force-sync=$(date +%s) --overwrite`）
+- 新 IP で QNAP の iSCSI サービスに到達可能
+
+### 手順
+
+#### 1. Trident controller 再起動
+
+```bash
+kubectl rollout restart deployment trident-controller -n trident
+```
+
+#### 2. ワーカーノード再起動（ゴースト iSCSI デバイス除去）
+
+旧 IP のデバイスが transport-offline で残り、multipath エラーの原因になる。
+
+```bash
+# 確認
+for node in 192.168.0.200 192.168.0.201 192.168.0.202; do
+  echo "=== $node ==="
+  talosctl -n $node read /proc/partitions | grep "^   8" | while read maj min blocks name; do
+    state=$(talosctl -n $node read /sys/block/$name/device/state 2>/dev/null)
+    echo "  $name: $state"
+  done
+done
+
+# transport-offline があるノードを再起動
+talosctl -n <IP> reboot
+```
+
+#### 3. VolumeAttachment の旧 IP をクリア
+
+VolumeAttachment の `attachmentMetadata.p2` に旧 IP が残っている場合、VA を削除して再 publish させる。
+
+```bash
+# 旧 IP が残っている VA を特定
+kubectl get volumeattachments -o json | python3 -c "
+import json,sys
+d = json.load(sys.stdin)
+for item in d['items']:
+    pv = item['spec']['source'].get('persistentVolumeName','')
+    ctx = item.get('status',{}).get('attachmentMetadata',{})
+    if ctx.get('p2') == '<旧IP>':
+        print(item['metadata']['name'], pv)"
+
+# 該当 VA を削除（Pod も再作成が必要）
+kubectl delete volumeattachment <name>
+```
+
+#### 4. iscsiadm ノードデータベースの旧エントリ削除
+
+各ワーカーの trident-node Pod 経由で旧ポータルエントリを削除。
+
+```bash
+for node in wn-01 wn-02 wn-03; do
+  TPOD=$(kubectl get pods -n trident -l app=node.csi.trident.qnap.io \
+    --field-selector spec.nodeName=$node -o jsonpath='{.items[0].metadata.name}')
+  for iqn in $(kubectl exec -n trident $TPOD -c trident-main -- \
+    iscsiadm -m node 2>/dev/null | grep "<旧IP>" | awk '{print $2}'); do
+    kubectl exec -n trident $TPOD -c trident-main -- \
+      iscsiadm -m node -T "$iqn" -p "<旧IP>:3260" --op=delete
+  done
+done
+```
+
+#### 5. Trident トラッキングファイル更新
+
+`/var/lib/trident/tracking/*.json` の `iscsiPortals` に旧 IP が残っている場合、書き換える。
+
+```bash
+for node in 192.168.0.200 192.168.0.201 192.168.0.202; do
+  for f in $(talosctl -n $node ls /var/lib/trident/tracking/ | grep json | awk '{print $2}'); do
+    talosctl -n $node read /var/lib/trident/tracking/$f | grep -q '<旧IP>' && echo "$node: $f"
+  done
+done
+
+# trident-node Pod 経由で書き換え
+kubectl exec -n trident <trident-node-pod> -c trident-main -- \
+  busybox sed -i 's/<旧IP>/<新IP>/g' /host/var/lib/trident/tracking/<pvc>.json
+```
+
+#### 6. trident-node 再起動 + Pod 再作成
+
+```bash
+kubectl rollout restart daemonset trident-node-linux -n trident
+# 各 Pod を削除して再マウントさせる
+```
+
+#### 7. NFS PV の再作成
+
+NFS PV の `spec.nfs.server` は immutable。PV + PVC を削除して ArgoCD に再作成させる。
+
+```bash
+kubectl delete pv <nfs-pv-name>
+kubectl patch pv <nfs-pv-name> -p '{"metadata":{"finalizers":null}}'  # stuck の場合
+# ArgoCD selfHeal が新 IP で再作成
+```
+
+### 影響を受けるリソース
+
+| リソース | 旧 IP の参照箇所 |
+|----------|----------------|
+| Secret `qnap-backend-secret` | storageAddress (1Password → ESO) |
+| VolumeAttachment | attachmentMetadata.p2 |
+| Trident tracking JSON | iscsiPortals 配列 |
+| iscsiadm node DB | portal エントリ |
+| NFS PV | spec.nfs.server (immutable) |
+| CNP (各 namespace) | toCIDR の NAS IP |
+| home-infra pxe/ | dnsmasq.conf, boot.ipxe |
+| home-cloudflare dns.tf | nas.tgy.io A レコード |

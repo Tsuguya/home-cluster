@@ -36,7 +36,7 @@ spec:
             - port: "8333"
               protocol: TCP
     - toCIDR:
-        - 192.168.0.240/32
+        - 192.168.5.240/32
       toPorts:
         - ports:
             - port: "2049"

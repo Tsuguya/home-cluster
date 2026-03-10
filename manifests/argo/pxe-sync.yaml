@@ -38,7 +38,7 @@ spec:
   volumes:
     - name: pxe
       nfs:
-        server: 192.168.0.240
+        server: 192.168.5.240
         path: /Container/pxe
   templates:
     - name: main

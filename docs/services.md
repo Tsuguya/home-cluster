@@ -38,6 +38,7 @@ ArgoCD のみ TLS Passthrough（専用 argocd-gateway、ArgoCD 自身が TLS 終
 | argo | argo | Argo Workflows |
 | nextcloud | nextcloud | Nextcloud |
 | harbor | harbor | Harbor |
+| seaweedfs | seaweedfs | SeaweedFS filer (メタデータストア) |
 
 クレデンシャルはサービスごとに 1Password → ExternalSecret (ESO) で各 namespace にデプロイ。
 
@@ -48,3 +49,4 @@ ArgoCD のみ TLS Passthrough（専用 argocd-gateway、ArgoCD 自身が TLS 終
 | Argo PostgreSQL | argo | argo-pg-credentials | database, argo |
 | Nextcloud PostgreSQL | nextcloud | nextcloud-pg-credentials | database, nextcloud |
 | Harbor PostgreSQL | harbor | harbor-pg-credentials | database, harbor |
+| seaweedfs-pg-credentials | seaweedfs | seaweedfs-pg-credentials | database, seaweedfs |

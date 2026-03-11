@@ -5,7 +5,7 @@ ArgoCD (GitOps) 管理外で、手動実行が必要な手順をまとめる。
 
 ## 前提条件
 
-- Talos Linux ノードが起動済み（VIP: 192.168.0.229）
+- Talos Linux ノードが起動済み（VIP: 192.168.10.229）
 - `talosctl` / `kubectl` が VIP に接続可能
 - 1Password vault `home-cluster` に構築前アイテムが作成済み（[1Password Items](#1password-items) 参照）
 

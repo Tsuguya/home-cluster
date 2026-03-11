@@ -19,16 +19,16 @@ data:
         rewrite name registry.infra.tgy.io harbor.harbor.svc.cluster.local
 
         hosts {
-            192.168.0.192  idm.tgy.io
-            192.168.0.191  argocd.infra.tgy.io
-            192.168.0.190  nc.tgy.io
-            192.168.0.190  reader.tgy.io
+            192.168.10.192  idm.tgy.io
+            192.168.10.191  argocd.infra.tgy.io
+            192.168.10.190  nc.tgy.io
+            192.168.10.190  reader.tgy.io
             fallthrough
         }
 
         template IN A infra.tgy.io {
             match ".*\.infra\.tgy\.io\.$"
-            answer "{{ .Name }} 60 IN A 192.168.0.190"
+            answer "{{ .Name }} 60 IN A 192.168.10.190"
             fallthrough
         }
 

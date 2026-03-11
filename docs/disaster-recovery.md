@@ -161,22 +161,22 @@ mc cp r2/home-cluster-backup/etcd/<TIMESTAMP>.db /tmp/etcd-snapshot.db
 
 ```bash
 # 全 CP に対して etcd を停止・ワイプ
-talosctl -n 192.168.0.230,192.168.0.231,192.168.0.232 reset \
+talosctl -n 192.168.10.230,192.168.10.231,192.168.10.232 reset \
   --graceful=false --reboot --system-labels-to-wipe=EPHEMERAL
 ```
 
 3. 1台目の CP でスナップショットからブートストラップ:
 
 ```bash
-talosctl bootstrap --recover-from=/tmp/etcd-snapshot.db -n 192.168.0.230
+talosctl bootstrap --recover-from=/tmp/etcd-snapshot.db -n 192.168.10.230
 ```
 
 4. 残りの CP が自動的に etcd クラスタに join するのを待つ:
 
 ```bash
-talosctl -n 192.168.0.230 health \
-  --control-plane-nodes 192.168.0.230,192.168.0.231,192.168.0.232 \
-  --worker-nodes 192.168.0.200,192.168.0.201,192.168.0.202
+talosctl -n 192.168.10.230 health \
+  --control-plane-nodes 192.168.10.230,192.168.10.231,192.168.10.232 \
+  --worker-nodes 192.168.10.200,192.168.10.201,192.168.10.202
 ```
 
 ### 注意
@@ -209,7 +209,7 @@ kubectl rollout restart deployment trident-controller -n trident
 
 ```bash
 # 確認
-for node in 192.168.0.200 192.168.0.201 192.168.0.202; do
+for node in 192.168.10.200 192.168.10.201 192.168.10.202; do
   echo "=== $node ==="
   talosctl -n $node read /proc/partitions | grep "^   8" | while read maj min blocks name; do
     state=$(talosctl -n $node read /sys/block/$name/device/state 2>/dev/null)
@@ -261,7 +261,7 @@ done
 `/var/lib/trident/tracking/*.json` の `iscsiPortals` に旧 IP が残っている場合、書き換える。
 
 ```bash
-for node in 192.168.0.200 192.168.0.201 192.168.0.202; do
+for node in 192.168.10.200 192.168.10.201 192.168.10.202; do
   for f in $(talosctl -n $node ls /var/lib/trident/tracking/ | grep json | awk '{print $2}'); do
     talosctl -n $node read /var/lib/trident/tracking/$f | grep -q '<旧IP>' && echo "$node: $f"
   done

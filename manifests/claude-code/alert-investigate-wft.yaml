@@ -1,0 +1,166 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: alert-investigate
+  namespace: claude-code
+spec:
+  activeDeadlineSeconds: 1800
+  serviceAccountName: claude-code-sre
+  entrypoint: main
+  onExit: notify
+  arguments:
+    parameters:
+      - name: alerts
+  podMetadata:
+    labels:
+      claude-code: "true"
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+    - name: report
+      emptyDir: {}
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - wn-03
+  templates:
+    - name: main
+      steps:
+        - - name: investigate
+            template: investigate
+
+    - name: investigate
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      container:
+        image: registry.infra.tgy.io/tools/claude-code:latest
+        command: [sh, -c]
+        args:
+          - |
+            ALERTS_JSON='{{workflow.parameters.alerts}}'
+            CRITICAL=$(echo "$ALERTS_JSON" | jq -c '[.alerts[] | select(.status == "firing" and .labels.severity == "critical")]')
+
+            claude -p \
+              --allowedTools "Bash(readonly=true),Read,Grep,Glob" \
+              --max-turns 30 \
+              "あなたは Kubernetes クラスタの SRE エージェントです。以下の critical アラートが発火しました。根本原因を調査し、修正案を提示してください。
+
+            調査に使えるツール:
+            - kubectl（読み取り専用）
+            - hubble observe（kubectl exec -n kube-system <cilium-pod> -- hubble observe）
+            - logcli（Loki: http://loki-gateway.monitoring:80）
+            - helm
+
+            クラスタ情報:
+            - CNI: Cilium（全 Pod にデフォルト deny の CiliumNetworkPolicy 適用）
+            - GitOps: ArgoCD（home-cluster リポジトリ、selfHeal: true）
+            - Observability: Prometheus + Loki + Hubble
+            - ノード: cp-01/02/03 (control plane), wn-01/02/03 (worker)
+
+            アラート JSON:
+            ${CRITICAL}
+
+            調査手順:
+            1. アラート内容を分析（alertname, namespace, pod, description）
+            2. 該当 Pod/Service の状態を確認（kubectl describe, logs, events）
+            3. ネットワーク関連なら Hubble で DROPPED フローを確認
+            4. Loki でアプリケーションログを確認
+            5. 根本原因を特定し、修正手順を提示
+
+            最終的に以下のフォーマットで報告:
+            ## アラート概要
+            ## 調査結果
+            ## 根本原因
+            ## 修正手順" | tee /report/result.txt
+        env:
+          - name: HOME
+            value: /tmp
+          - name: CLAUDE_CODE_OAUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: claude-code-token
+                key: credential
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: report
+            mountPath: /report
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 4Gi
+
+    - name: notify
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+      container:
+        image: registry.infra.tgy.io/tools/argo-tools:latest
+        command: [sh, -c]
+        args:
+          - |
+            STATUS="{{workflow.status}}"
+            WF_NAME="{{workflow.name}}"
+            NS="{{workflow.namespace}}"
+            URL="https://argo.infra.tgy.io/workflows/${NS}/${WF_NAME}"
+            TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+
+            if [ "$STATUS" = "Succeeded" ]; then
+              COLOR=65280
+            else
+              COLOR=16711680
+            fi
+
+            REPORT=""
+            if [ -f /report/result.txt ]; then
+              REPORT=$(head -c 3800 /report/result.txt)
+            fi
+
+            if [ -z "$REPORT" ]; then
+              REPORT="調査結果を取得できませんでした。Argo UI でログを確認してください。"
+            fi
+
+            PAYLOAD=$(jq -n \
+              --arg title "Alert Investigation ${STATUS}: ${WF_NAME}" \
+              --arg url "$URL" \
+              --argjson color "$COLOR" \
+              --arg report "$REPORT" \
+              --arg ts "$TIMESTAMP" \
+              '{embeds: [{title: $title, url: $url, color: $color, description: $report, timestamp: $ts}]}')
+
+            wget -qO /dev/null --header="Content-Type: application/json" \
+              --post-data="$PAYLOAD" "$DISCORD_WEBHOOK_URL"
+        env:
+          - name: DISCORD_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+                name: discord-webhook-argo
+                key: url
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: report
+            mountPath: /report
+            readOnly: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 128Mi

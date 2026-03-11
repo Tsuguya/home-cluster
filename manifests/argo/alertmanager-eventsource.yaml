@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: alertmanager-webhook
+  namespace: argo
+spec:
+  template:
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    container:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+  service:
+    ports:
+      - port: 12001
+        targetPort: 12001
+  webhook:
+    alertmanager:
+      endpoint: /alertmanager
+      port: "12001"
+      method: POST

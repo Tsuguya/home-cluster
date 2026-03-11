@@ -1,0 +1,32 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: alertmanager-eventsource
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      eventsource-name: alertmanager-webhook
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: alertmanager
+            io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "12001"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            eventbus-name: default
+      toPorts:
+        - ports:
+            - port: "4222"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP

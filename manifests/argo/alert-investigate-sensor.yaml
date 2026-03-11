@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: alert-investigate
+  namespace: argo
+spec:
+  template:
+    serviceAccountName: workflow-executor
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    container:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+  dependencies:
+    - name: critical-alert
+      eventSourceName: alertmanager-webhook
+      eventName: alertmanager
+      filters:
+        script: |-
+          if event.body == nil or event.body.alerts == nil then
+            return false
+          end
+          for _, alert in ipairs(event.body.alerts) do
+            if alert.status == "firing" and alert.labels and alert.labels.severity == "critical" then
+              return true
+            end
+          end
+          return false
+  triggers:
+    - template:
+        name: investigate
+        conditions: "critical-alert"
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: alert-investigate-
+                namespace: claude-code
+              spec:
+                workflowTemplateRef:
+                  name: alert-investigate
+                arguments:
+                  parameters:
+                    - name: alerts
+                      value: ""
+          parameters:
+            - src:
+                dependencyName: critical-alert
+                dataTemplate: "{{ .Input.body | toJson }}"
+              dest: spec.arguments.parameters.0.value

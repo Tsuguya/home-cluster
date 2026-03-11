@@ -21,6 +21,12 @@ spec:
           - name: alertname
             value: Watchdog
             matchType: "="
+      - receiver: alert-investigate
+        matchers:
+          - name: severity
+            value: critical
+            matchType: "="
+        continue: true
       - receiver: discord-critical
         matchers:
           - name: severity
@@ -68,3 +74,7 @@ spec:
             name: discord-webhook-alertmanager-low
             key: url
           sendResolved: true
+    - name: alert-investigate
+      webhookConfigs:
+        - url: http://alertmanager-webhook-eventsource-svc.argo:12001/alertmanager
+          sendResolved: false

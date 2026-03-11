@@ -25,3 +25,11 @@ spec:
         - ports:
             - port: "443"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            eventsource-name: alertmanager-webhook
+            io.kubernetes.pod.namespace: argo
+      toPorts:
+        - ports:
+            - port: "12001"
+              protocol: TCP

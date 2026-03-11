@@ -95,6 +95,10 @@ read:
 write:
   replicas: 0
 
+memberlist:
+  service:
+    publishNotReadyAddresses: true
+
 chunksCache:
   enabled: false
 resultsCache:

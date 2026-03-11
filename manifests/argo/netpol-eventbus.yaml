@@ -12,6 +12,8 @@ spec:
         - matchLabels:
             eventsource-name: github-webhook
         - matchLabels:
+            eventsource-name: alertmanager-webhook
+        - matchLabels:
             sensor-name: tofu-cloudflare
         - matchLabels:
             sensor-name: upgrade-k8s
@@ -21,6 +23,8 @@ spec:
             sensor-name: talos-build
         - matchLabels:
             sensor-name: images-build
+        - matchLabels:
+            sensor-name: alert-investigate
       toPorts:
         - ports:
             - port: "4222"

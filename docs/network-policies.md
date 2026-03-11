@@ -218,7 +218,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Component | Ingress | Egress |
 |---|---|---|
 | **trivy-operator** | prometheus (monitoring) → 8080; host → 9090 (probes) | kube-apiserver, mirror.gcr.io + registry-1.docker.io + auth.docker.io + production.cloudflare.docker.com + ghcr.io + registry.k8s.io + *.pkg.dev + quay.io + *.quay.io + public.ecr.aws :443 |
-| **scan-jobs** (managed-by: trivy-operator) | deny world | 0.0.0.0/0:443 — registry CDN backends (S3, R2, CloudFront, etc.) are too numerous and dynamic for toFQDNs. Ephemeral pods, HTTPS only |
+| **scan-jobs** (managed-by: trivy-operator) | deny world | 0.0.0.0/0:443 — registry CDN backends (S3, R2, CloudFront, etc.) are too numerous and dynamic for toFQDNs. Ephemeral pods, HTTPS only; harbor-nginx (harbor):8443 |
 | **node-collector** (app: node-collector) | deny world | kube-apiserver |
 
 ## nfs-provisioner (1 policy)
@@ -231,7 +231,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **nginx** | ingress, cloudflared (argocd), image-build (image-build) → 8080; prometheus (monitoring) → 8001 | core:8080, portal:8080 |
+| **nginx** | ingress, cloudflared (argocd), image-build (image-build), host/remote-node, kyverno (admission/background-controller), scan-jobs (trivy-system) → 8443; prometheus (monitoring) → 8001 | core:8080, portal:8080 |
 | **core** | nginx, jobservice, exporter → 8080; prometheus (monitoring) → 8001 | shared-pg (database):5432, redis:6379, registry:5000/8080, portal:8080, jobservice:8080, trivy:8080, kanidm (kanidm):8443, kube-apiserver |
 | **portal** | nginx, core → 8080 | (none) |
 | **registry** | core, jobservice → 5000/8080; prometheus (monitoring) → 8001 | seaweedfs-filer (seaweedfs):8333, redis:6379 |

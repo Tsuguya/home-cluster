@@ -17,3 +17,12 @@ spec:
         - ports:
             - port: "443"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: nginx
+            io.kubernetes.pod.namespace: harbor
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP

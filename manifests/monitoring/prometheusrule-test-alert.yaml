@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: test-cnp-alert
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: test-cnp-alert
+      rules:
+        - alert: TestCNPBroken
+          expr: |
+            kube_pod_status_ready{namespace="oauth2-proxy", pod=~"oauth2-proxy-hubble.*", condition="true"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "oauth2-proxy-hubble pod is not ready"
+            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been not ready for more than 1 minute."

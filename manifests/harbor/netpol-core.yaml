@@ -19,6 +19,9 @@ spec:
         - matchLabels:
             app: harbor
             component: exporter
+        - matchLabels:
+            app: harbor
+            component: trivy
       toPorts:
         - ports:
             - port: "8080"

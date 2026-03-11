@@ -32,6 +32,14 @@ spec:
     - toEndpoints:
         - matchLabels:
             app: harbor
+            component: core
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
             component: redis
       toPorts:
         - ports:

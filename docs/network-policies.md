@@ -50,8 +50,10 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Nextcloud (nextcloud) | SeaweedFS filer (seaweedfs) | 8333 | S3 object storage |
 | Nextcloud (nextcloud) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | Cloudflared (argocd) | Nextcloud (nextcloud) | 80 | Cloudflare Tunnel → Nextcloud |
-| Cloudflared (argocd) | Harbor nginx (harbor) | 8080 | Cloudflare Tunnel → Harbor |
-| Workflow pods (image-build) | Harbor nginx (harbor) | 8080 | Internal image push |
+| Cloudflared (argocd) | Harbor nginx (harbor) | 8443 | Cloudflare Tunnel → Harbor |
+| Workflow pods (image-build) | Harbor nginx (harbor) | 8443 | Internal image push |
+| Kyverno admission-controller (kyverno) | Harbor nginx (harbor) | 8443 | Image signature verification |
+| Kyverno background-controller (kyverno) | Harbor nginx (harbor) | 8443 | Image signature verification |
 | SeaweedFS filer (seaweedfs) | shared-pg (database) | 5432 | Filer metadata (postgres2) |
 | Harbor core (harbor) | shared-pg (database) | 5432 | Harbor database |
 | Harbor exporter (harbor) | shared-pg (database) | 5432 | Metrics collection |
@@ -83,7 +85,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **applicationset-controller** | (none) | kube-apiserver |
 | **notifications-controller** | (none) | kube-apiserver, discord.com:443 |
 | **redis-secret-init** (Job) | (none) | kube-apiserver |
-| **cloudflared** | (none) | *.v2.argotunnel.com + cftunnel.com + h2.cftunnel.com + quic.cftunnel.com:443/7844, server:8080, eventsource (argo):12000, kanidm (kanidm):8443, nextcloud (nextcloud):80, harbor-nginx (harbor):8080 |
+| **cloudflared** | (none) | *.v2.argotunnel.com + cftunnel.com + h2.cftunnel.com + quic.cftunnel.com:443/7844, server:8080, eventsource (argo):12000, kanidm (kanidm):8443, nextcloud (nextcloud):80, harbor-nginx (harbor):8443 |
 
 ## argo (11 policies)
 
@@ -133,7 +135,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **image-build** (image-build=true) | (deny world) | kube-apiserver, 0.0.0.0/0:443, harbor-nginx (harbor):8080 (internal push), seaweedfs-filer (seaweedfs):8333 |
+| **image-build** (image-build=true) | (deny world) | kube-apiserver, 0.0.0.0/0:443, harbor-nginx (harbor):8443 (internal push), seaweedfs-filer (seaweedfs):8333 |
 
 ## seaweedfs (4 policies)
 
@@ -193,8 +195,8 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **admission-controller** | kube-apiserver/host/remote-node → 9443 | kube-apiserver, harbor-nginx (harbor):8080, *.sigstore.dev:443, registry.infra.tgy.io:443 |
-| **background-controller** | (none) | kube-apiserver, harbor-nginx (harbor):8080 |
+| **admission-controller** | kube-apiserver/host/remote-node → 9443 | kube-apiserver, harbor-nginx (harbor):8443, *.sigstore.dev:443, registry.infra.tgy.io:443 |
+| **background-controller** | (none) | kube-apiserver, harbor-nginx (harbor):8443 |
 | **reports-controller** | (none) | kube-apiserver |
 | **cleanup-controller** | kube-apiserver/host/remote-node → 9443 | kube-apiserver |
 | **migrate-resources** (Job) | (none) | kube-apiserver |
@@ -231,7 +233,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **nginx** | ingress, cloudflared (argocd), image-build (image-build) → 8080; prometheus (monitoring) → 8001 | core:8080, portal:8080 |
+| **nginx** | ingress, cloudflared (argocd), image-build (image-build), kyverno (admission-controller, background-controller) → 8443; prometheus (monitoring) → 8001 | core:8080, portal:8080 |
 | **core** | nginx, jobservice, exporter → 8080; prometheus (monitoring) → 8001 | shared-pg (database):5432, redis:6379, registry:5000/8080, portal:8080, jobservice:8080, trivy:8080, kanidm (kanidm):8443, kube-apiserver |
 | **portal** | nginx, core → 8080 | (none) |
 | **registry** | core, jobservice → 5000/8080; prometheus (monitoring) → 8001 | seaweedfs-filer (seaweedfs):8333, redis:6379 |

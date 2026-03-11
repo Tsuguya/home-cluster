@@ -33,6 +33,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Workflow pods (talos-build) | SeaweedFS filer (seaweedfs) | 8333 | Artifact/log storage |
 | Workflow pods (image-build) | SeaweedFS filer (seaweedfs) | 8333 | Artifact/log storage |
 | Workflow pods (claude-code) | SeaweedFS filer (seaweedfs) | 8333 | Artifact/log storage |
+| Workflow pods (claude-code) | Loki gateway (monitoring) | 8080 | Log query (logcli) |
 | PXE sync pods (argo) | SeaweedFS filer (seaweedfs) | 8333 | Artifact/log storage |
 | Argo Workflows server (argo) | SeaweedFS filer (seaweedfs) | 8333 | Archived log retrieval |
 | Prometheus (monitoring) | Trivy Operator (trivy-system) | 8080 | Metrics scrape |
@@ -111,7 +112,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **kube-state-metrics** | prometheus → 8080 | kube-apiserver |
 | **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | kube-apiserver |
 | **loki** | loki-gateway, loki-canary → 3100 | kube-apiserver, seaweedfs-filer (seaweedfs):8333, self:7946 (memberlist) |
-| **loki-gateway** | grafana, alloy, loki-canary → 8080 | loki:3100 |
+| **loki-gateway** | grafana, alloy, loki-canary, claude-code (claude-code) → 8080 | loki:3100 |
 | **loki-canary** | host → 3500 | loki-gateway:8080, loki:3100 |
 | **alloy** | host → 12345 | kube-apiserver, loki-gateway:8080 |
 | **tempo** | grafana, prometheus → 3200 | seaweedfs-filer (seaweedfs):8333, prometheus:9090 (metrics remote_write) |
@@ -127,7 +128,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **claude-code** (claude-code=true) | (deny world) | kube-apiserver, api.anthropic.com + github.com + api.github.com + *.githubusercontent.com + index.crates.io + static.crates.io + registry.npmjs.org + discord.com + gitmcp.io :443, seaweedfs-filer (seaweedfs):8333 |
+| **claude-code** (claude-code=true) | (deny world) | kube-apiserver, api.anthropic.com + github.com + api.github.com + *.githubusercontent.com + index.crates.io + static.crates.io + registry.npmjs.org + discord.com + gitmcp.io :443, seaweedfs-filer (seaweedfs):8333, loki-gateway (monitoring):8080 |
 
 ## image-build (1 policy)
 

@@ -26,6 +26,7 @@ spec:
           - name: severity
             value: critical
             matchType: "="
+        repeatInterval: 24h
         continue: true
       - receiver: discord-critical
         matchers:

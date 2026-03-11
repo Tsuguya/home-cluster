@@ -17,6 +17,9 @@ spec:
         - matchLabels:
             app.kubernetes.io/name: loki
             app.kubernetes.io/component: canary
+        - matchLabels:
+            claude-code: "true"
+            io.kubernetes.pod.namespace: claude-code
       toPorts:
         - ports:
             - port: "8080"

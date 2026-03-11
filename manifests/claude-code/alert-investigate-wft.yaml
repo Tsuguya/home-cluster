@@ -52,7 +52,7 @@ spec:
             ALERT_SUMMARY=$(jq -r '.alerts[] | "alertname=\(.labels.alertname) namespace=\(.labels.namespace // "N/A") severity=\(.labels.severity) summary=\(.annotations.summary) description=\(.annotations.description)"' /tmp/alerts.json)
 
             claude -p \
-              --dangerouslySkipPermissions \
+              --dangerously-skip-permissions \
               --allowedTools "Bash(readonly=true),Read,Grep,Glob" \
               --max-turns 30 \
               "あなたは Kubernetes クラスタの SRE エージェントです。以下の critical アラートが発火しました。根本原因を調査し、修正案を提示してください。

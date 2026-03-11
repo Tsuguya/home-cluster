@@ -30,19 +30,21 @@ database:
 redis:
   type: internal
 
-imageChartStorage:
-  type: s3
-  s3:
-    region: us-east-1
-    bucket: harbor
-    regionendpoint: http://seaweedfs-filer.seaweedfs.svc:8333
-    secure: false
-    v4auth: true
-    existingSecret: harbor-s3-credentials
-  disableredirect: true
-
 persistence:
-  enabled: false
+  enabled: true
+  imageChartStorage:
+    type: s3
+    s3:
+      region: us-east-1
+      bucket: harbor
+      regionendpoint: http://seaweedfs-filer.seaweedfs.svc:8333
+      secure: false
+      v4auth: true
+      existingSecret: harbor-s3-credentials
+    disableredirect: true
+  persistentVolumeClaim:
+    registry:
+      storageClass: "-"
 
 trivy:
   enabled: true

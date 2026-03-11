@@ -50,6 +50,8 @@ spec:
         - ports:
             - port: "5000"
               protocol: TCP
+            - port: "8080"
+              protocol: TCP
     - toEndpoints:
         - matchLabels:
             app: harbor

@@ -50,6 +50,7 @@ spec:
         - matchPattern: "*.githubusercontent.com"
         - matchName: "registry.infra.tgy.io"
         - matchName: "mirror.gcr.io"
+        - matchName: "check.trivy.dev"
       toPorts:
         - ports:
             - port: "443"

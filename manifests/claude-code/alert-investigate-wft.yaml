@@ -48,9 +48,11 @@ spec:
         args:
           - |
             ALERTS_JSON='{{workflow.parameters.alerts}}'
-            CRITICAL=$(echo "$ALERTS_JSON" | jq -c '[.alerts[] | select(.status == "firing" and .labels.severity == "critical")]')
+            echo "$ALERTS_JSON" > /tmp/alerts.json
+            ALERT_SUMMARY=$(jq -r '.alerts[] | "alertname=\(.labels.alertname) namespace=\(.labels.namespace // "N/A") severity=\(.labels.severity) summary=\(.annotations.summary) description=\(.annotations.description)"' /tmp/alerts.json)
 
             claude -p \
+              --dangerouslySkipPermissions \
               --allowedTools "Bash(readonly=true),Read,Grep,Glob" \
               --max-turns 30 \
               "あなたは Kubernetes クラスタの SRE エージェントです。以下の critical アラートが発火しました。根本原因を調査し、修正案を提示してください。
@@ -67,8 +69,8 @@ spec:
             - Observability: Prometheus + Loki + Hubble
             - ノード: cp-01/02/03 (control plane), wn-01/02/03 (worker)
 
-            アラート JSON:
-            ${CRITICAL}
+            アラート:
+            ${ALERT_SUMMARY}
 
             調査手順:
             1. アラート内容を分析（alertname, namespace, pod, description）

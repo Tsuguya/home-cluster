@@ -29,3 +29,5 @@ spec:
       kind: ClusterRoleBinding
     - group: ''
       kind: Namespace
+    - group: ''
+      kind: PersistentVolume

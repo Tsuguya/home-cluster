@@ -262,7 +262,7 @@ spec:
           - --destination=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:latest
           - --destination=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}}
           - --digest-file=/workspace/digest
-          - --insecure
+          - --skip-tls-verify
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -342,7 +342,6 @@ spec:
             IMAGE="harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}@{{inputs.parameters.digest}}"
             cosign sign --key /cosign/cosign.key \
               --allow-insecure-registry \
-              --allow-http-registry \
               --yes \
               "$IMAGE"
         env:

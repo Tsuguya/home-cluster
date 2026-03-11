@@ -37,9 +37,8 @@ spec:
           - both
   volumes:
     - name: pxe
-      nfs:
-        server: 192.168.5.240
-        path: /Container/pxe
+      persistentVolumeClaim:
+        claimName: pxe-nfs
   templates:
     - name: main
       steps:

@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: test-cnp-alert
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: test-cnp-alert
+      rules:
+        - alert: TestCNPBroken
+          expr: |
+            up{job="oauth2-proxy-hubble"} == 0
+            or
+            absent(up{job="oauth2-proxy-hubble"})
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "oauth2-proxy-hubble is unreachable"
+            description: "The oauth2-proxy-hubble service in namespace oauth2-proxy is either down or not being scraped. This may indicate a network policy misconfiguration."

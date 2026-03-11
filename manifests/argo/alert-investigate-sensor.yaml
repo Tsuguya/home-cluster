@@ -34,8 +34,14 @@ spec:
           if event.body == nil or event.body.alerts == nil then
             return false
           end
+          local status = event.body.status
           for _, alert in ipairs(event.body.alerts) do
-            if alert.status == "firing" and alert.labels and alert.labels.severity == "critical" then
+            local alert_status = alert.status
+            if type(alert_status) == "table" then
+              alert_status = alert_status.state
+            end
+            local is_firing = (alert_status == "firing") or (status == "firing") or (alert_status == "active")
+            if is_firing and alert.labels and alert.labels.severity == "critical" then
               return true
             end
           end

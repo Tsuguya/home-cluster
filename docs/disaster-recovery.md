@@ -185,6 +185,123 @@ talosctl -n 192.168.10.230 health \
 - 既存 etcd が動いている状態では実行しない
 - リカバリ後、ArgoCD が全リソースを再 sync するため一時的に Pod の再起動が発生する
 
+## ノード IP 移行（VLAN 移行等）
+
+全ノードの IP を一括変更する手順。etcd のピア URL がデータに記録されているため、Talos config の IP 変更だけでは etcd クラスタが壊れる。
+
+### 前提
+
+- 新旧どちらのサブネットにも PC から到達可能であること
+- 新サブネットのゲートウェイ・DHCP が設定済みであること
+
+### 手順
+
+#### 1. 設定変更
+
+```bash
+# home-infra: talconfig.yaml の全ノード IP, VIP, gateway, nameservers を変更
+cd home-infra
+vim talconfig.yaml
+make genconfig
+```
+
+#### 2. staged apply（全ノード）
+
+再起動するまで反映されない `--mode=staged` で適用。
+
+```bash
+for entry in cp-01:<旧IP> cp-02:<旧IP> cp-03:<旧IP> wn-01:<旧IP> wn-02:<旧IP> wn-03:<旧IP>; do
+  name="${entry%%:*}"; ip="${entry##*:}"
+  talosctl apply-config --mode=staged \
+    -f clusterconfig/home-cluster-${name}.cluster.internal.yaml \
+    -n "$ip" -e "$ip"
+done
+```
+
+#### 3. ネットワーク切り替え + 電源サイクル
+
+1. スイッチのポート VLAN を変更
+2. 全ノードの電源を抜き差し（N100 ミニ PC に IPMI はない）
+
+#### 4. etcd 復旧
+
+ノードが新 IP で起動するが、etcd のピア URL に旧 IP が残っているためクォーラムが取れない。
+
+**cp-01 を単独 etcd クラスタとして起動（データ保持）:**
+
+```bash
+talosctl -n <cp-01新IP> -e <cp-01新IP> patch machineconfig --patch 'cluster:
+  etcd:
+    extraArgs:
+      force-new-cluster: "true"'
+
+talosctl -n <cp-01新IP> -e <cp-01新IP> reboot
+# etcd Health OK を確認
+talosctl -n <cp-01新IP> -e <cp-01新IP> service etcd
+```
+
+**cp-01 から force-new-cluster フラグを除去:**
+
+```bash
+talosctl apply-config \
+  -f clusterconfig/home-cluster-cp-01.cluster.internal.yaml \
+  -n <cp-01新IP> -e <cp-01新IP>
+```
+
+**cp-02, cp-03 を 1 台ずつ再参加させる（重要: 必ず 1 台ずつ）:**
+
+```bash
+# cp-02
+talosctl -n <cp-02新IP> -e <cp-02新IP> reset \
+  --graceful=false --reboot --system-labels-to-wipe=EPHEMERAL
+# etcd 3/3 Health OK を確認してから次へ
+
+# cp-03
+talosctl -n <cp-03新IP> -e <cp-03新IP> reset \
+  --graceful=false --reboot --system-labels-to-wipe=EPHEMERAL
+```
+
+> **注意**: EPHEMERAL ワイプは kubelet データも消えるが、CP ノードでは問題ない。
+> etcd メンバーは必ず 1 台ずつ追加する（2 台同時だとクォーラムが不安定になる）。
+
+#### 5. ローカル設定・マニフェスト更新
+
+```bash
+# talosconfig の endpoints/nodes
+sed -i 's/<旧IP>/<新IP>/g' ~/.talos/config
+
+# kubeconfig の server (VIP)
+sed -i 's/<旧VIP>/<新VIP>/g' ~/.kube/config
+
+# home-cluster の IP 参照箇所を更新して push
+# (ip-pool, etcd endpoints, CNP, CoreDNS, Argo WF 等)
+```
+
+#### 6. CoreDNS 再起動
+
+ConfigMap 変更だけでは反映されない。
+
+```bash
+kubectl rollout restart deployment coredns -n kube-system
+```
+
+### 影響を受けるリソース
+
+| リポジトリ | ファイル | 内容 |
+|-----------|---------|------|
+| home-infra | talconfig.yaml | ノード IP, VIP, gateway, nameservers |
+| home-infra | pxe/dnsmasq.conf | PXE サブネット |
+| home-cluster | manifests/infra/ip-pool.yaml | Cilium LB IP プール |
+| home-cluster | helm-values/kube-prometheus-stack/values.yaml | etcd endpoints |
+| home-cluster | manifests/argo/etcd-backup.yaml | talosctl 先 CP IP |
+| home-cluster | manifests/argo/node-shutdown-wft.yaml | 全ノード IP マッピング |
+| home-cluster | manifests/argo/netpol-workflow-pods.yaml | CNP egress IP |
+| home-cluster | manifests/kube-system/coredns-configmap.yaml | split-horizon DNS |
+| ローカル | ~/.talos/config | endpoints, nodes |
+| ローカル | ~/.kube/config | server (VIP) |
+
+> home-cloudflare は Tunnel ベースのため IP 直参照なし、変更不要。
+
 ## NAS IP 変更時の iSCSI 復旧
 
 NAS の IP が変わった場合（VLAN 移行、NAS 買い替え等）、Trident backend の Secret 更新だけでは不十分。旧 IP が 3 箇所に残る。

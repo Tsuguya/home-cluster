@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: horenso-migrations
+  namespace: horenso
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+data:
+  001_create_posts.sql: |
+    -- migrate:up
+    CREATE TABLE IF NOT EXISTS posts (
+      id SERIAL PRIMARY KEY,
+      type TEXT NOT NULL CHECK (type IN ('report', 'update', 'question')),
+      source TEXT NOT NULL,
+      context TEXT,
+      body TEXT NOT NULL,
+      tags TEXT[] DEFAULT '{}',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_posts_tags ON posts USING GIN (tags);
+    CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts (created_at DESC);
+
+    -- migrate:down
+    DROP TABLE IF EXISTS posts;

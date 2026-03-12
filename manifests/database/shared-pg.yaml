@@ -31,6 +31,8 @@ spec:
         - "CREATE DATABASE nextcloud OWNER nextcloud;"
         - "CREATE ROLE seaweedfs LOGIN;"
         - "CREATE DATABASE seaweedfs OWNER seaweedfs;"
+        - "CREATE ROLE horenso LOGIN;"
+        - "CREATE DATABASE horenso OWNER horenso;"
   backup:
     barmanObjectStore:
       destinationPath: s3://home-cluster-backup/cnpg/
@@ -77,3 +79,10 @@ spec:
         login: true
         passwordSecret:
           name: seaweedfs-pg-credentials
+      - name: horenso
+        ensure: present
+        connectionLimit: -1
+        inherit: true
+        login: true
+        passwordSecret:
+          name: horenso-pg-credentials

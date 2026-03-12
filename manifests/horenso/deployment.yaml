@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: horenso
+  namespace: horenso
+  labels:
+    app: horenso
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: horenso
+  template:
+    metadata:
+      labels:
+        app: horenso
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: horenso
+          image: registry.infra.tgy.io/tools/horenso:latest
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: horenso-pg-credentials
+                  key: uri
+            - name: DATABASE_SSL
+              value: "true"
+            - name: NODE_EXTRA_CA_CERTS
+              value: /etc/ssl/pg/ca.crt
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          volumeMounts:
+            - name: pg-ca
+              mountPath: /etc/ssl/pg
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: pg-ca
+          secret:
+            secretName: pg-ca-cert
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: horenso
+  namespace: horenso
+spec:
+  selector:
+    app: horenso
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP

@@ -17,6 +17,8 @@ spec:
       namespace: harbor
     - server: https://kubernetes.default.svc
       namespace: rss
+    - server: https://kubernetes.default.svc
+      namespace: horenso
   clusterResourceWhitelist:
     - group: '*'
       kind: CustomResourceDefinition

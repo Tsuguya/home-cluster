@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: horenso-migration
+  namespace: horenso
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: horenso-migration
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: dbmate
+          image: ghcr.io/amacneil/dbmate:2
+          args: ["--migrations-dir", "/app/db/migrations", "up"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: BASE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: horenso-pg-credentials
+                  key: uri
+            - name: DATABASE_URL
+              value: "$(BASE_DATABASE_URL)&sslrootcert=/etc/ssl/pg/ca.crt"
+          volumeMounts:
+            - name: migrations
+              mountPath: /app/db/migrations
+              readOnly: true
+            - name: pg-ca
+              mountPath: /etc/ssl/pg
+              readOnly: true
+      volumes:
+        - name: migrations
+          configMap:
+            name: horenso-migrations
+        - name: pg-ca
+          secret:
+            secretName: pg-ca-cert
+      restartPolicy: Never

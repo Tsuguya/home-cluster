@@ -1,0 +1,52 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: horenso
+  namespace: horenso
+spec:
+  endpointSelector:
+    matchLabels:
+      app: horenso
+  ingress:
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: horenso
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: horenso-migration
+  namespace: horenso
+spec:
+  endpointSelector:
+    matchLabels:
+      app: horenso-migration
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP

@@ -59,6 +59,8 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Alertmanager (monitoring) | alertmanager-eventsource (argo) | 12001 | Alertmanager webhook relay |
 | Harbor registry (harbor) | SeaweedFS filer (seaweedfs) | 8333 | S3 image storage |
 | Harbor core (harbor) | Kanidm (kanidm) | 8443 | OIDC token exchange |
+| Horenso (horenso) | shared-pg (database) | 5432 | Horenso database |
+| Horenso migration (horenso) | shared-pg (database) | 5432 | DB migration |
 | shared-pg (database) | Cloudflare R2 (external) | 443 | CNPG barman backup/WAL archiving |
 | CloudNative-PG (cnpg-system) | rss-pg (rss) | 8000 | Health probes |
 
@@ -261,6 +263,13 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **rss-cleaner** | rss-cron → 80 | rss-pg:5432 |
 | **rss-cron** | (none) | rss-fetcher:80, rss-cleaner:80 |
 | **rss-migration** (Job) | (none) | rss-pg:5432 |
+
+## horenso (2 policies)
+
+| Component | Ingress | Egress |
+|---|---|---|
+| **horenso** | host/remote-node → 3000 | shared-pg (database):5432 |
+| **horenso-migration** (Job) | (none) | shared-pg (database):5432 |
 
 ## spin-operator (1 policy)
 

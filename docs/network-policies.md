@@ -51,11 +51,12 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Nextcloud (nextcloud) | SeaweedFS filer (seaweedfs) | 8333 | S3 object storage |
 | Nextcloud (nextcloud) | Kanidm (kanidm) | 8443 | OIDC token exchange (direct, via CoreDNS rewrite) |
 | Cloudflared (argocd) | Nextcloud (nextcloud) | 80 | Cloudflare Tunnel → Nextcloud |
-| Cloudflared (argocd) | Harbor nginx (harbor) | 8080 | Cloudflare Tunnel → Harbor |
-| Workflow pods (image-build) | Harbor nginx (harbor) | 8080 | Internal image push |
+| Cloudflared (argocd) | Harbor nginx (harbor) | 8443 | Cloudflare Tunnel → Harbor |
+| Workflow pods (image-build) | Harbor nginx (harbor) | 8443 | Internal image push |
 | SeaweedFS filer (seaweedfs) | shared-pg (database) | 5432 | Filer metadata (postgres2) |
 | Harbor core (harbor) | shared-pg (database) | 5432 | Harbor database |
 | Harbor exporter (harbor) | shared-pg (database) | 5432 | Metrics collection |
+| Alertmanager (monitoring) | alertmanager-eventsource (argo) | 12001 | Alertmanager webhook relay |
 | Harbor registry (harbor) | SeaweedFS filer (seaweedfs) | 8333 | S3 image storage |
 | Harbor core (harbor) | Kanidm (kanidm) | 8443 | OIDC token exchange |
 | shared-pg (database) | Cloudflare R2 (external) | 443 | CNPG barman backup/WAL archiving |
@@ -84,18 +85,19 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **applicationset-controller** | (none) | kube-apiserver |
 | **notifications-controller** | (none) | kube-apiserver, discord.com:443 |
 | **redis-secret-init** (Job) | (none) | kube-apiserver |
-| **cloudflared** | (none) | *.v2.argotunnel.com + cftunnel.com + h2.cftunnel.com + quic.cftunnel.com:443/7844, server:8080, eventsource (argo):12000, kanidm (kanidm):8443, nextcloud (nextcloud):80, harbor-nginx (harbor):8080 |
+| **cloudflared** | (none) | *.v2.argotunnel.com + cftunnel.com + h2.cftunnel.com + quic.cftunnel.com:443/7844, server:8080, eventsource (argo):12000, kanidm (kanidm):8443, nextcloud (nextcloud):80, harbor-nginx (harbor):8443 |
 
-## argo (11 policies)
+## argo (12 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
 | **workflows-server** | ingress → 2746 (L7 HTTP); sensors (tofu-cloudflare, upgrade-k8s, pxe-sync), workflows-controller → 2746 | kube-apiserver, shared-pg (database):5432, kanidm (kanidm):8443, seaweedfs-filer (seaweedfs):8333 |
 | **workflows-controller** | (none) | kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
-| **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
+| **alertmanager-eventsource** | alertmanager (monitoring) → 12001 | kube-apiserver, eventbus:4222 |
+| **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate) | (none) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **events-controller** | host → 8081 | kube-apiserver, eventbus:8222 |
-| **eventbus** | eventsource, sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
+| **eventbus** | eventsource (github-webhook), alertmanager-eventsource (alertmanager-webhook), sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
 | **workflow-pods** (backup-workflow, pxe-sync, talos-build, kanidm-repl-exchange, kanidm-backup除外) | (deny world) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
 | **etcd-backup** (backup-workflow=true) | (none) | kube-apiserver:6443/50000 (Talos apid), *.r2.cloudflarestorage.com:443, seaweedfs-filer (seaweedfs):8333 |
 | **pxe-sync** (pxe-sync=true) | (none) | kube-apiserver, github.com + api.github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.5.240):2049 (NFS) |
@@ -107,7 +109,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Component | Ingress | Egress |
 |---|---|---|
 | **prometheus** | grafana, tempo → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, tetragon-operator (kube-system):2113, seaweedfs (seaweedfs):9327, trivy-operator (trivy-system):8080, harbor (harbor):8001, host/remote-node:10250/9100/2379/2381/10257/10259/9965/2112 |
-| **alertmanager** | prometheus → 9093/8080 | discord.com:443, discordapp.com:443 |
+| **alertmanager** | prometheus → 9093/8080 | discord.com:443, discordapp.com:443, alertmanager-eventsource (argo):12001 |
 | **grafana** | ingress → 3000 (L7 HTTP); prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, tempo:3200, shared-pg (database):5432, kanidm (kanidm):8443 |
 | **kube-state-metrics** | prometheus → 8080 | kube-apiserver |
 | **prometheus-operator** | kube-apiserver/remote-node, prometheus → 10250 | kube-apiserver |
@@ -134,7 +136,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **image-build** (image-build=true) | (deny world) | kube-apiserver, 0.0.0.0/0:443, harbor-nginx (harbor):8080 (internal push), seaweedfs-filer (seaweedfs):8333 |
+| **image-build** (image-build=true) | (deny world) | kube-apiserver, 0.0.0.0/0:443, harbor-nginx (harbor):8443 (internal push), seaweedfs-filer (seaweedfs):8333 |
 
 ## seaweedfs (4 policies)
 
@@ -194,9 +196,9 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **admission-controller** | kube-apiserver/host/remote-node → 9443 | kube-apiserver, harbor-nginx (harbor):8080, *.sigstore.dev:443, registry.infra.tgy.io:443 |
-| **background-controller** | (none) | kube-apiserver, harbor-nginx (harbor):8080 |
-| **reports-controller** | (none) | kube-apiserver |
+| **admission-controller** | kube-apiserver/host/remote-node → 9443 | kube-apiserver, harbor-nginx (harbor):8443, *.sigstore.dev:443, registry.infra.tgy.io:443 |
+| **background-controller** | (none) | kube-apiserver, harbor-nginx (harbor):8443 |
+| **reports-controller** | (none) | kube-apiserver, harbor-nginx (harbor):8443, *.sigstore.dev:443, registry.infra.tgy.io:443 |
 | **cleanup-controller** | kube-apiserver/host/remote-node → 9443 | kube-apiserver |
 | **migrate-resources** (Job) | (none) | kube-apiserver |
 

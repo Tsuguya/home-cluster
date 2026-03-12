@@ -28,25 +28,19 @@ spec:
             capabilities:
               drop: ["ALL"]
           env:
-            - name: BASE_DATABASE_URL
+            - name: DATABASE_URL
+              value: "postgres://horenso:$(PG_PASSWORD)@shared-pg-rw.database:5432/horenso?sslmode=require"
+            - name: PG_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: horenso-pg-credentials
-                  key: uri
-            - name: DATABASE_URL
-              value: "$(BASE_DATABASE_URL)&sslrootcert=/etc/ssl/pg/ca.crt"
+                  key: password
           volumeMounts:
             - name: migrations
               mountPath: /app/db/migrations
-              readOnly: true
-            - name: pg-ca
-              mountPath: /etc/ssl/pg
               readOnly: true
       volumes:
         - name: migrations
           configMap:
             name: horenso-migrations
-        - name: pg-ca
-          secret:
-            secretName: pg-ca-cert
       restartPolicy: Never

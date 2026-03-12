@@ -34,7 +34,7 @@ spec:
                   name: horenso-pg-credentials
                   key: password
             - name: DATABASE_URL
-              value: "postgres://horenso:$(PG_PASSWORD)@shared-pg-rw.database.svc:5432/horenso?sslmode=require"
+              value: "postgres://horenso:$(PG_PASSWORD)@shared-pg-rw.database.svc.cluster.local:5432/horenso?sslmode=require"
           volumeMounts:
             - name: migrations
               mountPath: /app/db/migrations

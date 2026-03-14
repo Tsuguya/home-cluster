@@ -28,6 +28,8 @@ spec:
       kind: '*'
     - group: external-secrets.io
       kind: ClusterSecretStore
+    - group: external-secrets.io
+      kind: ClusterExternalSecret
     - group: admissionregistration.k8s.io
       kind: ValidatingWebhookConfiguration
     - group: admissionregistration.k8s.io

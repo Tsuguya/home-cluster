@@ -31,3 +31,5 @@ spec:
       kind: Namespace
     - group: ''
       kind: PersistentVolume
+    - group: argoproj.io
+      kind: ClusterWorkflowTemplate

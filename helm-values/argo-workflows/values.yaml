@@ -55,6 +55,7 @@ controller:
           templateRef:
             name: discord-notify
             template: send
+            clusterScope: true
   extraEnv:
     - name: PGSSLROOTCERT
       value: /etc/ssl/certs/pg-ca.crt

@@ -89,7 +89,8 @@ metadata:
   name: kanidm-backup
   namespace: argo
 spec:
-  schedule: "30 4 * * *"
+  schedules:
+    - "30 4 * * *"
   timezone: Asia/Tokyo
   concurrencyPolicy: Replace
   workflowSpec:

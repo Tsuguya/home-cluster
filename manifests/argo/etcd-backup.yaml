@@ -95,7 +95,8 @@ metadata:
   name: etcd-backup
   namespace: argo
 spec:
-  schedule: "0 4 * * *"
+  schedules:
+    - "0 4 * * *"
   timezone: Asia/Tokyo
   concurrencyPolicy: Replace
   workflowSpec:

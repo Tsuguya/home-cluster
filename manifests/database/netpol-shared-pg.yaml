@@ -40,9 +40,6 @@ spec:
         - matchLabels:
             app: horenso
             io.kubernetes.pod.namespace: horenso
-        - matchLabels:
-            app: horenso-migration
-            io.kubernetes.pod.namespace: horenso
       toPorts:
         - ports:
             - port: "5432"

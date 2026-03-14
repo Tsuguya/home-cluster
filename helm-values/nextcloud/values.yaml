@@ -1,5 +1,6 @@
 nextcloud:
   host: nc.tgy.io
+  update: 1
   trustedDomains:
     - nc.tgy.io
   existingSecret:
@@ -114,6 +115,14 @@ podSecurityContext:
   fsGroup: 33
   seccompProfile:
     type: RuntimeDefault
+
+startupProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+  successThreshold: 1
 
 resources:
   requests:

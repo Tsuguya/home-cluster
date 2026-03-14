@@ -15,6 +15,12 @@ spec:
       - name: prompt
       - name: skip-if-pr-exists
         default: "true"
+      - name: signed-commit
+        default: "false"
+      - name: pr-title
+        default: ""
+      - name: pr-labels
+        default: ""
   podMetadata:
     labels:
       claude-code: "true"
@@ -50,6 +56,13 @@ spec:
         - - name: run-audit
             template: claude-code
             when: "'{{workflow.parameters.skip-if-pr-exists}}' != 'true' || '{{steps.check-existing-pr.outputs.result}}' == 'no-pr'"
+        - - name: create-signed-pr
+            template: create-signed-pr
+            when: "'{{workflow.parameters.signed-commit}}' == 'true' && '{{steps.run-audit.status}}' == 'Succeeded'"
+            arguments:
+              artifacts:
+                - name: workspace
+                  from: "{{steps.run-audit.outputs.artifacts.workspace}}"
 
     - name: check-existing-pr
       securityContext:
@@ -186,6 +199,10 @@ spec:
               memory: 64Mi
             limits:
               memory: 256Mi
+      outputs:
+        artifacts:
+          - name: workspace
+            path: /workspace
       container:
         image: registry.infra.tgy.io/tools/claude-code:latest
         command: [sh, -c]
@@ -222,6 +239,152 @@ spec:
             memory: 512Mi
           limits:
             memory: 4Gi
+
+    - name: create-signed-pr
+      inputs:
+        artifacts:
+          - name: workspace
+            path: /workspace
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      script:
+        image: registry.infra.tgy.io/tools/argo-tools:latest
+        command: [sh]
+        source: |
+          set -eu
+          GITHUB_TOKEN=$(cat /github-token/token)
+          export GH_TOKEN=$GITHUB_TOKEN
+          export HOME=/tmp
+
+          git config --global --add safe.directory /workspace
+          cd /workspace
+          REPO="{{workflow.parameters.repo}}"
+          BRANCH="{{workflow.parameters.branch}}"
+          PR_TITLE="{{workflow.parameters.pr-title}}"
+          PR_LABELS="{{workflow.parameters.pr-labels}}"
+
+          PR_BODY="Automated update by Claude"
+          if [ -f .pr-body ]; then
+            PR_BODY=$(cat .pr-body)
+            rm .pr-body
+          fi
+
+          git add -A
+          CHANGED_FILES=$(git diff --cached --name-only)
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No changes detected, skipping"
+            exit 0
+          fi
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          BASE_SHA=$(gh api "repos/${REPO}/git/ref/heads/main" -q '.object.sha')
+          BASE_TREE=$(gh api "repos/${REPO}/git/commits/${BASE_SHA}" -q '.tree.sha')
+
+          echo "[]" > /tmp/tree_entries.json
+          echo "$CHANGED_FILES" > /tmp/changed_files.txt
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              B64=$(base64 < "$file" | tr -d '\n')
+              jq -n --arg c "$B64" '{"content":$c,"encoding":"base64"}' > /tmp/blob.json
+              BLOB_SHA=$(gh api "repos/${REPO}/git/blobs" \
+                --method POST --input /tmp/blob.json -q '.sha')
+              jq --arg p "$file" --arg s "$BLOB_SHA" \
+                '. + [{"path":$p,"mode":"100644","type":"blob","sha":$s}]' \
+                /tmp/tree_entries.json > /tmp/tree_new.json
+              mv /tmp/tree_new.json /tmp/tree_entries.json
+              echo "  blob: $file -> $BLOB_SHA"
+            fi
+          done < /tmp/changed_files.txt
+
+          jq -n --arg bt "$BASE_TREE" --slurpfile t /tmp/tree_entries.json \
+            '{"base_tree":$bt,"tree":$t[0]}' > /tmp/create_tree.json
+          TREE_SHA=$(gh api "repos/${REPO}/git/trees" \
+            --method POST --input /tmp/create_tree.json -q '.sha')
+          echo "Created tree: $TREE_SHA"
+
+          jq -n --arg msg "$PR_TITLE" --arg tree "$TREE_SHA" --arg parent "$BASE_SHA" \
+            '{"message":$msg,"tree":$tree,"parents":[$parent]}' > /tmp/create_commit.json
+          COMMIT_SHA=$(gh api "repos/${REPO}/git/commits" \
+            --method POST --input /tmp/create_commit.json -q '.sha')
+          echo "Created signed commit: $COMMIT_SHA"
+
+          if gh api "repos/${REPO}/git/ref/heads/${BRANCH}" > /dev/null 2>&1; then
+            jq -n --arg sha "$COMMIT_SHA" '{"sha":$sha,"force":true}' | \
+              gh api "repos/${REPO}/git/refs/heads/${BRANCH}" --method PATCH --input -
+            echo "Updated branch: $BRANCH"
+          else
+            jq -n --arg ref "refs/heads/${BRANCH}" --arg sha "$COMMIT_SHA" \
+              '{"ref":$ref,"sha":$sha}' | \
+              gh api "repos/${REPO}/git/refs" --method POST --input -
+            echo "Created branch: $BRANCH"
+          fi
+
+          OWNER=$(echo "$REPO" | cut -d'/' -f1)
+          EXISTING=$(gh api "repos/${REPO}/pulls?state=open&head=${OWNER}:${BRANCH}" -q 'length')
+          if [ "$EXISTING" -gt 0 ]; then
+            echo "PR already exists on branch ${BRANCH}"
+            exit 0
+          fi
+
+          jq -n --arg title "$PR_TITLE" --arg head "$BRANCH" --arg body "$PR_BODY" \
+            '{"title":$title,"head":$head,"base":"main","body":$body}' > /tmp/create_pr.json
+          PR_URL=$(gh api "repos/${REPO}/pulls" \
+            --method POST --input /tmp/create_pr.json -q '.html_url')
+          echo "Created PR: $PR_URL"
+
+          if [ -n "$PR_LABELS" ]; then
+            PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
+            echo "$PR_LABELS" | tr ',' '\n' | jq -R . | jq -s '{"labels":.}' | \
+              gh api "repos/${REPO}/issues/${PR_NUMBER}/labels" --method POST --input -
+            echo "Added labels: $PR_LABELS"
+          fi
+        securityContext:
+          runAsUser: 65532
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+          - name: github-token
+            mountPath: /github-token
+            readOnly: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi
 
     - name: notify
       steps:

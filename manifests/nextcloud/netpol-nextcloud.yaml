@@ -64,6 +64,8 @@ spec:
     - toFQDNs:
         - matchPattern: "*.nextcloud.com"
         - matchName: "github.com"
+        - matchPattern: "*.githubusercontent.com"
+        - matchPattern: "*.github.com"
       toPorts:
         - ports:
             - port: "443"

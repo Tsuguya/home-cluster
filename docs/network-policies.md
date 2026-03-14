@@ -248,7 +248,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **nextcloud** | ingress, cloudflared (argocd) → 80 | kube-apiserver, shared-pg (database):5432, seaweedfs-filer (seaweedfs):8333, kanidm (kanidm):8443, valkey:6379, *.nextcloud.com:443 (app store/updates), github.com:443 (app store) |
+| **nextcloud** | ingress, cloudflared (argocd) → 80 | kube-apiserver, shared-pg (database):5432, seaweedfs-filer (seaweedfs):8333, kanidm (kanidm):8443, valkey:6379, *.nextcloud.com:443 (app store/updates), github.com:443 + *.githubusercontent.com:443 + *.github.com:443 (app store downloads) |
 | **valkey** | nextcloud → 6379 | (none) |
 
 ## rss (7 policies)

@@ -37,6 +37,11 @@ spec:
                   key: uri
             - name: DATABASE_SSL
               value: "true"
+            - name: DISCORD_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: discord-webhook-argo
+                  key: url
             - name: NODE_EXTRA_CA_CERTS
               value: /etc/ssl/pg/ca.crt
           securityContext:

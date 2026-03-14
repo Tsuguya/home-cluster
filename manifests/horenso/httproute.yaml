@@ -5,12 +5,21 @@ metadata:
   namespace: horenso
 spec:
   parentRefs:
-    - name: main-gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: main-gateway
       namespace: gateway
       sectionName: https
   hostnames:
     - horenso.infra.tgy.io
   rules:
     - backendRefs:
-        - name: horenso
+        - group: ""
+          kind: Service
+          name: horenso
           port: 3000
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

@@ -267,7 +267,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **horenso** | host/remote-node → 3000 | shared-pg (database):5432 |
+| **horenso** | ingress/host/remote-node → 3000 | shared-pg (database):5432 |
 
 ## spin-operator (1 policy)
 

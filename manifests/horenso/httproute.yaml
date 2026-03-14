@@ -1,0 +1,16 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: horenso
+  namespace: horenso
+spec:
+  parentRefs:
+    - name: main-gateway
+      namespace: gateway
+      sectionName: https
+  hostnames:
+    - horenso.infra.tgy.io
+  rules:
+    - backendRefs:
+        - name: horenso
+          port: 3000

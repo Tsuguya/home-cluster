@@ -9,6 +9,12 @@ spec:
       app: horenso
   ingress:
     - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+    - fromEntities:
         - host
         - remote-node
       toPorts:

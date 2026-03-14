@@ -392,3 +392,4 @@ spec:
             templateRef:
               name: discord-notify
               template: send
+              clusterScope: true

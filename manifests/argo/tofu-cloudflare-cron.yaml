@@ -4,7 +4,8 @@ metadata:
   name: tofu-cloudflare-periodic
   namespace: argo
 spec:
-  schedule: "0 15 * * 0"
+  schedules:
+    - "0 15 * * 0"
   timezone: Asia/Tokyo
   concurrencyPolicy: Replace
   workflowSpec:

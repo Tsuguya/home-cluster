@@ -101,7 +101,8 @@ metadata:
   name: kanidm-repl-cert-exchange
   namespace: argo
 spec:
-  schedule: "0 5 * * *"
+  schedules:
+    - "0 5 * * *"
   timezone: Asia/Tokyo
   concurrencyPolicy: Replace
   workflowSpec:

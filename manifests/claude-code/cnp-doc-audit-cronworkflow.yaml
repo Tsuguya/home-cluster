@@ -4,7 +4,8 @@ metadata:
   name: cnp-doc-audit
   namespace: claude-code
 spec:
-  schedule: "0 15 * * *"
+  schedules:
+    - "0 15 * * *"
   timezone: Asia/Tokyo
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3

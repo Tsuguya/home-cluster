@@ -1,3 +1,6 @@
+crds:
+  full: false
+
 artifactRepository:
   archiveLogs: true
   s3:

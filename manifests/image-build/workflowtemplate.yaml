@@ -269,6 +269,7 @@ spec:
             TOML
             export BUILDKIT_TMPDIR=/workspace/.buildkit
             export TMPDIR=/workspace/.buildkit/tmp
+            export BUILDKITD_FLAGS="--config /etc/buildkit/buildkitd.toml"
             buildctl-daemonless.sh build \
               --frontend dockerfile.v0 \
               --local context=/workspace/{{inputs.parameters.image-dir}} \

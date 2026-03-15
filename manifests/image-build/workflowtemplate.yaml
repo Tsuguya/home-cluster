@@ -261,6 +261,8 @@ spec:
           - |
             mkdir -p /etc/buildkit
             cat > /etc/buildkit/buildkitd.toml << 'TOML'
+            [worker.oci]
+              snapshotter = "native"
             [registry."harbor.harbor.svc"]
               insecure = true
             TOML

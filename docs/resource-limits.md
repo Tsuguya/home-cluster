@@ -153,7 +153,7 @@
 | claude-code | setup (init) | 10m / 64Mi | 256Mi |
 | claude-code | claude-code (main) | 100m / 512Mi | 4Gi |
 | image-build | detect-changes | 10m / 64Mi | 256Mi |
-| image-build | build-image (kaniko) | 100m / 512Mi | 2Gi |
+| image-build | buildkit-build | 100m / 512Mi | 4Gi |
 
 ### QNAP CSI (trident)
 

@@ -25,7 +25,7 @@ Cluster-wide default is **restricted enforce** (configured in Talos `admissionCo
 | seaweedfs | restricted | |
 | claude-code | baseline | Argo Workflows コンテナ要件 |
 | harbor | baseline | Harbor コンテナが restricted 非対応 |
-| image-build | baseline | kaniko が root + capabilities 必須（Kata VM 内で実行） |
+| image-build | privileged | BuildKit が privileged 必須（Kata VM 内で実行） |
 | nextcloud | baseline | Nextcloud コンテナが restricted 非対応 |
 | spin-operator | baseline | SpinKube shim executor 要件 |
 | talos-build | baseline | Talos imager が root + capabilities 必須 |

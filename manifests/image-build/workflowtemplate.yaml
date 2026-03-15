@@ -131,7 +131,7 @@ spec:
           - name: image-dir
       steps:
         - - name: build
-            template: kaniko-build
+            template: buildkit-build
             arguments:
               parameters:
                 - name: image-dir
@@ -145,7 +145,7 @@ spec:
                 - name: digest
                   value: "{{steps.build.outputs.parameters.digest}}"
 
-    - name: kaniko-build
+    - name: buildkit-build
       inputs:
         parameters:
           - name: image-dir
@@ -255,25 +255,32 @@ spec:
             limits:
               memory: 64Mi
       container:
-        image: gcr.io/kaniko-project/executor:v1.24.0
-        command:
-          - /kaniko/executor
-          - --dockerfile=Dockerfile
-          - --context=dir:///workspace/{{inputs.parameters.image-dir}}
-          - --destination=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:latest
-          - --destination=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}}
-          - --digest-file=/workspace/digest
-          - --skip-tls-verify
+        image: moby/buildkit:v0.28.0
+        command: [sh, -c]
+        args:
+          - |
+            mkdir -p /etc/buildkit
+            cat > /etc/buildkit/buildkitd.toml << 'TOML'
+            [registry."harbor.harbor.svc"]
+              insecure = true
+            TOML
+            buildctl-daemonless.sh build \
+              --frontend dockerfile.v0 \
+              --local context=/workspace/{{inputs.parameters.image-dir}} \
+              --local dockerfile=/workspace/{{inputs.parameters.image-dir}} \
+              --output type=image,"name=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:latest,harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}}",push=true \
+              --metadata-file /workspace/metadata.json
+            grep -o '"containerimage.digest":"[^"]*"' /workspace/metadata.json | head -1 | cut -d'"' -f4 > /workspace/digest
+        env:
+          - name: DOCKER_CONFIG
+            value: /docker-config
         securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            add: [CHOWN, FOWNER, SETUID, SETGID]
-            drop: [ALL]
+          privileged: true
         volumeMounts:
           - name: workspace
             mountPath: /workspace
           - name: docker-config
-            mountPath: /kaniko/.docker
+            mountPath: /docker-config
             readOnly: true
         resources:
           requests:

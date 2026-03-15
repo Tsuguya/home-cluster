@@ -1,0 +1,163 @@
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: cluster-observe
+  namespace: claude-code
+spec:
+  schedules:
+    - "0 0,12 * * *"
+  timezone: Asia/Tokyo
+  concurrencyPolicy: Forbid
+  workflowSpec:
+    entrypoint: main
+    serviceAccountName: claude-code-sre
+    activeDeadlineSeconds: 300
+    podMetadata:
+      labels:
+        claude-code: "true"
+    securityContext:
+      seccompProfile:
+        type: RuntimeDefault
+    templates:
+      - name: main
+        securityContext:
+          runAsUser: 65532
+          runAsNonRoot: true
+          runAsGroup: 65532
+          fsGroup: 65532
+        container:
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [sh, -c]
+          args:
+            - |
+              set -eu
+              HORENSO="http://horenso.horenso.svc.cluster.local:3000"
+              PROM="http://kube-prometheus-stack-prometheus.monitoring.svc:9090"
+              ISSUES=""
+
+              post_event() {
+                local title="$1" body="$2" priority="${3:-normal}"
+                wget -qO /dev/null --header="Content-Type: application/json" \
+                  --post-data="{\"title\":\"$title\",\"description\":\"$body\",\"category\":\"investigate\",\"priority\":\"$priority\",\"source\":\"cluster-observe\",\"tags\":[\"observe\",\"auto\"],\"status\":\"approved\",\"decision\":\"auto\",\"decision_reason\":\"定期観測で検出された異常\"}" \
+                  "$HORENSO/tasks"
+              }
+
+              post_report() {
+                local body="$1"
+                wget -qO /dev/null --header="Content-Type: application/json" \
+                  --post-data="{\"type\":\"report\",\"source\":\"cluster-observe\",\"body\":\"$body\",\"tags\":[\"observe\"]}" \
+                  "$HORENSO/posts"
+              }
+
+              # 1. Pod restarts (>5 in any pod)
+              echo "=== Checking pod restarts ==="
+              RESTARTS=$(kubectl get pods -A -o json | jq -r '
+                .items[] |
+                select(.status.containerStatuses != null) |
+                .status.containerStatuses[] |
+                select(.restartCount > 5) |
+                "\(.name) in \(.state | keys[0]) ns=\(.restartCount) restarts"
+              ' 2>/dev/null || true)
+
+              if [ -n "$RESTARTS" ]; then
+                ISSUES="$ISSUES\n## Pod Restarts (>5)\n$RESTARTS"
+              fi
+
+              # 2. OOMKilled pods
+              echo "=== Checking OOMKilled ==="
+              OOMKILL=$(kubectl get pods -A -o json | jq -r '
+                .items[] |
+                select(.status.containerStatuses != null) |
+                . as $pod |
+                .status.containerStatuses[] |
+                select(.lastState.terminated.reason == "OOMKilled") |
+                "\($pod.metadata.namespace)/\($pod.metadata.name)"
+              ' 2>/dev/null || true)
+
+              if [ -n "$OOMKILL" ]; then
+                ISSUES="$ISSUES\n## OOMKilled Pods\n$OOMKILL"
+              fi
+
+              # 3. Non-running pods
+              echo "=== Checking non-running pods ==="
+              BAD_PODS=$(kubectl get pods -A --field-selector='status.phase!=Running,status.phase!=Succeeded' -o wide --no-headers 2>/dev/null || true)
+
+              if [ -n "$BAD_PODS" ]; then
+                ISSUES="$ISSUES\n## Non-Running Pods\n$BAD_PODS"
+              fi
+
+              # 4. Node conditions
+              echo "=== Checking node conditions ==="
+              NODE_ISSUES=$(kubectl get nodes -o json | jq -r '
+                .items[] |
+                . as $node |
+                .status.conditions[] |
+                select(.type != "Ready" and .status == "True") |
+                "\($node.metadata.name): \(.type)=\(.status)"
+              ' 2>/dev/null || true)
+
+              NOT_READY=$(kubectl get nodes -o json | jq -r '
+                .items[] |
+                .status.conditions[] |
+                select(.type == "Ready" and .status != "True") |
+                "\(.type)=\(.status)"
+              ' 2>/dev/null || true)
+
+              if [ -n "$NODE_ISSUES" ] || [ -n "$NOT_READY" ]; then
+                ISSUES="$ISSUES\n## Node Issues\n${NODE_ISSUES}${NOT_READY}"
+              fi
+
+              # 5. Disk usage (Prometheus)
+              echo "=== Checking disk usage ==="
+              DISK_HIGH=$(wget -qO- "$PROM/api/v1/query?query=100-(node_filesystem_avail_bytes{mountpoint=\"/var\",fstype=\"xfs\"}/node_filesystem_size_bytes{mountpoint=\"/var\",fstype=\"xfs\"}*100)>80" 2>/dev/null | jq -r '
+                .data.result[] |
+                "\(.metric.instance): \(.value[1])% used"
+              ' 2>/dev/null || true)
+
+              if [ -n "$DISK_HIGH" ]; then
+                ISSUES="$ISSUES\n## Disk Usage >80%\n$DISK_HIGH"
+              fi
+
+              # 6. Memory usage (Prometheus)
+              echo "=== Checking memory usage ==="
+              MEM_HIGH=$(wget -qO- "$PROM/api/v1/query?query=100-(node_memory_AvailableBytes/node_memory_MemTotal_bytes*100)>85" 2>/dev/null | jq -r '
+                .data.result[] |
+                "\(.metric.instance): \(.value[1])% used"
+              ' 2>/dev/null || true)
+
+              if [ -n "$MEM_HIGH" ]; then
+                ISSUES="$ISSUES\n## Memory Usage >85%\n$MEM_HIGH"
+              fi
+
+              # 7. Certificate expiry (<14 days)
+              echo "=== Checking certificate expiry ==="
+              CERT_EXPIRING=$(wget -qO- "$PROM/api/v1/query?query=(certmanager_certificate_expiration_timestamp_seconds-time())/86400<14" 2>/dev/null | jq -r '
+                .data.result[] |
+                "\(.metric.namespace)/\(.metric.name): \(.value[1]) days left"
+              ' 2>/dev/null || true)
+
+              if [ -n "$CERT_EXPIRING" ]; then
+                ISSUES="$ISSUES\n## Certificates Expiring (<14d)\n$CERT_EXPIRING"
+              fi
+
+              # Report
+              if [ -n "$ISSUES" ]; then
+                echo "Issues found, creating tasks..."
+                BODY=$(printf "$ISSUES")
+                post_event "クラスタ定期観測: 異常検出" "$BODY" "normal"
+                echo "Task created."
+              else
+                echo "No issues found."
+              fi
+
+              echo "=== Observation complete ==="
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 256Mi

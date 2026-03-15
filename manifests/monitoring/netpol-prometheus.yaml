@@ -13,6 +13,9 @@ spec:
             app.kubernetes.io/name: grafana
         - matchLabels:
             app.kubernetes.io/name: tempo
+        - matchLabels:
+            claude-code: "true"
+            io.kubernetes.pod.namespace: claude-code
       toPorts:
         - ports:
             - port: "9090"

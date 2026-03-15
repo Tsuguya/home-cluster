@@ -49,3 +49,19 @@ spec:
         - ports:
             - port: "8080"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: prometheus
+            io.kubernetes.pod.namespace: monitoring
+      toPorts:
+        - ports:
+            - port: "9090"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app: horenso
+            io.kubernetes.pod.namespace: horenso
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP

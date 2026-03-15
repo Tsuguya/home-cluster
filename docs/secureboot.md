@@ -7,12 +7,12 @@
 ## アーキテクチャ
 
 ```
-GHA (talos-custom-build)              Argo Workflows (argo namespace)
+GHA (talos-custom-build)              Argo Workflows (talos-build namespace)
 ┌────────────────────────┐            ┌──────────────────────────────────────┐
-│ kernel (UFS config)    │            │ imager (SecureBoot signing)          │
-│ installer-base         │            │  ├─ secureboot-installer → GHCR     │
-│ imager                 │──webhook──→│  ├─ secureboot-iso      → GH Release│
-│ Pre-release 作成       │            │  └─ iso (PXE assets)   → GH Release│
+│ kernel (UFS config)    │            │ build-and-push-installer (Pod 1)    │
+│ installer-base         │            │  imager (initContainer) → crane push│
+│ imager                 │──webhook──→│ build-and-push-iso (Pod 2, 並列)    │
+│ Pre-release 作成       │            │  imager×2 (initContainer) → gh upload│
 └────────────────────────┘            │ finalize-release (pre→release)      │
                                       └──────────────────────────────────────┘
 ```
@@ -20,6 +20,8 @@ GHA (talos-custom-build)              Argo Workflows (argo namespace)
 - **GHA**: カスタムカーネル + imager ビルド（秘密不要）
 - **Argo WF**: SecureBoot 署名（署名鍵はクラスタ内 1Password 管理）
 - 署名鍵が GitHub に渡らない（リポジトリはパブリック）
+- ビルドと push を同一 Pod 内で完結（imager を initContainer として実行、emptyDir でデータ共有）
+- GHCR push は専用 PAT (`ghcr-pat` Secret) を使用（GitHub App トークンでは GHCR push 不可）
 
 ## ノード状態
 
@@ -51,9 +53,10 @@ ExternalSecret: `manifests/secrets/talos-build-secureboot-signing-keys.yaml`
 
 | ファイル | 内容 |
 |----------|------|
-| `manifests/argo/talos-secureboot-build.yaml` | WorkflowTemplate + SA + RBAC |
-| `manifests/argo/talos-build-scripts.yaml` | push-installer.sh, push-iso.sh, finalize-release.sh |
+| `manifests/talos-build/workflowtemplate.yaml` | WorkflowTemplate + SA + RBAC |
+| `manifests/talos-build/scripts.yaml` | push-installer.sh, push-iso.sh, finalize-release.sh |
 | `manifests/argo/talos-build-sensor.yaml` | Sensor (release webhook → WF trigger) |
+| `manifests/secrets/talos-build-ghcr-pat.yaml` | GHCR push 用 PAT (ExternalSecret) |
 
 ### トリガーフロー
 
@@ -94,7 +97,15 @@ ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
 
 元イメージ: `ghcr.io/siderolabs/iscsi-tools@sha256:b30127b2f3ea6a49aa73dcf18c30da1fa1d2604da00c60519f8f00b4c6d25294`
 
+**注意**: このパッケージは GHCR で public に設定済み（GitHub App トークンでは private GHCR パッケージにアクセス不可のため）。
+
 **暫定措置**: siderolabs/extensions がホストレベルバイナリ配置を復活したら、公式版に戻す。
+
+### Talos v1.12.5 アップグレードブロッカー
+
+Talos v1.12.5 では iscsi-tools extension のバイナリ配置パスが変更され（`/usr/local/sbin/` → `/usr/local/lib/containers/iscsid/usr/local/sbin/`）、旧版ミラーを pin していても CSI ドライバが壊れる。**v1.12.4 に留まること。**
+
+- Issue: https://github.com/siderolabs/talos/issues/12951
 
 ## 新ノードへの SecureBoot 適用手順
 
@@ -183,4 +194,6 @@ SecureBoot 有効の UEFI に未署名 installer を書くと **Secure Boot Viol
 
 - [x] 全ノード SecureBoot 有効化完了
 - [x] TPM ディスク暗号化（STATE + EPHEMERAL、全 6 ノード LUKS2 暗号化完了）
+- [x] Kata Containers 3.27.0 extension 追加（全ノード）
 - [ ] siderolabs/extensions に issue: ホストレベル iscsiadm 復活要求
+- [ ] Talos v1.12.5 アップグレード（Issue #12951 解決待ち）

@@ -92,7 +92,16 @@ kubectl -n trident logs <trident-node-pod> -c trident-main | grep -i iscsi
 **注意**:
 - Talos ホストにシェル (`/bin/sh`) がないため wrapper script による回避は不可
 - upstream が修正されたらミラー版から公式版に戻すこと
+- ミラーパッケージは GHCR で public に設定済み（GitHub App トークンでは private GHCR パッケージにアクセス不可）
 - TODO: siderolabs/extensions に issue 提出
+
+## Talos v1.12.5 アップグレードブロッカー (Issue #12951)
+
+Talos v1.12.5 で iscsi-tools extension のバイナリ配置が `/usr/local/sbin/` から `/usr/local/lib/containers/iscsid/usr/local/sbin/` に変更された。旧版 extension を pin していても Talos 本体の変更が原因のため影響を受ける。CSI ドライバ (QNAP Trident) が chroot 経由で `iscsiadm` を見つけられずマウント失敗する。
+
+**対策**: v1.12.4 に留まる。Issue の修正を待つ。
+
+- https://github.com/siderolabs/talos/issues/12951
 
 ## 1Password Operator → External Secrets Operator (ESO) 移行（解決済み）
 

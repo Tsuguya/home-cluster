@@ -169,6 +169,11 @@ spec:
             value: "{{workflow.parameters.version}}"
           - name: DOCKER_CONFIG
             value: /tmp
+          - name: GHCR_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: ghcr-pat
+                key: token
         resources:
           requests:
             cpu: 50m
@@ -178,9 +183,6 @@ spec:
         volumeMounts:
           - name: scripts
             mountPath: /scripts
-            readOnly: true
-          - name: github-token
-            mountPath: /github-token
             readOnly: true
           - name: build
             mountPath: /build

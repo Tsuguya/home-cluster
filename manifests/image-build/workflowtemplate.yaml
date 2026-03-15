@@ -269,12 +269,9 @@ spec:
               --frontend dockerfile.v0 \
               --local context=/workspace/{{inputs.parameters.image-dir}} \
               --local dockerfile=/workspace/{{inputs.parameters.image-dir}} \
-              --output type=image,name=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:latest,push=true \
               --output type=image,name=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}},push=true \
               --metadata-file /workspace/metadata.json
-            cat /workspace/metadata.json
             grep -oE 'sha256:[a-f0-9]{64}' /workspace/metadata.json | head -1 > /workspace/digest
-            cat /workspace/digest
         env:
           - name: DOCKER_CONFIG
             value: /docker-config
@@ -354,10 +351,23 @@ spec:
         command: [sh, -c]
         args:
           - |
-            IMAGE="registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}@{{inputs.parameters.digest}}"
-            cosign sign --key /cosign/cosign.key \
-              --yes \
-              "$IMAGE"
+            REPO="registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}"
+            IMAGE="$REPO@{{inputs.parameters.digest}}"
+            cosign sign --key /cosign/cosign.key --yes "$IMAGE"
+            echo "Adding latest tag..."
+            MANIFEST=$(curl -sf -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+              -u "$HARBOR_USER:$HARBOR_PASS" \
+              "$REPO/manifests/{{workflow.parameters.commit-sha}}" \
+              --resolve "registry.infra.tgy.io:443:$(getent hosts registry.infra.tgy.io | awk '{print $1}')" 2>/dev/null) || \
+            MANIFEST=$(curl -sf -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+              -u "$HARBOR_USER:$HARBOR_PASS" \
+              "https://registry.infra.tgy.io/v2/tools/{{inputs.parameters.image-dir}}/manifests/{{workflow.parameters.commit-sha}}")
+            echo "$MANIFEST" | curl -sf -X PUT \
+              -H "Content-Type: application/vnd.docker.distribution.manifest.v2+json" \
+              -u "$HARBOR_USER:$HARBOR_PASS" \
+              -d @- \
+              "https://registry.infra.tgy.io/v2/tools/{{inputs.parameters.image-dir}}/manifests/latest" \
+              && echo "latest tag created" || echo "WARNING: failed to create latest tag"
         env:
           - name: HOME
             value: /tmp
@@ -365,6 +375,16 @@ spec:
             value: ""
           - name: DOCKER_CONFIG
             value: /docker-config
+          - name: HARBOR_USER
+            valueFrom:
+              secretKeyRef:
+                name: harbor-robot-images
+                key: username
+          - name: HARBOR_PASS
+            valueFrom:
+              secretKeyRef:
+                name: harbor-robot-images
+                key: credential
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

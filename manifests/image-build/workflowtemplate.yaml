@@ -149,7 +149,10 @@ spec:
       inputs:
         parameters:
           - name: image-dir
-      podSpecPatch: '{"runtimeClassName": "kata", "metadata": {"annotations": {"io.katacontainers.config.hypervisor.virtio_fs_extra_args": "[\"--thread-pool-size=1\", \"--announce-submounts\", \"--xattr\"]"}}}'
+      podSpecPatch: '{"runtimeClassName": "kata"}'
+      metadata:
+        annotations:
+          io.katacontainers.config.hypervisor.virtio_fs_extra_args: '["--thread-pool-size=1", "--announce-submounts", "--xattr"]'
       securityContext:
         runAsUser: 0
         runAsNonRoot: false

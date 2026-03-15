@@ -276,6 +276,9 @@ spec:
             value: /docker-config
         securityContext:
           privileged: true
+          allowPrivilegeEscalation: true
+          capabilities:
+            add: [ALL]
         volumeMounts:
           - name: workspace
             mountPath: /workspace

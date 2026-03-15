@@ -268,7 +268,8 @@ spec:
               --frontend dockerfile.v0 \
               --local context=/workspace/{{inputs.parameters.image-dir}} \
               --local dockerfile=/workspace/{{inputs.parameters.image-dir}} \
-              --output type=image,"name=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:latest,harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}}",push=true \
+              --output type=image,name=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:latest,push=true \
+              --output type=image,name=harbor.harbor.svc/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}},push=true \
               --metadata-file /workspace/metadata.json
             grep -o '"containerimage.digest":"[^"]*"' /workspace/metadata.json | head -1 | cut -d'"' -f4 > /workspace/digest
         env:

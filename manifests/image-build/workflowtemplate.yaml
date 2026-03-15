@@ -259,13 +259,12 @@ spec:
         command: [sh, -c]
         args:
           - |
-            mkdir -p /etc/buildkit
+            mkdir -p /etc/buildkit /var/lib/buildkit
             cat > /etc/buildkit/buildkitd.toml << 'TOML'
-            [worker.oci]
-              snapshotter = "native"
             [registry."harbor.harbor.svc"]
               insecure = true
             TOML
+            export BUILDKIT_TMPDIR=/var/lib/buildkit
             buildctl-daemonless.sh build \
               --frontend dockerfile.v0 \
               --local context=/workspace/{{inputs.parameters.image-dir}} \

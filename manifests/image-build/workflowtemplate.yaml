@@ -265,6 +265,8 @@ spec:
               insecure = true
             TOML
             export BUILDKIT_TMPDIR=/var/lib/buildkit
+            export TMPDIR=/var/lib/buildkit/tmp
+            mkdir -p /var/lib/buildkit/tmp
             buildctl-daemonless.sh build \
               --frontend dockerfile.v0 \
               --local context=/workspace/{{inputs.parameters.image-dir}} \

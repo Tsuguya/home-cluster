@@ -66,47 +66,18 @@ spec:
   templates:
     - name: main
       steps:
-        - - name: build-secureboot-installer
-            template: run-imager
-            arguments:
-              parameters:
-                - name: output-type
-                  value: secureboot-installer
-          - name: build-secureboot-iso
-            template: run-imager
-            arguments:
-              parameters:
-                - name: output-type
-                  value: secureboot-iso
-          - name: build-iso
-            template: run-imager
-            arguments:
-              parameters:
-                - name: output-type
-                  value: iso
-        - - name: push-installer
-            template: push-installer
-            arguments:
-              artifacts:
-                - name: artifact
-                  from: "{{steps.build-secureboot-installer.outputs.artifacts.output}}"
-          - name: push-iso
-            template: push-iso
-            arguments:
-              artifacts:
-                - name: sb-iso
-                  from: "{{steps.build-secureboot-iso.outputs.artifacts.output}}"
-                - name: iso
-                  from: "{{steps.build-iso.outputs.artifacts.output}}"
+        - - name: build-and-push-installer
+            template: build-and-push-installer
+          - name: build-and-push-iso
+            template: build-and-push-iso
         - - name: finalize-release
             template: finalize-release
 
-    - name: run-imager
-      inputs:
-        parameters:
-          - name: output-type
+    - name: build-and-push-installer
       volumes:
         - name: docker-config
+          emptyDir: {}
+        - name: build
           emptyDir: {}
       initContainers:
         - name: github-auth
@@ -148,84 +119,45 @@ spec:
             - name: github-token
               mountPath: /github-token
               readOnly: true
-      container:
-        image: "ghcr.io/tsuguya/imager:{{workflow.parameters.version}}"
-        command: [/bin/imager]
-        args:
-          - "{{inputs.parameters.output-type}}"
-          - --arch
-          - amd64
-          - --system-extension-image
-          - ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
-          - --system-extension-image
-          - ghcr.io/siderolabs/spin:v0.22.0
-          - --system-extension-image
-          - ghcr.io/siderolabs/kata-containers:3.27.0
-          - --base-installer-image
-          - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
-          - --extra-kernel-arg
-          - "-lockdown"
-          - --extra-kernel-arg
-          - "lockdown=integrity"
-        env:
-          - name: DOCKER_CONFIG
-            value: /docker-config
-        resources:
-          requests:
-            cpu: 100m
-            memory: 512Mi
-          limits:
-            memory: 2Gi
-        volumeMounts:
-          - name: secureboot-keys
-            mountPath: /secureboot
-            readOnly: true
-          - name: docker-config
-            mountPath: /docker-config
-            readOnly: true
-      outputs:
-        artifacts:
-          - name: output
-            path: /out
-
-    - name: push-installer
-      inputs:
-        artifacts:
-          - name: artifact
-            path: /tmp/artifact/
-      volumes:
-        - name: github-token
-          emptyDir: {}
-        - name: github-app-secret
-          secret:
-            secretName: github-app-private-key
-      initContainers:
-        - name: github-auth
-          image: registry.infra.tgy.io/tools/argo-tools:latest
-          command: [github-auth.sh]
+        - name: build
+          image: "ghcr.io/tsuguya/imager:{{workflow.parameters.version}}"
+          command: [/bin/imager]
+          args:
+            - secureboot-installer
+            - --arch
+            - amd64
+            - --system-extension-image
+            - ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
+            - --system-extension-image
+            - ghcr.io/siderolabs/spin:v0.22.0
+            - --system-extension-image
+            - ghcr.io/siderolabs/kata-containers:3.27.0
+            - --base-installer-image
+            - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
+            - --extra-kernel-arg
+            - "-lockdown"
+            - --extra-kernel-arg
+            - "lockdown=integrity"
+            - --output
+            - /build
           env:
-            - name: GITHUB_APP_ID
-              value: "2998228"
-            - name: GITHUB_APP_INSTALLATION_ID
-              value: "113765957"
-          securityContext:
-            runAsUser: 65532
-            runAsNonRoot: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: [ALL]
-          volumeMounts:
-            - name: github-app-secret
-              mountPath: /github-app
-              readOnly: true
-            - name: github-token
-              mountPath: /github-token
+            - name: DOCKER_CONFIG
+              value: /docker-config
           resources:
             requests:
-              cpu: 10m
-              memory: 32Mi
+              cpu: 100m
+              memory: 512Mi
             limits:
-              memory: 64Mi
+              memory: 2Gi
+          volumeMounts:
+            - name: secureboot-keys
+              mountPath: /secureboot
+              readOnly: true
+            - name: docker-config
+              mountPath: /docker-config
+              readOnly: true
+            - name: build
+              mountPath: /build
       container:
         image: alpine:3.23
         command: [sh, /scripts/push-installer.sh]
@@ -250,20 +182,18 @@ spec:
           - name: github-token
             mountPath: /github-token
             readOnly: true
+          - name: build
+            mountPath: /build
+            readOnly: true
 
-    - name: push-iso
-      inputs:
-        artifacts:
-          - name: sb-iso
-            path: /tmp/sb-iso/
-          - name: iso
-            path: /tmp/iso/
+    - name: build-and-push-iso
       volumes:
-        - name: github-token
+        - name: docker-config
           emptyDir: {}
-        - name: github-app-secret
-          secret:
-            secretName: github-app-private-key
+        - name: build-sb-iso
+          emptyDir: {}
+        - name: build-iso
+          emptyDir: {}
       initContainers:
         - name: github-auth
           image: registry.infra.tgy.io/tools/argo-tools:latest
@@ -291,6 +221,97 @@ spec:
               memory: 32Mi
             limits:
               memory: 64Mi
+        - name: setup-registry-auth
+          image: alpine:3.23
+          command: [sh, -c]
+          args:
+            - |
+              GITHUB_TOKEN=$(cat /github-token/token)
+              printf '{"auths":{"ghcr.io":{"auth":"%s"}}}' "$(printf '%s:%s' x-access-token "$GITHUB_TOKEN" | base64)" > /docker-config/config.json
+          volumeMounts:
+            - name: docker-config
+              mountPath: /docker-config
+            - name: github-token
+              mountPath: /github-token
+              readOnly: true
+        - name: build-secureboot-iso
+          image: "ghcr.io/tsuguya/imager:{{workflow.parameters.version}}"
+          command: [/bin/imager]
+          args:
+            - secureboot-iso
+            - --arch
+            - amd64
+            - --system-extension-image
+            - ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
+            - --system-extension-image
+            - ghcr.io/siderolabs/spin:v0.22.0
+            - --system-extension-image
+            - ghcr.io/siderolabs/kata-containers:3.27.0
+            - --base-installer-image
+            - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
+            - --extra-kernel-arg
+            - "-lockdown"
+            - --extra-kernel-arg
+            - "lockdown=integrity"
+            - --output
+            - /build-sb-iso
+          env:
+            - name: DOCKER_CONFIG
+              value: /docker-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          volumeMounts:
+            - name: secureboot-keys
+              mountPath: /secureboot
+              readOnly: true
+            - name: docker-config
+              mountPath: /docker-config
+              readOnly: true
+            - name: build-sb-iso
+              mountPath: /build-sb-iso
+        - name: build-iso
+          image: "ghcr.io/tsuguya/imager:{{workflow.parameters.version}}"
+          command: [/bin/imager]
+          args:
+            - iso
+            - --arch
+            - amd64
+            - --system-extension-image
+            - ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
+            - --system-extension-image
+            - ghcr.io/siderolabs/spin:v0.22.0
+            - --system-extension-image
+            - ghcr.io/siderolabs/kata-containers:3.27.0
+            - --base-installer-image
+            - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
+            - --extra-kernel-arg
+            - "-lockdown"
+            - --extra-kernel-arg
+            - "lockdown=integrity"
+            - --output
+            - /build-iso
+          env:
+            - name: DOCKER_CONFIG
+              value: /docker-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          volumeMounts:
+            - name: secureboot-keys
+              mountPath: /secureboot
+              readOnly: true
+            - name: docker-config
+              mountPath: /docker-config
+              readOnly: true
+            - name: build-iso
+              mountPath: /build-iso
       container:
         image: alpine:3.23
         command: [sh, /scripts/push-iso.sh]
@@ -312,6 +333,12 @@ spec:
             readOnly: true
           - name: github-token
             mountPath: /github-token
+            readOnly: true
+          - name: build-sb-iso
+            mountPath: /build-sb-iso
+            readOnly: true
+          - name: build-iso
+            mountPath: /build-iso
             readOnly: true
 
     - name: finalize-release

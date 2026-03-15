@@ -12,7 +12,7 @@ data:
     tar xzf /tmp/crane.tar.gz -C /tmp crane
     chmod +x /tmp/crane
     export PATH="/tmp:$PATH"
-    INSTALLER_TAR=$(find /tmp/artifact -name '*.tar' | head -1)
+    INSTALLER_TAR=$(find /build -name '*.tar' | head -1)
     echo "=== Pushing SecureBoot installer: ${INSTALLER_TAR} ==="
     crane auth login ghcr.io -u x-access-token -p "${GITHUB_TOKEN}"
     crane push "${INSTALLER_TAR}" "ghcr.io/tsuguya/installer:${VERSION}"
@@ -36,8 +36,8 @@ data:
       --repositories-file /etc/apk/repositories 7zip > /dev/null
     export PATH="$_apk/usr/bin:$PATH" LD_LIBRARY_PATH="$_apk/usr/lib:$_apk/lib"
 
-    SB_ISO=$(find /tmp/sb-iso -name '*.iso' | head -1)
-    ISO=$(find /tmp/iso -name '*.iso' | head -1)
+    SB_ISO=$(find /build-sb-iso -name '*.iso' | head -1)
+    ISO=$(find /build-iso -name '*.iso' | head -1)
 
     echo "=== Extracting PXE assets from: ${ISO} ==="
     7z x "${ISO}" -o/tmp/pxe boot/vmlinuz boot/initramfs.xz
@@ -69,5 +69,5 @@ data:
 
     - Talos: ${VERSION}
     - SecureBoot: Signed UKI + auto-enrollment ISO
-    - System extensions: iscsi-tools, spin"
+    - System extensions: iscsi-tools, spin, kata-containers"
     echo "=== Release finalized ==="

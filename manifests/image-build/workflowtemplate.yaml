@@ -149,6 +149,7 @@ spec:
       inputs:
         parameters:
           - name: image-dir
+      podSpecPatch: '{"runtimeClassName": "kata"}'
       securityContext:
         runAsUser: 0
         runAsNonRoot: false

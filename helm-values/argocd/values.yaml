@@ -137,9 +137,15 @@ notifications:
       headers:
         - name: Content-Type
           value: application/json
+    service.webhook.horenso: |
+      url: http://horenso.horenso.svc.cluster.local:3000/events/argocd
+      headers:
+        - name: Content-Type
+          value: application/json
   subscriptions:
     - recipients:
         - discord
+        - horenso
       triggers:
         - on-sync-succeeded
         - on-sync-failed
@@ -177,6 +183,15 @@ notifications:
                 ]
               }]
             }
+        horenso:
+          method: POST
+          body: |
+            {
+              "app": "{{.app.metadata.name}}",
+              "event": "sync-succeeded",
+              "sync_status": "{{.app.status.sync.status}}",
+              "url": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
+            }
     template.app-sync-failed: |
       webhook:
         discord:
@@ -192,6 +207,16 @@ notifications:
                 ]
               }]
             }
+        horenso:
+          method: POST
+          body: |
+            {
+              "app": "{{.app.metadata.name}}",
+              "event": "sync-failed",
+              "sync_status": "Failed",
+              "message": "{{.app.status.operationState.message | trunc 500 }}",
+              "url": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}?operation=true"
+            }
     template.app-health-degraded: |
       webhook:
         discord:
@@ -206,4 +231,13 @@ notifications:
                   {"name": "Health", "value": "{{.app.status.health.status}}", "inline": true}
                 ]
               }]
+            }
+        horenso:
+          method: POST
+          body: |
+            {
+              "app": "{{.app.metadata.name}}",
+              "event": "health-degraded",
+              "health_status": "{{.app.status.health.status}}",
+              "url": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
             }

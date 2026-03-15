@@ -36,6 +36,9 @@ spec:
             app.kubernetes.io/component: background-controller
             io.kubernetes.pod.namespace: kyverno
         - matchLabels:
+            app.kubernetes.io/component: reports-controller
+            io.kubernetes.pod.namespace: kyverno
+        - matchLabels:
             app.kubernetes.io/managed-by: trivy-operator
             io.kubernetes.pod.namespace: trivy-system
       toPorts:

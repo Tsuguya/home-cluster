@@ -34,3 +34,5 @@ spec:
       kind: CiliumL2AnnouncementPolicy
     - group: '*'
       kind: CiliumLoadBalancerIPPool
+    - group: node.k8s.io
+      kind: RuntimeClass

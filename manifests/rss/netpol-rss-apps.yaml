@@ -19,7 +19,8 @@ spec:
   egress:
     - toEndpoints:
         - matchLabels:
-            cnpg.io/cluster: rss-pg
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
       toPorts:
         - ports:
             - port: "5432"
@@ -46,7 +47,8 @@ spec:
   egress:
     - toEndpoints:
         - matchLabels:
-            cnpg.io/cluster: rss-pg
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
       toPorts:
         - ports:
             - port: "5432"
@@ -72,7 +74,8 @@ spec:
   egress:
     - toEndpoints:
         - matchLabels:
-            cnpg.io/cluster: rss-pg
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
       toPorts:
         - ports:
             - port: "5432"
@@ -104,7 +107,8 @@ spec:
   egress:
     - toEndpoints:
         - matchLabels:
-            cnpg.io/cluster: rss-pg
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
       toPorts:
         - ports:
             - port: "5432"
@@ -147,7 +151,8 @@ spec:
   egress:
     - toEndpoints:
         - matchLabels:
-            cnpg.io/cluster: rss-pg
+            cnpg.io/cluster: shared-pg
+            io.kubernetes.pod.namespace: database
       toPorts:
         - ports:
             - port: "5432"

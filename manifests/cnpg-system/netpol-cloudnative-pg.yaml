@@ -27,9 +27,6 @@ spec:
         - matchLabels:
             cnpg.io/cluster: shared-pg
             io.kubernetes.pod.namespace: database
-        - matchLabels:
-            cnpg.io/cluster: rss-pg
-            io.kubernetes.pod.namespace: rss
       toPorts:
         - ports:
             - port: "8000"

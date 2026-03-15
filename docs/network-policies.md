@@ -61,7 +61,6 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Harbor core (harbor) | Kanidm (kanidm) | 8443 | OIDC token exchange |
 | Horenso (horenso) | shared-pg (database) | 5432 | Horenso database |
 | shared-pg (database) | Cloudflare R2 (external) | 443 | CNPG barman backup/WAL archiving |
-| CloudNative-PG (cnpg-system) | rss-pg (rss) | 8000 | Health probes |
 
 ## Excluded Pods (hostNetwork: true)
 
@@ -163,7 +162,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo), nextcloud (nextcloud), harbor-core (harbor), harbor-exporter (harbor), harbor-jobservice (harbor), seaweedfs-filer (seaweedfs), horenso (horenso) → 5432; self → 5432/8000 (replication); cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000, *.r2.cloudflarestorage.com:443 (backup) |
+| **shared-pg** | grafana (monitoring), argo-workflows-controller (argo), argo-workflows-server (argo), nextcloud (nextcloud), harbor-core (harbor), harbor-exporter (harbor), harbor-jobservice (harbor), seaweedfs-filer (seaweedfs), horenso (horenso), rss-server/rss-ui/rss-fetcher/rss-cleaner/rss-migration (rss) → 5432; self → 5432/8000 (replication); cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000, *.r2.cloudflarestorage.com:443 (backup) |
 
 ## cert-manager (4 policies)
 
@@ -184,7 +183,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **cloudnative-pg** | kube-apiserver/host/remote-node → 9443 | kube-apiserver, shared-pg (database):8000, rss-pg (rss):8000 |
+| **cloudnative-pg** | kube-apiserver/host/remote-node → 9443 | kube-apiserver, shared-pg (database):8000 |
 
 ## external-secrets (2 policies)
 
@@ -251,17 +250,16 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **nextcloud** | ingress, cloudflared (argocd) → 80 | kube-apiserver, shared-pg (database):5432, seaweedfs-filer (seaweedfs):8333, kanidm (kanidm):8443, valkey:6379, *.nextcloud.com:443 (app store/updates), github.com:443 + *.githubusercontent.com:443 + *.github.com:443 (app store downloads) |
 | **valkey** | nextcloud → 6379 | (none) |
 
-## rss (7 policies)
+## rss (5 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **rss-pg** | self → 5432/8000; rss-server/rss-ui/rss-fetcher/rss-cleaner/rss-migration → 5432; cloudnative-pg (cnpg-system), host → 8000 (probes) | kube-apiserver, self:5432/8000 |
-| **rss-server** | oauth2-proxy-rss (oauth2-proxy) → 80 | rss-pg:5432 |
-| **rss-ui** | oauth2-proxy-rss (oauth2-proxy) → 80 | rss-pg:5432 |
-| **rss-fetcher** | rss-cron → 80 | rss-pg:5432, world:443 |
-| **rss-cleaner** | rss-cron → 80 | rss-pg:5432 |
+| **rss-server** | oauth2-proxy-rss (oauth2-proxy) → 80 | shared-pg (database):5432 |
+| **rss-ui** | oauth2-proxy-rss (oauth2-proxy) → 80 | shared-pg (database):5432 |
+| **rss-fetcher** | rss-cron → 80 | shared-pg (database):5432, world:443 |
+| **rss-cleaner** | rss-cron → 80 | shared-pg (database):5432 |
 | **rss-cron** | (none) | rss-fetcher:80, rss-cleaner:80 |
-| **rss-migration** (Job) | (none) | rss-pg:5432 |
+| **rss-migration** (Job) | (none) | shared-pg (database):5432 |
 
 ## horenso (1 policy)
 

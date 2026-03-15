@@ -40,6 +40,21 @@ spec:
         - matchLabels:
             app: horenso
             io.kubernetes.pod.namespace: horenso
+        - matchLabels:
+            core.spinkube.dev/app-name: rss-server
+            io.kubernetes.pod.namespace: rss
+        - matchLabels:
+            core.spinkube.dev/app-name: rss-ui
+            io.kubernetes.pod.namespace: rss
+        - matchLabels:
+            core.spinkube.dev/app-name: rss-fetcher
+            io.kubernetes.pod.namespace: rss
+        - matchLabels:
+            core.spinkube.dev/app-name: rss-cleaner
+            io.kubernetes.pod.namespace: rss
+        - matchLabels:
+            app: rss-migration
+            io.kubernetes.pod.namespace: rss
       toPorts:
         - ports:
             - port: "5432"

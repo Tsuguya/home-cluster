@@ -269,10 +269,12 @@ spec:
               --frontend dockerfile.v0 \
               --local context=/workspace/{{inputs.parameters.image-dir}} \
               --local dockerfile=/workspace/{{inputs.parameters.image-dir}} \
-              --output 'type=image,"name=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:latest,registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}}",push=true' \
+              --output type=image,name=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:latest,push=true \
+              --output type=image,name=registry.infra.tgy.io/tools/{{inputs.parameters.image-dir}}:{{workflow.parameters.commit-sha}},push=true \
               --metadata-file /workspace/metadata.json
             cat /workspace/metadata.json
             grep -oE 'sha256:[a-f0-9]{64}' /workspace/metadata.json | head -1 > /workspace/digest
+            cat /workspace/digest
         env:
           - name: DOCKER_CONFIG
             value: /docker-config

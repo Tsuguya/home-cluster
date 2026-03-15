@@ -37,16 +37,13 @@ spec:
 
               post_event() {
                 local title="$1" body="$2" priority="${3:-normal}"
+                PAYLOAD=$(jq -n \
+                  --arg title "$title" \
+                  --arg desc "$body" \
+                  --arg prio "$priority" \
+                  '{title:$title,description:$desc,category:"investigate",priority:$prio,source:"cluster-observe",tags:["observe","auto"],status:"approved",decision:"auto",decision_reason:"定期観測で検出された異常"}')
                 wget -qO /dev/null --header="Content-Type: application/json" \
-                  --post-data="{\"title\":\"$title\",\"description\":\"$body\",\"category\":\"investigate\",\"priority\":\"$priority\",\"source\":\"cluster-observe\",\"tags\":[\"observe\",\"auto\"],\"status\":\"approved\",\"decision\":\"auto\",\"decision_reason\":\"定期観測で検出された異常\"}" \
-                  "$HORENSO/tasks"
-              }
-
-              post_report() {
-                local body="$1"
-                wget -qO /dev/null --header="Content-Type: application/json" \
-                  --post-data="{\"type\":\"report\",\"source\":\"cluster-observe\",\"body\":\"$body\",\"tags\":[\"observe\"]}" \
-                  "$HORENSO/posts"
+                  --post-data="$PAYLOAD" "$HORENSO/tasks"
               }
 
               # 1. Pod restarts (>5 in any pod)

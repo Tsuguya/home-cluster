@@ -9,20 +9,24 @@ spec:
       eventSourceName: task-dispatch
       eventName: task
       filters:
-        script: |
-          local json = require("dkjson")
-          local body = json.decode(event.body)
-          local cat = body.category or ""
-          return cat == "investigate" or cat == "observe" or cat == "operate"
+        data:
+          - path: body.category
+            type: string
+            value:
+              - investigate
+              - observe
+              - operate
     - name: task-write
       eventSourceName: task-dispatch
       eventName: task
       filters:
-        script: |
-          local json = require("dkjson")
-          local body = json.decode(event.body)
-          local cat = body.category or ""
-          return cat == "modify_manifest" or cat == "modify_infra" or cat == "modify_cloudflare"
+        data:
+          - path: body.category
+            type: string
+            value:
+              - modify_manifest
+              - modify_infra
+              - modify_cloudflare
   triggers:
     - template:
         conditions: task-readonly

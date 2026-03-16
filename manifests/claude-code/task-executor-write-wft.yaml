@@ -124,17 +124,27 @@ spec:
             - タスク説明にリポジトリとブランチがあればそれを clone して作業する
             - 変更したら commit して push する
             - PR がある場合は PR ブランチに push する（新しい PR は作らない）
-            - 結果のサマリーを出力する"
+            - 最後に結果のサマリーを /tmp/result.txt にテキストで書き出す（Write ツール使用）"
 
-            RESULT=$(claude -p \
+            claude -p \
+              --verbose \
+              --output-format stream-json \
               --dangerously-skip-permissions \
               --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
               --model sonnet \
-              "$PROMPT" 2>&1) || true
+              "$PROMPT" || true
+
+            RESULT=""
+            if [ -f /tmp/result.txt ]; then
+              RESULT=$(head -c 3800 /tmp/result.txt)
+            fi
+            if [ -z "$RESULT" ]; then
+              RESULT="結果ファイルが生成されませんでした。Argo UI でログを確認してください。"
+            fi
 
             PAYLOAD=$(jq -n \
               --arg status "completed" \
-              --arg result "$(echo "$RESULT" | tail -c 3800)" \
+              --arg result "$RESULT" \
               '{status:$status,result:$result}')
             curl -s -X PATCH \
               -H "Content-Type: application/json" \

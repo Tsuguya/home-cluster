@@ -81,17 +81,27 @@ spec:
             ## ルール
             - 調査結果・実行結果を明確に報告する
             - 変更が必要な場合は具体的な手順を提示する（直接変更しない）
-            - 最後に結果のサマリーを出力する"
+            - 最後に結果のサマリーを /tmp/result.txt にテキストで書き出す（Write ツール使用）"
 
-            RESULT=$(claude -p \
+            claude -p \
+              --verbose \
+              --output-format stream-json \
               --dangerously-skip-permissions \
-              --allowedTools "Bash(readonly=true),Read,Grep,Glob" \
+              --allowedTools "Bash(readonly=true),Read,Write,Grep,Glob" \
               --model sonnet \
-              "$PROMPT" 2>&1) || true
+              "$PROMPT" || true
+
+            RESULT=""
+            if [ -f /tmp/result.txt ]; then
+              RESULT=$(head -c 3800 /tmp/result.txt)
+            fi
+            if [ -z "$RESULT" ]; then
+              RESULT="結果ファイルが生成されませんでした。Argo UI でログを確認してください。"
+            fi
 
             PAYLOAD=$(jq -n \
               --arg status "completed" \
-              --arg result "$(echo "$RESULT" | head -c 3800)" \
+              --arg result "$RESULT" \
               '{status:$status,result:$result}')
             curl -s -X PATCH \
               -H "Content-Type: application/json" \

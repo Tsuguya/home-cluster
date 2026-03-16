@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: etcd-defrag-executor
+  namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: etcd-defrag-executor
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-edit
+subjects:
+  - kind: ServiceAccount
+    name: etcd-defrag-executor
+    namespace: argo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: etcd-defrag
+  namespace: argo
+spec:
+  activeDeadlineSeconds: 300
+  serviceAccountName: etcd-defrag-executor
+  entrypoint: main
+  volumes:
+    - name: talosconfig
+      secret:
+        secretName: talosconfig
+        defaultMode: 0444
+  templates:
+    - name: main
+      metadata:
+        labels:
+          backup-workflow: "true"
+      container:
+        image: registry.infra.tgy.io/tools/talos-tools:latest
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 128Mi
+        command: [sh, -c]
+        args:
+          - |
+            set -euo pipefail
+
+            NODES="192.168.10.230 192.168.10.231 192.168.10.232"
+
+            for NODE in $NODES; do
+              echo "=== Defragmenting etcd on ${NODE} ==="
+              talosctl -e "${NODE}" -n "${NODE}" etcd defrag
+              echo "Done: ${NODE}"
+            done
+
+            echo "=== All nodes defragmented ==="
+        env:
+          - name: TALOSCONFIG
+            value: /etc/talos/config
+        volumeMounts:
+          - name: talosconfig
+            mountPath: /etc/talos
+            readOnly: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: etcd-defrag
+  namespace: argo
+spec:
+  schedules:
+    - "0 3 * * 0"
+  timezone: Asia/Tokyo
+  concurrencyPolicy: Replace
+  workflowSpec:
+    workflowTemplateRef:
+      name: etcd-defrag

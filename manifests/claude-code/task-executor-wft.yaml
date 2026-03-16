@@ -57,9 +57,10 @@ spec:
             HORENSO="http://horenso.horenso.svc.cluster.local:3000"
 
             # Mark task as running
-            wget -qO /dev/null --header="Content-Type: application/json" \
-              --post-data="{\"status\":\"running\"}" \
-              --method=PATCH "$HORENSO/tasks/$TASK_ID" 2>/dev/null || true
+            curl -s -X PATCH \
+              -H "Content-Type: application/json" \
+              -d '{"status":"running"}' \
+              "$HORENSO/tasks/$TASK_ID" > /dev/null 2>&1 || true
 
             PROMPT="あなたは Kubernetes クラスタの運用エージェントです。以下のタスクを実行してください。
 
@@ -144,9 +145,10 @@ spec:
               --arg status "$TASK_STATUS" \
               --arg result "$REPORT" \
               '{status:$status,result:$result}')
-            wget -qO /dev/null --header="Content-Type: application/json" \
-              --post-data="$PAYLOAD" --method=PATCH \
-              "$HORENSO/tasks/$TASK_ID" 2>/dev/null || true
+            curl -s -X PATCH \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" \
+              "$HORENSO/tasks/$TASK_ID" || true
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

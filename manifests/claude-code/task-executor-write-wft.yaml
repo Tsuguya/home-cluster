@@ -1,0 +1,168 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: task-executor-write
+  namespace: claude-code
+spec:
+  activeDeadlineSeconds: 1800
+  serviceAccountName: claude-code-executor
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: task-id
+      - name: task-title
+      - name: task-description
+      - name: task-category
+  podMetadata:
+    labels:
+      claude-code: "true"
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+    - name: workspace
+      emptyDir: {}
+    - name: claude-home
+      emptyDir: {}
+    - name: github-token
+      emptyDir: {}
+    - name: github-app-secret
+      secret:
+        secretName: github-app-private-key
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - wn-03
+  templates:
+    - name: main
+      steps:
+        - - name: execute
+            template: execute
+
+    - name: execute
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      container:
+        image: registry.infra.tgy.io/tools/claude-code:latest
+        command: [sh, -c]
+        args:
+          - |
+            TASK_ID='{{workflow.parameters.task-id}}'
+            TASK_TITLE='{{workflow.parameters.task-title}}'
+            TASK_DESC='{{workflow.parameters.task-description}}'
+            TASK_CAT='{{workflow.parameters.task-category}}'
+            HORENSO="http://horenso.horenso.svc.cluster.local:3000"
+            export GITHUB_TOKEN=$(cat /github-token/token)
+            export GH_TOKEN=$GITHUB_TOKEN
+
+            curl -s -X PATCH \
+              -H "Content-Type: application/json" \
+              -d '{"status":"running"}' \
+              "$HORENSO/tasks/$TASK_ID" > /dev/null 2>&1 || true
+
+            cd /workspace
+            git config --global --add safe.directory /workspace
+
+            PROMPT="あなたは Kubernetes クラスタの運用エージェントです。以下のタスクを実行してください。
+
+            ## タスク情報
+            - ID: ${TASK_ID}
+            - タイトル: ${TASK_TITLE}
+            - カテゴリ: ${TASK_CAT}
+            - 説明:
+            ${TASK_DESC}
+
+            ## クラスタ情報
+            - CNI: Cilium（全 Pod にデフォルト deny の CiliumNetworkPolicy 適用）
+            - GitOps: ArgoCD（home-cluster リポジトリ、selfHeal: true, prune: true）
+            - Observability: Prometheus + Loki + Hubble
+            - ノード: cp-01/02/03 (control plane), wn-01/02/03 (worker)
+            - PUBLIC リポジトリ — 機密値を絶対にコミットしない
+
+            ## 使えるツール
+            - kubectl, helm, gh（GitHub CLI）
+            - git clone/checkout/commit/push
+            - ファイル編集
+
+            ## ルール
+            - タスク説明にリポジトリとブランチがあればそれを clone して作業する
+            - 変更したら commit して push する
+            - PR がある場合は PR ブランチに push する（新しい PR は作らない）
+            - 結果のサマリーを出力する"
+
+            RESULT=$(claude -p \
+              --dangerously-skip-permissions \
+              --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
+              --model sonnet \
+              "$PROMPT" 2>&1) || true
+
+            PAYLOAD=$(jq -n \
+              --arg status "completed" \
+              --arg result "$(echo "$RESULT" | tail -c 3800)" \
+              '{status:$status,result:$result}')
+            curl -s -X PATCH \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" \
+              "$HORENSO/tasks/$TASK_ID" || true
+        env:
+          - name: HOME
+            value: /claude-home
+          - name: CLAUDE_CODE_OAUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: claude-code-token
+                key: credential
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+          - name: claude-home
+            mountPath: /claude-home
+          - name: github-token
+            mountPath: /github-token
+            readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 4Gi

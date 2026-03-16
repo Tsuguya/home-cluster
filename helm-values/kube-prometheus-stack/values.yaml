@@ -219,6 +219,7 @@ grafana:
 
 alertmanager:
   alertmanagerSpec:
+    hostNetwork: false
     logFormat: json
     automountServiceAccountToken: false
     alertmanagerConfiguration:

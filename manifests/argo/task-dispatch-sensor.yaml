@@ -48,6 +48,7 @@ spec:
                 dataKey: body.category
               dest: spec.arguments.parameters.3.value
   template:
+    serviceAccountName: task-dispatch-sensor
     securityContext:
       runAsNonRoot: true
       runAsUser: 1000

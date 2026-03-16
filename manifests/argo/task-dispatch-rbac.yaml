@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: task-dispatch-sensor
+  namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: task-dispatch-submit
+  namespace: claude-code
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["workflows", "workflowtemplates"]
+    verbs: ["get", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: task-dispatch-submit
+  namespace: claude-code
+subjects:
+  - kind: ServiceAccount
+    name: task-dispatch-sensor
+    namespace: argo
+roleRef:
+  kind: Role
+  name: task-dispatch-submit
+  apiGroup: rbac.authorization.k8s.io

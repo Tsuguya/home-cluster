@@ -7,7 +7,6 @@ spec:
   activeDeadlineSeconds: 1800
   serviceAccountName: claude-code-sre
   entrypoint: main
-  onExit: report
   arguments:
     parameters:
       - name: task-id
@@ -20,9 +19,6 @@ spec:
   securityContext:
     seccompProfile:
       type: RuntimeDefault
-  volumes:
-    - name: report
-      emptyDir: {}
   affinity:
     nodeAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -87,11 +83,20 @@ spec:
             - 変更が必要な場合は具体的な手順を提示する（直接変更しない）
             - 最後に結果のサマリーを出力する"
 
-            claude -p \
+            RESULT=$(claude -p \
               --dangerously-skip-permissions \
               --allowedTools "Bash(readonly=true),Read,Grep,Glob" \
               --model sonnet \
-              "$PROMPT" | tee /report/result.txt
+              "$PROMPT" 2>&1) || true
+
+            PAYLOAD=$(jq -n \
+              --arg status "completed" \
+              --arg result "$(echo "$RESULT" | head -c 3800)" \
+              '{status:$status,result:$result}')
+            curl -s -X PATCH \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" \
+              "$HORENSO/tasks/$TASK_ID" || true
         env:
           - name: HOME
             value: /tmp
@@ -104,62 +109,9 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             drop: [ALL]
-        volumeMounts:
-          - name: report
-            mountPath: /report
         resources:
           requests:
             cpu: 100m
             memory: 512Mi
           limits:
             memory: 4Gi
-
-    - name: report
-      securityContext:
-        runAsUser: 65532
-        runAsNonRoot: true
-      container:
-        image: registry.infra.tgy.io/tools/argo-tools:latest
-        command: [sh, -c]
-        args:
-          - |
-            TASK_ID='{{workflow.parameters.task-id}}'
-            STATUS="{{workflow.status}}"
-            HORENSO="http://horenso.horenso.svc.cluster.local:3000"
-
-            REPORT=""
-            if [ -f /report/result.txt ]; then
-              REPORT=$(head -c 3800 /report/result.txt)
-            fi
-            if [ -z "$REPORT" ]; then
-              REPORT="結果を取得できませんでした。Argo UI でログを確認してください。"
-            fi
-
-            if [ "$STATUS" = "Succeeded" ]; then
-              TASK_STATUS="completed"
-            else
-              TASK_STATUS="failed"
-            fi
-
-            PAYLOAD=$(jq -n \
-              --arg status "$TASK_STATUS" \
-              --arg result "$REPORT" \
-              '{status:$status,result:$result}')
-            curl -s -X PATCH \
-              -H "Content-Type: application/json" \
-              -d "$PAYLOAD" \
-              "$HORENSO/tasks/$TASK_ID" || true
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: [ALL]
-        volumeMounts:
-          - name: report
-            mountPath: /report
-            readOnly: true
-        resources:
-          requests:
-            cpu: 10m
-            memory: 16Mi
-          limits:
-            memory: 128Mi

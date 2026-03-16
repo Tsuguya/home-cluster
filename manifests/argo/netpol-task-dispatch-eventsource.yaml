@@ -1,0 +1,32 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: task-dispatch-eventsource
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      eventsource-name: task-dispatch
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: horenso
+            io.kubernetes.pod.namespace: horenso
+      toPorts:
+        - ports:
+            - port: "12002"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            eventbus-name: default
+      toPorts:
+        - ports:
+            - port: "4222"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP

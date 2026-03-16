@@ -1,0 +1,69 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: task-dispatch
+  namespace: argo
+spec:
+  dependencies:
+    - name: task
+      eventSourceName: task-dispatch
+      eventName: task
+  triggers:
+    - template:
+        conditions: task
+        name: execute-task
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: task-exec-
+                namespace: claude-code
+              spec:
+                workflowTemplateRef:
+                  name: task-executor
+                arguments:
+                  parameters:
+                    - name: task-id
+                    - name: task-title
+                    - name: task-description
+                    - name: task-category
+          parameters:
+            - src:
+                dependencyName: task
+                dataKey: body.id
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: task
+                dataKey: body.title
+              dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: task
+                dataKey: body.description
+              dest: spec.arguments.parameters.2.value
+            - src:
+                dependencyName: task
+                dataKey: body.category
+              dest: spec.arguments.parameters.3.value
+  template:
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    container:
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi

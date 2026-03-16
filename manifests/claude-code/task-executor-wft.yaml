@@ -1,0 +1,163 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: task-executor
+  namespace: claude-code
+spec:
+  activeDeadlineSeconds: 1800
+  serviceAccountName: claude-code-sre
+  entrypoint: main
+  onExit: report
+  arguments:
+    parameters:
+      - name: task-id
+      - name: task-title
+      - name: task-description
+      - name: task-category
+  podMetadata:
+    labels:
+      claude-code: "true"
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+    - name: report
+      emptyDir: {}
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - wn-03
+  templates:
+    - name: main
+      steps:
+        - - name: execute
+            template: execute
+
+    - name: execute
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      container:
+        image: registry.infra.tgy.io/tools/claude-code:latest
+        command: [sh, -c]
+        args:
+          - |
+            TASK_ID='{{workflow.parameters.task-id}}'
+            TASK_TITLE='{{workflow.parameters.task-title}}'
+            TASK_DESC='{{workflow.parameters.task-description}}'
+            TASK_CAT='{{workflow.parameters.task-category}}'
+            HORENSO="http://horenso.horenso.svc.cluster.local:3000"
+
+            # Mark task as running
+            wget -qO /dev/null --header="Content-Type: application/json" \
+              --post-data="{\"status\":\"running\"}" \
+              --method=PATCH "$HORENSO/tasks/$TASK_ID" 2>/dev/null || true
+
+            PROMPT="あなたは Kubernetes クラスタの運用エージェントです。以下のタスクを実行してください。
+
+            ## タスク情報
+            - ID: ${TASK_ID}
+            - タイトル: ${TASK_TITLE}
+            - カテゴリ: ${TASK_CAT}
+            - 説明: ${TASK_DESC}
+
+            ## クラスタ情報
+            - CNI: Cilium（全 Pod にデフォルト deny の CiliumNetworkPolicy 適用）
+            - GitOps: ArgoCD（home-cluster リポジトリ、selfHeal: true）
+            - Observability: Prometheus + Loki + Hubble
+            - ノード: cp-01/02/03 (control plane), wn-01/02/03 (worker)
+
+            ## 使えるツール
+            - kubectl（読み取り専用）
+            - hubble observe（kubectl exec -n kube-system <cilium-pod> -- hubble observe）
+            - logcli（Loki: http://loki-gateway.monitoring:80）
+            - helm
+
+            ## ルール
+            - 調査結果・実行結果を明確に報告する
+            - 変更が必要な場合は具体的な手順を提示する（直接変更しない）
+            - 最後に結果のサマリーを出力する"
+
+            claude -p \
+              --dangerously-skip-permissions \
+              --allowedTools "Bash(readonly=true),Read,Grep,Glob" \
+              --model sonnet \
+              "$PROMPT" | tee /report/result.txt
+        env:
+          - name: HOME
+            value: /tmp
+          - name: CLAUDE_CODE_OAUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: claude-code-token
+                key: credential
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: report
+            mountPath: /report
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 4Gi
+
+    - name: report
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+      container:
+        image: registry.infra.tgy.io/tools/argo-tools:latest
+        command: [sh, -c]
+        args:
+          - |
+            TASK_ID='{{workflow.parameters.task-id}}'
+            STATUS="{{workflow.status}}"
+            HORENSO="http://horenso.horenso.svc.cluster.local:3000"
+
+            REPORT=""
+            if [ -f /report/result.txt ]; then
+              REPORT=$(head -c 3800 /report/result.txt)
+            fi
+            if [ -z "$REPORT" ]; then
+              REPORT="結果を取得できませんでした。Argo UI でログを確認してください。"
+            fi
+
+            if [ "$STATUS" = "Succeeded" ]; then
+              TASK_STATUS="completed"
+            else
+              TASK_STATUS="failed"
+            fi
+
+            PAYLOAD=$(jq -n \
+              --arg status "$TASK_STATUS" \
+              --arg result "$REPORT" \
+              '{status:$status,result:$result}')
+            wget -qO /dev/null --header="Content-Type: application/json" \
+              --post-data="$PAYLOAD" --method=PATCH \
+              "$HORENSO/tasks/$TASK_ID" 2>/dev/null || true
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: report
+            mountPath: /report
+            readOnly: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 128Mi

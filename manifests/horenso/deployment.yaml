@@ -42,6 +42,8 @@ spec:
                 secretKeyRef:
                   name: discord-webhook-argo
                   key: url
+            - name: TASK_DISPATCH_URL
+              value: "http://task-dispatch-eventsource-svc.argo:12002/task"
             - name: NODE_EXTRA_CA_CERTS
               value: /etc/ssl/pg/ca.crt
           securityContext:

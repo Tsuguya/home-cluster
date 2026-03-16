@@ -25,6 +25,10 @@ spec:
             sensor-name: images-build
         - matchLabels:
             sensor-name: alert-investigate
+        - matchLabels:
+            eventsource-name: task-dispatch
+        - matchLabels:
+            sensor-name: task-dispatch
       toPorts:
         - ports:
             - port: "4222"

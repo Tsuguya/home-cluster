@@ -62,6 +62,10 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Horenso (horenso) | shared-pg (database) | 5432 | Horenso database |
 | shared-pg (database) | Cloudflare R2 (external) | 443 | CNPG barman backup/WAL archiving |
 | CloudNative-PG (cnpg-system) | rss-pg (rss) | 8000 | Health probes |
+| Workflow pods (claude-code) | Prometheus (monitoring) | 9090 | Metrics query |
+| Workflow pods (claude-code) | Horenso (horenso) | 3000 | Task dispatch |
+| notifications-controller (argocd) | Horenso (horenso) | 3000 | Alertmanager notifications |
+| Horenso (horenso) | task-dispatch-eventsource (argo) | 12002 | Task dispatch webhook |
 
 ## Excluded Pods (hostNetwork: true)
 
@@ -84,11 +88,11 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **repo-server** | server, app-controller → 8081 | github.com + ghcr.io + {argoproj,grafana,oauth2-proxy,aquasecurity,kyverno,cloudnative-pg,kubernetes-sigs,prometheus-community,seaweedfs,stakater}.github.io + *.githubusercontent.com + charts.jetstack.io + helm.cilium.io + helm.goharbor.io + charts.external-secrets.io + external-secrets.io:443, redis:6379 |
 | **redis** | server, repo-server, app-controller → 6379 | (none) |
 | **applicationset-controller** | (deny world) | kube-apiserver |
-| **notifications-controller** | (deny world) | kube-apiserver, discord.com:443 |
+| **notifications-controller** | (deny world) | kube-apiserver, discord.com:443, horenso (horenso):3000 |
 | **redis-secret-init** (Job) | (deny world) | kube-apiserver |
 | **cloudflared** | (deny world) | *.v2.argotunnel.com + cftunnel.com + h2.cftunnel.com + quic.cftunnel.com:443/7844, server:8080, eventsource (argo):12000, kanidm (kanidm):8443, nextcloud (nextcloud):80, harbor-nginx (harbor):8443 |
 
-## argo (12 policies)
+## argo (13 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
@@ -96,9 +100,10 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **workflows-controller** | host → 6060 | kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
 | **alertmanager-eventsource** | alertmanager (monitoring) → 12001 | kube-apiserver, eventbus:4222 |
-| **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate) | (deny world) | kube-apiserver, eventbus:4222, workflows-server:2746 |
+| **task-dispatch-eventsource** | horenso (horenso) → 12002 | kube-apiserver, eventbus:4222 |
+| **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate, task-dispatch) | (deny world) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **events-controller** | host → 8081 | kube-apiserver, eventbus:8222 |
-| **eventbus** | eventsource (github-webhook), alertmanager-eventsource (alertmanager-webhook), sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
+| **eventbus** | eventsource (github-webhook), alertmanager-eventsource (alertmanager-webhook), task-dispatch-eventsource (task-dispatch), sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate, task-dispatch) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
 | **workflow-pods** (backup-workflow, pxe-sync, talos-build, kanidm-repl-exchange, kanidm-backup除外) | (deny world) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
 | **etcd-backup** (backup-workflow=true) | (deny world) | kube-apiserver:6443/50000 (Talos apid), *.r2.cloudflarestorage.com:443, seaweedfs-filer (seaweedfs):8333 |
 | **pxe-sync** (pxe-sync=true) | (deny world) | kube-apiserver, github.com + api.github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.5.240):2049 (NFS) |
@@ -109,7 +114,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **prometheus** | grafana, tempo → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, tetragon-operator (kube-system):2113, seaweedfs (seaweedfs):9327, trivy-operator (trivy-system):8080, harbor (harbor):8001, host/remote-node:10250/9100/2379/2381/10257/10259/9965/2112 |
+| **prometheus** | grafana, tempo, claude-code (claude-code) → 9090 | kube-apiserver, alertmanager:9093/8080, kube-state-metrics:8080, operator:10250, grafana:3000, tempo:3200 (scrape), coredns (kube-system):9153, tetragon-operator (kube-system):2113, seaweedfs (seaweedfs):9327, trivy-operator (trivy-system):8080, harbor (harbor):8001, host/remote-node:10250/9100/2379/2381/10257/10259/9965/2112 |
 | **alertmanager** | prometheus → 9093/8080 | discord.com:443, discordapp.com:443, alertmanager-eventsource (argo):12001 |
 | **grafana** | ingress → 3000 (L7 HTTP); prometheus → 3000 | kube-apiserver, prometheus:9090, loki-gateway:8080, tempo:3200, shared-pg (database):5432, kanidm (kanidm):8443 |
 | **kube-state-metrics** | prometheus → 8080 | kube-apiserver |
@@ -131,7 +136,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **claude-code** (claude-code=true) | (deny world) | kube-apiserver, api.anthropic.com + github.com + api.github.com + *.githubusercontent.com + index.crates.io + static.crates.io + registry.npmjs.org + discord.com + gitmcp.io :443, seaweedfs-filer (seaweedfs):8333, loki-gateway (monitoring):8080 |
+| **claude-code** (claude-code=true) | (deny world) | kube-apiserver, api.anthropic.com + github.com + api.github.com + *.githubusercontent.com + index.crates.io + static.crates.io + registry.npmjs.org + discord.com + gitmcp.io :443, seaweedfs-filer (seaweedfs):8333, loki-gateway (monitoring):8080, prometheus (monitoring):9090, horenso (horenso):3000 |
 
 ## image-build (1 policy)
 
@@ -267,7 +272,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **horenso** | ingress/host/remote-node → 3000 | shared-pg (database):5432, discord.com + *.discord.com:443 |
+| **horenso** | ingress/host/remote-node → 3000; argocd-notifications-controller (argocd) → 3000; claude-code (claude-code) → 3000 | shared-pg (database):5432, discord.com + *.discord.com:443, task-dispatch-eventsource (argo):12002 |
 
 ## spin-operator (1 policy)
 

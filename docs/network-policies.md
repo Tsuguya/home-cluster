@@ -53,6 +53,8 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Cloudflared (argocd) | Nextcloud (nextcloud) | 80 | Cloudflare Tunnel → Nextcloud |
 | Cloudflared (argocd) | Harbor nginx (harbor) | 8443 | Cloudflare Tunnel → Harbor |
 | Workflow pods (image-build) | Harbor nginx (harbor) | 8443 | Internal image push |
+| Kyverno (kyverno) | Harbor nginx (harbor) | 8443 | Image signature verification |
+| scan-jobs (trivy-system) | Harbor nginx (harbor) | 8443 | Image scan from Harbor registry |
 | SeaweedFS filer (seaweedfs) | shared-pg (database) | 5432 | Filer metadata (postgres2) |
 | Harbor core (harbor) | shared-pg (database) | 5432 | Harbor database |
 | Harbor exporter (harbor) | shared-pg (database) | 5432 | Metrics collection |

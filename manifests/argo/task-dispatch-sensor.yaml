@@ -27,6 +27,9 @@ spec:
               - modify_manifest
               - modify_infra
               - modify_cloudflare
+    - name: adjudicate
+      eventSourceName: task-dispatch
+      eventName: adjudicate
   triggers:
     - template:
         conditions: task-readonly
@@ -104,6 +107,41 @@ spec:
                 dependencyName: task-write
                 dataKey: body.category
               dest: spec.arguments.parameters.3.value
+    - template:
+        conditions: adjudicate
+        name: execute-adjudicate
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: adjudicate-
+                namespace: claude-code
+              spec:
+                workflowTemplateRef:
+                  name: adjudicator
+                arguments:
+                  parameters:
+                    - name: context
+                    - name: source-workflow
+                    - name: source-namespace
+          parameters:
+            - src:
+                dependencyName: adjudicate
+                dataKey: body.context
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: adjudicate
+                dataKey: body.source_workflow
+                value: ""
+              dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: adjudicate
+                dataKey: body.source_namespace
+                value: "claude-code"
+              dest: spec.arguments.parameters.2.value
   template:
     serviceAccountName: task-dispatch-sensor
     securityContext:

@@ -12,6 +12,9 @@ spec:
         - matchLabels:
             app: horenso
             io.kubernetes.pod.namespace: horenso
+        - matchLabels:
+            claude-code: "true"
+            io.kubernetes.pod.namespace: claude-code
       toPorts:
         - ports:
             - port: "12002"

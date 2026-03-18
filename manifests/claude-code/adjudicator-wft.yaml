@@ -1,0 +1,260 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: adjudicator
+  namespace: claude-code
+spec:
+  activeDeadlineSeconds: 900
+  serviceAccountName: claude-code-sre
+  entrypoint: main
+  onExit: notify
+  arguments:
+    parameters:
+      - name: context
+      - name: source-workflow
+        default: ""
+      - name: source-namespace
+        default: "claude-code"
+  podMetadata:
+    labels:
+      claude-code: "true"
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+    - name: report
+      emptyDir: {}
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - wn-03
+  templates:
+    - name: main
+      steps:
+        - - name: adjudicate
+            template: adjudicate
+        - - name: act-on-decision
+            template: act-on-decision
+
+    - name: adjudicate
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      container:
+        image: registry.infra.tgy.io/tools/claude-code:latest
+        command: [sh, -c]
+        args:
+          - |
+            CONTEXT='{{workflow.parameters.context}}'
+
+            PROMPT="あなたは Kubernetes クラスタ運用の裁定エージェントです。
+            他のエージェントや自動化プロセスから判断を求められています。
+            あなたの役割は、提案された操作の安全性とリスクを評価し、承認・却下の判断を下すことです。
+
+            ## 裁定依頼内容
+            ${CONTEXT}
+
+            ## 判断基準
+            1. セキュリティ: 機密情報の漏洩リスク、権限昇格、ネットワークポリシー違反はないか
+            2. 可用性: 既存サービスへの影響、ダウンタイムの可能性はないか
+            3. 可逆性: 問題発生時にロールバック可能か
+            4. GitOps 整合性: ArgoCD の selfHeal/prune と矛盾しないか
+            5. スコープ: 依頼された範囲を超えた変更がないか
+
+            ## 調査
+            必ずクラスタの現在の状態を確認してから判断すること。
+            - kubectl で関連リソースの状態を確認
+            - 必要に応じて Hubble で通信状況を確認
+            - 必要に応じて Loki でログを確認（logcli, endpoint: http://loki-gateway.monitoring:80）
+
+            ## クラスタ情報
+            - CNI: Cilium（全 Pod にデフォルト deny の CiliumNetworkPolicy 適用）
+            - GitOps: ArgoCD（home-cluster リポジトリ、selfHeal: true, prune: true）
+            - Observability: Prometheus + Loki + Hubble
+            - ノード: cp-01/02/03 (control plane), wn-01/02/03 (worker)
+            - PUBLIC リポジトリ — 機密値を絶対にコミットしない
+
+            ## 出力
+            調査・検討の後、最終判断を以下のフォーマットで /report/result.txt に Write ツールで書き出してください。
+            フォーマットは厳密に守ること（各行の先頭にスペースを入れない）:
+
+            DECISION: APPROVE または REJECT
+            REASON: 判断の根拠（簡潔に）
+            CONDITIONS: 承認する場合の条件や注意事項（あれば。なければ「なし」）
+            RISK_LEVEL: LOW / MEDIUM / HIGH"
+
+            claude -p \
+              --output-format stream-json \
+              --dangerously-skip-permissions \
+              --allowedTools "Bash(readonly=true),Read,Write,Grep,Glob" \
+              --model sonnet \
+              --max-turns 20 \
+              "$PROMPT" || true
+
+            if [ ! -f /report/result.txt ]; then
+              cat > /report/result.txt <<'FALLBACK'
+            DECISION: REJECT
+            REASON: 裁定エージェントが結果を生成できませんでした
+            CONDITIONS: Argo UI でログを確認してください
+            RISK_LEVEL: HIGH
+            FALLBACK
+            fi
+        env:
+          - name: HOME
+            value: /tmp
+          - name: CLAUDE_CODE_OAUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: claude-code-token
+                key: credential
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: report
+            mountPath: /report
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 4Gi
+
+    - name: act-on-decision
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      container:
+        image: registry.infra.tgy.io/tools/argo-tools:latest
+        command: [sh, -c]
+        args:
+          - |
+            SOURCE_WF='{{workflow.parameters.source-workflow}}'
+            SOURCE_NS='{{workflow.parameters.source-namespace}}'
+
+            if [ -z "$SOURCE_WF" ]; then
+              echo "No source workflow specified, skipping resume/stop"
+              exit 0
+            fi
+
+            DECISION=$(grep '^DECISION:' /report/result.txt | head -1 | awk '{print $2}')
+
+            if [ "$DECISION" = "APPROVE" ]; then
+              echo "APPROVE: resuming workflow $SOURCE_WF in $SOURCE_NS"
+              WF_JSON=$(kubectl -n "$SOURCE_NS" get wf "$SOURCE_WF" -o json 2>&1)
+              if [ $? -ne 0 ]; then
+                echo "Failed to get workflow: $WF_JSON"
+                exit 0
+              fi
+              SUSPEND_NODES=$(echo "$WF_JSON" | jq -r '[.status.nodes // {} | to_entries[] | select(.value.type == "Suspend" and .value.phase == "Running")] | length')
+              if [ "$SUSPEND_NODES" = "0" ]; then
+                echo "No suspended nodes found in $SOURCE_WF"
+                exit 0
+              fi
+              FINISHED=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+              echo "$WF_JSON" | jq --arg fin "$FINISHED" \
+                '.status.nodes |= with_entries(
+                  if .value.type == "Suspend" and .value.phase == "Running"
+                  then .value.phase = "Succeeded" | .value.finishedAt = $fin
+                  else . end
+                )' | kubectl replace -f - 2>&1
+              echo "Workflow $SOURCE_WF resumed"
+            elif [ "$DECISION" = "REJECT" ]; then
+              echo "REJECT: stopping workflow $SOURCE_WF in $SOURCE_NS"
+              kubectl -n "$SOURCE_NS" patch wf "$SOURCE_WF" \
+                --type=merge -p '{"spec":{"shutdown":"Stop"}}' 2>&1 || true
+              echo "Workflow $SOURCE_WF stopped"
+            else
+              echo "Unknown decision: $DECISION"
+            fi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: report
+            mountPath: /report
+            readOnly: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 128Mi
+
+    - name: notify
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+      container:
+        image: registry.infra.tgy.io/tools/argo-tools:latest
+        command: [sh, -c]
+        args:
+          - |
+            STATUS="{{workflow.status}}"
+            WF_NAME="{{workflow.name}}"
+            NS="{{workflow.namespace}}"
+            SOURCE_WF='{{workflow.parameters.source-workflow}}'
+            URL="https://argo.infra.tgy.io/workflows/${NS}/${WF_NAME}"
+            TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+
+            if [ "$STATUS" = "Succeeded" ]; then
+              COLOR=65280
+            else
+              COLOR=16711680
+            fi
+
+            REPORT=""
+            if [ -f /report/result.txt ]; then
+              REPORT=$(head -c 3800 /report/result.txt)
+            fi
+            if [ -z "$REPORT" ]; then
+              REPORT="裁定結果を取得できませんでした。Argo UI でログを確認してください。"
+            fi
+
+            TITLE="Adjudication ${STATUS}: ${WF_NAME}"
+            if [ -n "$SOURCE_WF" ]; then
+              TITLE="Adjudication ${STATUS} (for: ${SOURCE_WF})"
+            fi
+
+            PAYLOAD=$(jq -n \
+              --arg title "$TITLE" \
+              --arg url "$URL" \
+              --argjson color "$COLOR" \
+              --arg report "$REPORT" \
+              --arg ts "$TIMESTAMP" \
+              '{embeds: [{title: $title, url: $url, color: $color, description: $report, timestamp: $ts}]}')
+
+            wget -qO /dev/null --header="Content-Type: application/json" \
+              --post-data="$PAYLOAD" "$DISCORD_WEBHOOK_URL"
+        env:
+          - name: DISCORD_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+                name: discord-webhook-argo
+                key: url
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: report
+            mountPath: /report
+            readOnly: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            memory: 128Mi

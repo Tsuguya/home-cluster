@@ -13,6 +13,10 @@ spec:
       port: "12002"
       endpoint: /task
       method: POST
+    adjudicate:
+      port: "12002"
+      endpoint: /adjudicate
+      method: POST
   template:
     securityContext:
       runAsNonRoot: true

@@ -68,6 +68,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Workflow pods (claude-code) | Horenso (horenso) | 3000 | Task dispatch |
 | notifications-controller (argocd) | Horenso (horenso) | 3000 | Alertmanager notifications |
 | Horenso (horenso) | task-dispatch-eventsource (argo) | 12002 | Task dispatch webhook |
+| Workflow pods (claude-code) | task-dispatch-eventsource (argo) | 12002 | Adjudication webhook |
 
 ## Excluded Pods (hostNetwork: true)
 
@@ -102,7 +103,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **workflows-controller** | host → 6060 | kube-apiserver, shared-pg (database):5432, workflows-server:2746 |
 | **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
 | **alertmanager-eventsource** | alertmanager (monitoring) → 12001 | kube-apiserver, eventbus:4222 |
-| **task-dispatch-eventsource** | horenso (horenso) → 12002 | kube-apiserver, eventbus:4222 |
+| **task-dispatch-eventsource** | horenso (horenso), claude-code (claude-code) → 12002 | kube-apiserver, eventbus:4222 |
 | **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate, task-dispatch) | (deny world) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **events-controller** | host → 8081 | kube-apiserver, eventbus:8222 |
 | **eventbus** | eventsource (github-webhook), alertmanager-eventsource (alertmanager-webhook), task-dispatch-eventsource (task-dispatch), sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate, task-dispatch) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
@@ -138,7 +139,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **claude-code** (claude-code=true) | (deny world) | kube-apiserver, api.anthropic.com + github.com + api.github.com + *.githubusercontent.com + index.crates.io + static.crates.io + registry.npmjs.org + discord.com + gitmcp.io :443, seaweedfs-filer (seaweedfs):8333, loki-gateway (monitoring):8080, prometheus (monitoring):9090, horenso (horenso):3000 |
+| **claude-code** (claude-code=true) | (deny world) | kube-apiserver, api.anthropic.com + github.com + api.github.com + *.githubusercontent.com + index.crates.io + static.crates.io + registry.npmjs.org + discord.com + gitmcp.io :443, seaweedfs-filer (seaweedfs):8333, loki-gateway (monitoring):8080, prometheus (monitoring):9090, horenso (horenso):3000, task-dispatch-eventsource (argo):12002 |
 
 ## image-build (1 policy)
 

@@ -65,3 +65,11 @@ spec:
         - ports:
             - port: "3000"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            eventsource-name: task-dispatch
+            io.kubernetes.pod.namespace: argo
+      toPorts:
+        - ports:
+            - port: "12002"
+              protocol: TCP

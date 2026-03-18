@@ -1,0 +1,221 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: wf-improver
+  namespace: claude-code
+spec:
+  activeDeadlineSeconds: 3600
+  serviceAccountName: claude-code-executor
+  entrypoint: main
+  onExit: notify
+  arguments:
+    parameters:
+      - name: target
+      - name: context
+        default: ""
+  podMetadata:
+    labels:
+      claude-code: "true"
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+    - name: workspace
+      emptyDir: {}
+    - name: claude-home
+      emptyDir: {}
+    - name: github-token
+      emptyDir: {}
+    - name: github-app-secret
+      secret:
+        secretName: github-app-private-key
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - wn-03
+  templates:
+    - name: main
+      steps:
+        - - name: improve
+            template: improve
+
+    - name: improve
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+        - name: setup
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [sh, -c]
+          args:
+            - |
+              export GITHUB_TOKEN=$(cat /github-token/token)
+              git config --global --add safe.directory /workspace
+              git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-cluster.git" /workspace
+              cd /workspace
+              git config user.name "tgy-cluster-bot[bot]"
+              git config user.email "tgy-cluster-bot[bot]@users.noreply.github.com"
+          env:
+            - name: HOME
+              value: /tmp
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: github-token
+              mountPath: /github-token
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+      container:
+        image: registry.infra.tgy.io/tools/claude-code:latest
+        command: [sh, -c]
+        args:
+          - |
+            export GITHUB_TOKEN=$(cat /github-token/token)
+            export GH_TOKEN=$GITHUB_TOKEN
+            TARGET='{{workflow.parameters.target}}'
+            CONTEXT='{{workflow.parameters.context}}'
+
+            cd /workspace
+
+            PROMPT="あなたは Kubernetes クラスタの Argo Workflows 改善エージェントです。
+            指定された WorkflowTemplate を分析し、改善点があれば PR を出してください。
+
+            ## 対象
+            ${TARGET}
+
+            ## 追加コンテキスト
+            ${CONTEXT}
+
+            ## 分析手順
+            1. 対象 WFT の YAML を読む（manifests/ 配下を検索）
+            2. 関連ファイルも確認（CNP, EventSource, Sensor, ArgoCD App）
+            3. 他の WFT と比較してパターンの一貫性を確認
+            4. 問題点・改善点を特定
+            5. 改善がある場合のみブランチを切って commit → push → PR
+
+            ## 分析観点
+
+            ### セキュリティ
+            - securityContext が規約通りか（runAsUser: 65532, runAsNonRoot, capabilities drop ALL, seccompProfile）
+            - 機密値がハードコードされていないか
+            - allowedTools が最小限か（不要な権限を与えていないか）
+            - CNP が存在し、最小権限になっているか
+
+            ### 信頼性
+            - activeDeadlineSeconds が適切か（短すぎて失敗 / 長すぎてリソース浪費）
+            - エラーハンドリング（|| true の適切な使用、fallback 処理）
+            - max-turns が設定されているか（Claude の暴走防止）
+            - リソース requests/limits が適切か
+
+            ### 効率
+            - 不要なステップがないか
+            - 並列化できるステップがないか
+            - イメージサイズやリソースの無駄がないか
+
+            ### 一貫性
+            - 他の WFT と同じパターンに従っているか
+            - ラベル、アノテーション、命名規約の統一
+            - Discord 通知パターンの統一（onExit + discord-notify templateRef）
+
+            ### ドキュメント
+            - docs/network-policies.md に CNP が反映されているか
+            - 新しい通信パスが文書化されているか
+
+            ## 規約（改善時に適用）
+            - --verbose --output-format stream-json は必ずセット（Argo UI ログ確認用）
+            - podMetadata.labels: claude-code: 'true'
+            - affinity: wn-03 を preferredScheduling
+            - PUBLIC リポジトリ — 機密値を絶対にコミットしない
+
+            ## Git 操作
+            - ブランチ名: improve/<workflow-name>
+            - commit メッセージは英語
+            - PR は gh pr create で作成、改善内容を明記
+            - 改善点がなければ PR を作らず、分析結果だけ報告する"
+
+            claude -p \
+              --verbose \
+              --output-format stream-json \
+              --dangerously-skip-permissions \
+              --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent" \
+              --model sonnet \
+              "$PROMPT" || true
+        env:
+          - name: HOME
+            value: /claude-home
+          - name: CLAUDE_CODE_OAUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: claude-code-token
+                key: credential
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+          - name: claude-home
+            mountPath: /claude-home
+          - name: github-token
+            mountPath: /github-token
+            readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 4Gi
+
+    - name: notify
+      steps:
+        - - name: send
+            templateRef:
+              name: discord-notify
+              template: send
+              clusterScope: true

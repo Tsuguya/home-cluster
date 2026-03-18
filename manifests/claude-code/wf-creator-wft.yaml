@@ -1,0 +1,227 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: wf-creator
+  namespace: claude-code
+spec:
+  activeDeadlineSeconds: 3600
+  serviceAccountName: claude-code-executor
+  entrypoint: main
+  onExit: notify
+  arguments:
+    parameters:
+      - name: description
+  podMetadata:
+    labels:
+      claude-code: "true"
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+    - name: workspace
+      emptyDir: {}
+    - name: claude-home
+      emptyDir: {}
+    - name: github-token
+      emptyDir: {}
+    - name: github-app-secret
+      secret:
+        secretName: github-app-private-key
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                  - wn-03
+  templates:
+    - name: main
+      steps:
+        - - name: create
+            template: create
+
+    - name: create
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+        - name: setup
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [sh, -c]
+          args:
+            - |
+              export GITHUB_TOKEN=$(cat /github-token/token)
+              git config --global --add safe.directory /workspace
+              git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/Tsuguya/home-cluster.git" /workspace
+              cd /workspace
+              git config user.name "tgy-cluster-bot[bot]"
+              git config user.email "tgy-cluster-bot[bot]@users.noreply.github.com"
+          env:
+            - name: HOME
+              value: /tmp
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: github-token
+              mountPath: /github-token
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+      container:
+        image: registry.infra.tgy.io/tools/claude-code:latest
+        command: [sh, -c]
+        args:
+          - |
+            export GITHUB_TOKEN=$(cat /github-token/token)
+            export GH_TOKEN=$GITHUB_TOKEN
+            DESCRIPTION='{{workflow.parameters.description}}'
+
+            cd /workspace
+
+            PROMPT="あなたは Kubernetes クラスタの Argo Workflows 設計エージェントです。
+            依頼に基づいて新しい WorkflowTemplate を作成し、PR を出してください。
+
+            ## 依頼内容
+            ${DESCRIPTION}
+
+            ## 作業手順
+            1. 既存の WFT を読んでパターンを把握する（manifests/claude-code/ 配下）
+            2. 必要なファイルを作成する
+            3. docs/network-policies.md を更新する（CNP 変更がある場合）
+            4. ブランチを切って commit → push → PR 作成
+
+            ## WorkflowTemplate 規約（必ず守ること）
+
+            ### セキュリティ
+            - securityContext (pod): runAsUser: 65532, runAsNonRoot: true, runAsGroup: 65532, fsGroup: 65532
+            - securityContext (container): allowPrivilegeEscalation: false, capabilities.drop: [ALL]
+            - seccompProfile: RuntimeDefault（spec.securityContext に設定）
+            - 機密値は Secret 経由（ハードコード禁止）
+            - PUBLIC リポジトリ — 機密値を絶対にコミットしない
+
+            ### Pod 設定
+            - podMetadata.labels: claude-code: 'true'（CNP のセレクタに必要）
+            - affinity: wn-03 を preferredScheduling
+            - resources: requests (cpu: 100m, memory: 512Mi), limits (memory: 4Gi) が Claude 用の目安
+            - activeDeadlineSeconds: 用途に応じて設定（調査: 900, 作業: 1800-3600）
+
+            ### ServiceAccount
+            - claude-code-sre: 読み取り専用（kubectl get/list/watch + pods/exec）
+            - claude-code-executor: 書き込み可能（argo-workflows-edit + GitHub auth）
+
+            ### Discord 通知（onExit パターン）
+            onExit で結果を Discord に送信。argo-tools イメージ + discord-webhook-argo Secret を使用。
+            emptyDir volume を report として共有し、メインステップが /report/result.txt に書き出す。
+
+            ### CNP (CiliumNetworkPolicy)
+            - 全 Pod にデフォルト deny。新しい通信が必要なら CNP を作成
+            - DNS は CCNP で共通適用済み — 個別 CNP には不要
+            - 外部 HTTPS は toFQDNs（toCIDR 0.0.0.0/0 は原則禁止、ビルドジョブ等のみ例外）
+            - ファイル名: manifests/<namespace>/netpol-<name>.yaml
+            - docs/network-policies.md も同時更新
+
+            ### EventSource / Sensor（トリガーが必要な場合）
+            - EventSource: manifests/argo/ に webhook 定義
+            - Sensor: 同じく manifests/argo/ に dependency + trigger 定義
+            - 既存の EventSource にエンドポイント追加 or 新規作成
+
+            ### ArgoCD Application（新しい namespace の場合）
+            - apps/ に Application YAML を作成
+            - 既存の namespace (claude-code 等) なら不要
+
+            ## Claude 実行パターン
+            claude -p で実行する場合:
+            - --verbose --output-format stream-json は必ずセット（Argo UI でログ確認用）
+            - --dangerously-skip-permissions で権限プロンプトをスキップ
+            - --allowedTools で必要なツールだけ許可
+            - --model sonnet（コスト効率）
+            - --max-turns で暴走防止
+
+            ## Git 操作
+            - ブランチ名: wf/<workflow-name>
+            - commit メッセージは英語
+            - PR は gh pr create で作成
+            - PR タイトルは 70 文字以内"
+
+            claude -p \
+              --verbose \
+              --output-format stream-json \
+              --dangerously-skip-permissions \
+              --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent" \
+              --model sonnet \
+              "$PROMPT" || true
+        env:
+          - name: HOME
+            value: /claude-home
+          - name: CLAUDE_CODE_OAUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: claude-code-token
+                key: credential
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+          - name: claude-home
+            mountPath: /claude-home
+          - name: github-token
+            mountPath: /github-token
+            readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 4Gi
+
+    - name: notify
+      steps:
+        - - name: send
+            templateRef:
+              name: discord-notify
+              template: send
+              clusterScope: true

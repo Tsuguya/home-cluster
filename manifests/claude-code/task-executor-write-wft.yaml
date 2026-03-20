@@ -4,7 +4,7 @@ metadata:
   name: task-executor-write
   namespace: claude-code
 spec:
-  activeDeadlineSeconds: 1800
+  activeDeadlineSeconds: 10800
   serviceAccountName: claude-code-executor
   entrypoint: main
   arguments:

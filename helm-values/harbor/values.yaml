@@ -9,6 +9,9 @@ expose:
     name: harbor
     staticClusterIP: "10.107.133.63"
 
+updateStrategy:
+  type: Recreate
+
 externalURL: https://registry.infra.tgy.io
 
 caBundleSecretName: pg-ca-cert
@@ -45,6 +48,9 @@ persistence:
   persistentVolumeClaim:
     registry:
       storageClass: "-"
+    jobservice:
+      jobLog:
+        storageClass: "-"
 
 trivy:
   enabled: true
@@ -88,6 +94,9 @@ registry:
       memory: 512Mi
 
 jobservice:
+  jobLoggers:
+    - database
+  loggerSweeperDuration: 14
   resources:
     requests:
       cpu: 10m

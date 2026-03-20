@@ -28,6 +28,9 @@ spec:
         - matchLabels:
             claude-code: "true"
             io.kubernetes.pod.namespace: claude-code
+        - matchLabels:
+            task-fail-sync: "true"
+            io.kubernetes.pod.namespace: argo
       toPorts:
         - ports:
             - port: "3000"

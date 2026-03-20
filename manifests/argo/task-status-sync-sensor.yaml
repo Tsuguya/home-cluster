@@ -1,0 +1,106 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: task-status-sync
+  namespace: argo
+spec:
+  dependencies:
+    - name: workflow-failed
+      eventSourceName: task-status-sync
+      eventName: workflow-status
+      filters:
+        script: |-
+          if event.body.status and event.body.status.phase then
+            local phase = event.body.status.phase
+            if phase == "Failed" or phase == "Error" then
+              return true
+            end
+          end
+          return false
+  triggers:
+    - template:
+        name: update-task-failed
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: task-fail-sync-
+                namespace: argo
+                labels:
+                  task-fail-sync: "true"
+              spec:
+                serviceAccountName: task-status-sync
+                entrypoint: update
+                arguments:
+                  parameters:
+                    - name: task-id
+                    - name: workflow-name
+                    - name: workflow-phase
+                templates:
+                  - name: update
+                    securityContext:
+                      runAsUser: 65532
+                      runAsNonRoot: true
+                    script:
+                      image: registry.infra.tgy.io/tools/argo-tools:latest
+                      command: [sh]
+                      source: |
+                        TASK_ID="{{workflow.parameters.task-id}}"
+                        WF_NAME="{{workflow.parameters.workflow-name}}"
+                        WF_PHASE="{{workflow.parameters.workflow-phase}}"
+                        HORENSO="http://horenso.horenso.svc.cluster.local:3000"
+                        PAYLOAD=$(jq -n \
+                          --arg status "failed" \
+                          --arg result "Workflow ${WF_NAME} ended with status: ${WF_PHASE}" \
+                          '{status:$status,result:$result}')
+                        curl -s -X PATCH \
+                          -H "Content-Type: application/json" \
+                          -d "$PAYLOAD" \
+                          "$HORENSO/tasks/$TASK_ID"
+                      securityContext:
+                        allowPrivilegeEscalation: false
+                        capabilities:
+                          drop: [ALL]
+                      resources:
+                        requests:
+                          cpu: 10m
+                          memory: 32Mi
+                        limits:
+                          memory: 64Mi
+          parameters:
+            - src:
+                dependencyName: workflow-failed
+                dataKey: body.metadata.labels.horenso-task-id
+              dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: workflow-failed
+                dataKey: body.metadata.name
+              dest: spec.arguments.parameters.1.value
+            - src:
+                dependencyName: workflow-failed
+                dataKey: body.status.phase
+              dest: spec.arguments.parameters.2.value
+  template:
+    serviceAccountName: task-status-sync
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    container:
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi

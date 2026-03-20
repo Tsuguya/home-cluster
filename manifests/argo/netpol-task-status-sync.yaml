@@ -1,0 +1,66 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: task-status-sync-eventsource
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      eventsource-name: task-status-sync
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            eventbus-name: default
+      toPorts:
+        - ports:
+            - port: "4222"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: task-status-sync-sensor
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      sensor-name: task-status-sync
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            eventbus-name: default
+      toPorts:
+        - ports:
+            - port: "4222"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: task-fail-sync-workflow
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      task-fail-sync: "true"
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            app: horenso
+            io.kubernetes.pod.namespace: horenso
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP

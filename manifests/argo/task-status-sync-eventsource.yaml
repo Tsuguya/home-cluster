@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: task-status-sync
+  namespace: argo
+spec:
+  resource:
+    workflow-status:
+      namespace: claude-code
+      group: argoproj.io
+      version: v1alpha1
+      resource: workflows
+      eventTypes:
+        - UPDATE
+      filter:
+        labels:
+          - key: horenso-task
+            operation: "="
+            value: "true"
+        afterCompletedAt:
+          time: "0001-01-01T00:00:00Z"
+  template:
+    serviceAccountName: task-status-sync
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    container:
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi

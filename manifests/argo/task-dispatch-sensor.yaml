@@ -43,6 +43,8 @@ spec:
               metadata:
                 generateName: task-exec-
                 namespace: claude-code
+                labels:
+                  horenso-task: "true"
               spec:
                 workflowTemplateRef:
                   name: task-executor
@@ -57,6 +59,10 @@ spec:
                 dependencyName: task-readonly
                 dataKey: body.id
               dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: task-readonly
+                dataKey: body.id
+              dest: metadata.labels.horenso-task-id
             - src:
                 dependencyName: task-readonly
                 dataKey: body.title
@@ -81,6 +87,8 @@ spec:
               metadata:
                 generateName: task-write-
                 namespace: claude-code
+                labels:
+                  horenso-task: "true"
               spec:
                 workflowTemplateRef:
                   name: task-executor-write
@@ -95,6 +103,10 @@ spec:
                 dependencyName: task-write
                 dataKey: body.id
               dest: spec.arguments.parameters.0.value
+            - src:
+                dependencyName: task-write
+                dataKey: body.id
+              dest: metadata.labels.horenso-task-id
             - src:
                 dependencyName: task-write
                 dataKey: body.title

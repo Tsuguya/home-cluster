@@ -104,9 +104,12 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **eventsource** | cloudflared (argocd) → 12000 | kube-apiserver, eventbus:4222 |
 | **alertmanager-eventsource** | alertmanager (monitoring) → 12001 | kube-apiserver, eventbus:4222 |
 | **task-dispatch-eventsource** | horenso (horenso), claude-code (claude-code) → 12002 | kube-apiserver, eventbus:4222 |
-| **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate, task-dispatch) | (deny world) | kube-apiserver, eventbus:4222, workflows-server:2746 |
+| **task-status-sync-eventsource** | (deny world) | kube-apiserver, eventbus:4222 |
+| **task-status-sync-sensor** | (deny world) | kube-apiserver, eventbus:4222 |
+| **task-fail-sync** (task-fail-sync=true) | (deny world) | horenso (horenso):3000 |
+| **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate, task-dispatch, task-status-sync) | (deny world) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **events-controller** | host → 8081 | kube-apiserver, eventbus:8222 |
-| **eventbus** | eventsource (github-webhook), alertmanager-eventsource (alertmanager-webhook), task-dispatch-eventsource (task-dispatch), sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate, task-dispatch) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
+| **eventbus** | eventsource (github-webhook), alertmanager-eventsource (alertmanager-webhook), task-dispatch-eventsource (task-dispatch), task-status-sync-eventsource (task-status-sync), sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate, task-dispatch, task-status-sync) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
 | **workflow-pods** (backup-workflow, pxe-sync, talos-build, kanidm-repl-exchange, kanidm-backup除外) | (deny world) | kube-apiserver, HTTPS 443, all nodes:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |
 | **etcd-backup** (backup-workflow=true) | (deny world) | kube-apiserver:6443/50000 (Talos apid), *.r2.cloudflarestorage.com:443, seaweedfs-filer (seaweedfs):8333 |
 | **pxe-sync** (pxe-sync=true) | (deny world) | kube-apiserver, github.com + api.github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.5.240):2049 (NFS) |
@@ -275,7 +278,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **horenso** | ingress/host/remote-node → 3000; argocd-notifications-controller (argocd) → 3000; claude-code (claude-code) → 3000 | shared-pg (database):5432, discord.com + *.discord.com:443, task-dispatch-eventsource (argo):12002 |
+| **horenso** | ingress/host/remote-node → 3000; argocd-notifications-controller (argocd) → 3000; claude-code (claude-code) → 3000; task-fail-sync (argo) → 3000 | shared-pg (database):5432, discord.com + *.discord.com:443, task-dispatch-eventsource (argo):12002 |
 
 ## spin-operator (1 policy)
 

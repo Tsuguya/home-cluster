@@ -140,6 +140,8 @@ spec:
               git checkout -b "issue-${ISSUE_NUMBER}"
               git config user.name "tgy-cluster-bot[bot]"
               git config user.email "tgy-cluster-bot[bot]@users.noreply.github.com"
+              mkdir -p /workspace/.bin
+              cp /usr/local/bin/github-signed-commit.sh /workspace/.bin/
               curl -sf -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/Tsuguya/home-rss/issues/${ISSUE_NUMBER}" | jq -r '"# Issue #\(.number): \(.title)\n\n\(.body)"' > /workspace/ISSUE.md
               cp -R /workspace/k8s/.claude /claude-home/
           env:
@@ -176,7 +178,14 @@ spec:
             if [ "$CUSTOM_PROMPT" != "none" ] && [ -n "$CUSTOM_PROMPT" ]; then
               PROMPT="$CUSTOM_PROMPT"
             else
-              PROMPT="/workspace/ISSUE.md に対象 Issue の内容があります。これを読んで要件を理解し、実装してください。完了したらコミット・プッシュして PR を作成してください。Closes は ISSUE.md 冒頭の Issue 番号を使うこと。"
+              PROMPT="/workspace/ISSUE.md に対象 Issue の内容があります。これを読んで要件を理解し、実装してください。完了したらコミット・プッシュして PR を作成してください。Closes は ISSUE.md 冒頭の Issue 番号を使うこと。
+
+            ## Git コミット（署名付き）
+            git commit + git push の代わりに、github-signed-commit.sh を使うこと。
+            1. git add でファイルをステージ
+            2. /workspace/.bin/github-signed-commit.sh -r Tsuguya/home-rss -m 'コミットメッセージ' を実行
+            これにより GitHub API 経由で署名付きコミットが作成され、ローカルも同期される。
+            PR 作成は署名コミット後に gh pr create で行う。"
             fi
             cd /workspace
             claude -p "$PROMPT" --verbose --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent" --mcp-config /mcp-config/mcp.json

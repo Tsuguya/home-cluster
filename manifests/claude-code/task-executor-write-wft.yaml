@@ -78,6 +78,28 @@ spec:
               memory: 32Mi
             limits:
               memory: 64Mi
+        - name: setup
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [sh, -c]
+          args:
+            - |
+              mkdir -p /workspace/.bin
+              cp /usr/local/bin/github-signed-commit.sh /workspace/.bin/
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
       container:
         image: registry.infra.tgy.io/tools/claude-code:latest
         command: [sh, -c]
@@ -124,7 +146,13 @@ spec:
             - タスク説明にリポジトリとブランチがあればそれを clone して作業する
             - 変更したら commit して push する
             - PR がある場合は PR ブランチに push する（新しい PR は作らない）
-            - 最後に結果のサマリーを /tmp/result.txt にテキストで書き出す（Write ツール使用）"
+            - 最後に結果のサマリーを /tmp/result.txt にテキストで書き出す（Write ツール使用）
+
+            ## Git コミット（署名付き）
+            git commit + git push の代わりに、github-signed-commit.sh を使うこと。
+            1. git add でファイルをステージ
+            2. /workspace/.bin/github-signed-commit.sh -r OWNER/REPO -m 'コミットメッセージ' を実行（リポジトリ名はタスク説明から判断）
+            これにより GitHub API 経由で署名付きコミットが作成され、ローカルも同期される。"
 
             claude -p \
               --verbose \

@@ -172,6 +172,8 @@ spec:
               git checkout -b "${BRANCH}"
               git config user.name "tgy-cluster-bot[bot]"
               git config user.email "tgy-cluster-bot[bot]@users.noreply.github.com"
+              mkdir -p /workspace/.bin
+              cp /usr/local/bin/github-signed-commit.sh /workspace/.bin/
           env:
             - name: HOME
               value: /tmp
@@ -202,7 +204,14 @@ spec:
           - |
             export GITHUB_TOKEN=$(cat /github-token/token)
             cd /workspace
-            claude --model sonnet -p "$PROMPT" --verbose --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent"
+            SIGNING_INSTRUCTION="
+
+            ## Git コミット（署名付き）
+            git commit + git push の代わりに、github-signed-commit.sh を使うこと。
+            1. git add でファイルをステージ
+            2. /workspace/.bin/github-signed-commit.sh -r {{workflow.parameters.repo}} -m 'コミットメッセージ' を実行
+            これにより GitHub API 経由で署名付きコミットが作成され、ローカルも同期される。"
+            claude --model sonnet -p "${PROMPT}${SIGNING_INSTRUCTION}" --verbose --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent"
         env:
           - name: HOME
             value: /claude-home
@@ -295,7 +304,11 @@ spec:
             exit 0
           fi
 
-          jq -n --arg msg "$PR_TITLE" --arg tree "$TREE_SHA" --arg parent "$PARENT_SHA" \
+          COMMIT_MSG="${PR_TITLE}"
+          if [ -z "$COMMIT_MSG" ]; then
+            COMMIT_MSG="$ORIGINAL_MSG"
+          fi
+          jq -n --arg msg "$COMMIT_MSG" --arg tree "$TREE_SHA" --arg parent "$PARENT_SHA" \
             '{"message":$msg,"tree":$tree,"parents":[$parent]}' > /tmp/create_commit.json
           SIGNED_SHA=$(gh api "repos/${REPO}/git/commits" \
             --method POST --input /tmp/create_commit.json -q '.sha')

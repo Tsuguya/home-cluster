@@ -103,7 +103,7 @@ filer:
       cpu: 10m
       memory: 256Mi
     limits:
-      memory: 768Mi
+      memory: 1536Mi
   nodeSelector: |
     kubernetes.io/hostname: wn-02
   tolerations: |

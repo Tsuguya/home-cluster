@@ -12,7 +12,7 @@ controller:
       cpu: 50m
       memory: 512Mi
     limits:
-      memory: 1536Mi
+      memory: 3Gi
 
 applicationSet:
   resources:

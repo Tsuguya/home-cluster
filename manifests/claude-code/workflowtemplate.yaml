@@ -20,6 +20,19 @@ subjects:
     namespace: claude-code
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: claude-code-executor-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: claude-code-sre-reader
+subjects:
+  - kind: ServiceAccount
+    name: claude-code-executor
+    namespace: claude-code
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: argo-sso-admin-extras

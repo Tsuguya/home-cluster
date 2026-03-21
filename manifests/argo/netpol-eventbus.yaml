@@ -29,6 +29,10 @@ spec:
             eventsource-name: task-dispatch
         - matchLabels:
             sensor-name: task-dispatch
+        - matchLabels:
+            eventsource-name: task-status-sync
+        - matchLabels:
+            sensor-name: task-status-sync
       toPorts:
         - ports:
             - port: "4222"

@@ -95,6 +95,7 @@ spec:
               --dangerously-skip-permissions \
               --allowedTools "Bash(readonly=true),Read,Write,Grep,Glob" \
               --model sonnet \
+              --max-turns 30 \
               "$PROMPT" || true
 
             RESULT=""

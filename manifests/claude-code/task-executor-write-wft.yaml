@@ -29,6 +29,9 @@ spec:
     - name: github-app-secret
       secret:
         secretName: github-app-private-key
+    - name: argocd-token
+      secret:
+        secretName: argocd-cluster-bot-token
   affinity:
     nodeAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -85,6 +88,7 @@ spec:
             - |
               mkdir -p /workspace/.bin
               cp /usr/local/bin/github-signed-commit.sh /workspace/.bin/
+              cp /usr/local/bin/argocd /workspace/.bin/
           securityContext:
             runAsUser: 65532
             runAsNonRoot: true
@@ -141,6 +145,12 @@ spec:
             - kubectl, helm, gh（GitHub CLI）
             - git clone/checkout/commit/push
             - ファイル編集
+            - argocd CLI（/workspace/.bin/argocd）— ArgoCD API 経由でアプリ操作
+
+            ## ArgoCD CLI
+            export ARGOCD_AUTH_TOKEN=\$(cat /argocd-token/token)
+            /workspace/.bin/argocd app get <app-name> --server argocd-server.argocd.svc:443 --grpc-web
+            /workspace/.bin/argocd app sync <app-name> --server argocd-server.argocd.svc:443 --grpc-web
 
             ## ルール
             - タスク説明にリポジトリとブランチがあればそれを clone して作業する
@@ -203,6 +213,9 @@ spec:
             mountPath: /claude-home
           - name: github-token
             mountPath: /github-token
+            readOnly: true
+          - name: argocd-token
+            mountPath: /argocd-token
             readOnly: true
         resources:
           requests:

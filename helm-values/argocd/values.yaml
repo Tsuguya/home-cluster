@@ -31,7 +31,7 @@ configs:
           - CiliumIdentity
         clusters:
           - "*"
-    admin.enabled: "true"
+    admin.enabled: "false"
     resource.customizations.health.postgresql.cnpg.io_Cluster: |
       hs = {}
       if obj.status ~= nil then

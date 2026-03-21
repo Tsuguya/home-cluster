@@ -35,6 +35,63 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
+  name: claude-code-executor-rss
+  namespace: rss
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "pods/exec", "services", "configmaps", "secrets", "events"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: ["postgresql.cnpg.io"]
+    resources: ["clusters"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: claude-code-executor-rss
+  namespace: rss
+subjects:
+  - kind: ServiceAccount
+    name: claude-code-executor
+    namespace: claude-code
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: claude-code-executor-rss
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: claude-code-executor-argocd
+  namespace: argocd
+rules:
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications"]
+    verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: claude-code-executor-argocd
+  namespace: argocd
+subjects:
+  - kind: ServiceAccount
+    name: claude-code-executor
+    namespace: claude-code
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: claude-code-executor-argocd
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
   name: argo-sso-admin-extras
   namespace: claude-code
 rules:

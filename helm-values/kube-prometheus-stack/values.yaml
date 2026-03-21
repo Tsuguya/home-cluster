@@ -220,6 +220,7 @@ grafana:
 alertmanager:
   alertmanagerSpec:
     logFormat: json
+    hostNetwork: false
     automountServiceAccountToken: false
     alertmanagerConfiguration:
       name: discord

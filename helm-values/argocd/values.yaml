@@ -32,6 +32,38 @@ configs:
         clusters:
           - "*"
     admin.enabled: "false"
+    resource.customizations.health.postgresql.cnpg.io_Cluster: |
+      hs = {}
+      if obj.status ~= nil then
+        if obj.status.phase == "Cluster in healthy state" then
+          hs.status = "Healthy"
+          hs.message = obj.status.phase
+          return hs
+        end
+        if obj.status.phase == "Cluster in degraded state" then
+          hs.status = "Degraded"
+          hs.message = obj.status.phase
+          return hs
+        end
+        if obj.status.conditions ~= nil then
+          for _, condition in ipairs(obj.status.conditions) do
+            if condition.type == "Ready" then
+              if condition.status == "True" then
+                hs.status = "Healthy"
+                hs.message = condition.reason
+                return hs
+              elseif condition.status == "False" then
+                hs.status = "Degraded"
+                hs.message = condition.reason
+                return hs
+              end
+            end
+          end
+        end
+      end
+      hs.status = "Progressing"
+      hs.message = "Waiting for cluster to be ready"
+      return hs
     accounts.cluster-bot: apiKey
     url: https://argocd.infra.tgy.io
     oidc.config: |

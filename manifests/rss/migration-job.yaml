@@ -22,17 +22,27 @@ spec:
       containers:
         - name: dbmate
           image: ghcr.io/amacneil/dbmate:2
-          args: ["--migrations-dir", "/app/db/migrations", "up"]
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              encoded=$(printf '%s' "$DB_PASS" | sed 's/%/%25/g; s|/|%2F|g; s|+|%2B|g; s|=|%3D|g; s| |%20|g; s|@|%40|g; s|:|%3A|g; s|?|%3F|g; s|#|%23|g; s|\&|%26|g')
+              export DATABASE_URL="postgresql://${DB_USER}:${encoded}@rss-pg-rw.rss.svc.cluster.local:5432/rssreader?sslmode=require"
+              exec dbmate --migrations-dir /app/db/migrations up
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
           env:
-            - name: DATABASE_URL
+            - name: DB_USER
               valueFrom:
                 secretKeyRef:
                   name: rss-pg-credentials
-                  key: uri
+                  key: username
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: rss-pg-credentials
+                  key: password
           volumeMounts:
             - name: migrations
               mountPath: /app/db/migrations

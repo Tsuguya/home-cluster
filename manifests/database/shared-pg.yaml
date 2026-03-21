@@ -15,7 +15,7 @@ spec:
     limits:
       memory: 512Mi
   storage:
-    storageClass: qnap-iscsi
+    storageClass: qnap-iscsi-xfs
     size: 10Gi
   bootstrap:
     initdb:

@@ -86,7 +86,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **server** | ingress, cloudflared → 8080 | kube-apiserver, repo-server:8081, kanidm (kanidm):8443, redis:6379 |
+| **server** | ingress, cloudflared, claude-code (claude-code) → 8080 | kube-apiserver, repo-server:8081, kanidm (kanidm):8443, redis:6379 |
 | **application-controller** | host → 8082 | kube-apiserver, repo-server:8081, redis:6379 |
 | **repo-server** | server, app-controller → 8081 | github.com + ghcr.io + {argoproj,grafana,oauth2-proxy,aquasecurity,kyverno,cloudnative-pg,kubernetes-sigs,prometheus-community,seaweedfs,stakater}.github.io + *.githubusercontent.com + charts.jetstack.io + helm.cilium.io + helm.goharbor.io + charts.external-secrets.io + external-secrets.io:443, redis:6379 |
 | **redis** | server, repo-server, app-controller → 6379 | (none) |
@@ -142,7 +142,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 
 | Component | Ingress | Egress |
 |---|---|---|
-| **claude-code** (claude-code=true) | (deny world) | kube-apiserver, api.anthropic.com + github.com + api.github.com + *.githubusercontent.com + index.crates.io + static.crates.io + registry.npmjs.org + discord.com + gitmcp.io :443, seaweedfs-filer (seaweedfs):8333, loki-gateway (monitoring):8080, prometheus (monitoring):9090, horenso (horenso):3000, task-dispatch-eventsource (argo):12002 |
+| **claude-code** (claude-code=true) | (deny world) | kube-apiserver, api.anthropic.com + github.com + api.github.com + *.githubusercontent.com + index.crates.io + static.crates.io + registry.npmjs.org + discord.com + gitmcp.io :443, seaweedfs-filer (seaweedfs):8333, loki-gateway (monitoring):8080, prometheus (monitoring):9090, horenso (horenso):3000, task-dispatch-eventsource (argo):12002, argocd-server (argocd):8080 |
 
 ## image-build (1 policy)
 

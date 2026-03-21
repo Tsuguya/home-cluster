@@ -73,3 +73,11 @@ spec:
         - ports:
             - port: "12002"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: argocd-server
+            io.kubernetes.pod.namespace: argocd
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP

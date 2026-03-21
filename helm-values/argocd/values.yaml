@@ -32,6 +32,7 @@ configs:
         clusters:
           - "*"
     admin.enabled: "false"
+    accounts.cluster-bot: apiKey
     url: https://argocd.infra.tgy.io
     oidc.config: |
       name: Kanidm
@@ -63,6 +64,13 @@ configs:
       p, role:readonly, clusters, get, *, allow
       p, role:readonly, logs, get, */*, allow
       p, role:readonly, exec, create, */*, deny
+      p, role:cluster-bot, applications, get, */*, allow
+      p, role:cluster-bot, applications, sync, */*, allow
+      p, role:cluster-bot, applications, action/*, */*, allow
+      p, role:cluster-bot, applications, delete, */*, deny
+      p, role:cluster-bot, projects, get, *, allow
+      p, role:cluster-bot, logs, get, */*, allow
+      g, cluster-bot, role:cluster-bot
       g, tsuguya.toma@tgy.io, role:owner
     policy.default: ""
     scopes: "[email]"

@@ -48,7 +48,7 @@ master:
       mountPath: /tmp
 
 volume:
-  replicas: 1
+  replicas: 2
   dataDirs:
     - name: data
       type: "persistentVolumeClaim"

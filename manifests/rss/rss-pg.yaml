@@ -4,16 +4,13 @@ metadata:
   name: rss-pg
   namespace: rss
 spec:
-  instances: 1
+  instances: 2
   resources:
     requests:
       cpu: 10m
       memory: 128Mi
     limits:
       memory: 512Mi
-  affinity:
-    nodeSelector:
-      kubernetes.io/hostname: wn-01
   storage:
     storageClass: qnap-iscsi
     size: 5Gi

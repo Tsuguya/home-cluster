@@ -37,6 +37,8 @@ spec:
         - matchName: "helm.goharbor.io"
         - matchName: "charts.external-secrets.io"
         - matchName: "external-secrets.io"
+        - matchName: "qdrant.github.io"
+        - matchName: "helm.otwld.com"
       toPorts:
         - ports:
             - port: "443"

@@ -20,6 +20,7 @@ spec:
     - toFQDNs:
         - matchName: registry.ollama.ai
         - matchPattern: "*.ollama.com"
+        - matchPattern: "*.r2.cloudflarestorage.com"
       toPorts:
         - ports:
             - port: "443"

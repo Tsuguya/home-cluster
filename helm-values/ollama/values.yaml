@@ -8,6 +8,10 @@ ollama:
       - nomic-embed-text
   mountPath: /data/.ollama
 
+extraEnv:
+  - name: OLLAMA_HOME
+    value: /data/.ollama
+
 serviceAccount:
   create: true
   automount: false

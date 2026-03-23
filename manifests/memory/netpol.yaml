@@ -1,0 +1,48 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: memory
+  namespace: memory
+spec:
+  endpointSelector:
+    matchLabels:
+      app: memory
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+    - fromEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            claude-code: "true"
+            io.kubernetes.pod.namespace: claude-code
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: qdrant
+            io.kubernetes.pod.namespace: qdrant
+      toPorts:
+        - ports:
+            - port: "6333"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: ollama
+            io.kubernetes.pod.namespace: ollama
+      toPorts:
+        - ports:
+            - port: "11434"
+              protocol: TCP

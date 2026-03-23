@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memory
+  namespace: memory
+  labels:
+    app: memory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: memory
+  template:
+    metadata:
+      labels:
+        app: memory
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: memory
+          image: registry.infra.tgy.io/tools/memory:latest
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          env:
+            - name: QDRANT_URL
+              value: "http://qdrant.qdrant:6333"
+            - name: OLLAMA_URL
+              value: "http://ollama.ollama:11434"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: memory
+  namespace: memory
+spec:
+  selector:
+    app: memory
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP

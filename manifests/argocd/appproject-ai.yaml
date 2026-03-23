@@ -1,26 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: apps
+  name: ai
   namespace: argocd
 spec:
-  description: User-facing applications
+  description: AI/ML infrastructure (Qdrant, Ollama)
   sourceRepos:
-    - https://nextcloud.github.io/helm/
-    - https://valkey.io/valkey-helm/
-    - https://helm.goharbor.io
+    - https://qdrant.github.io/qdrant-helm
+    - https://helm.otwld.com/
     - https://github.com/Tsuguya/home-cluster.git
   destinations:
     - server: https://kubernetes.default.svc
-      namespace: nextcloud
+      namespace: qdrant
     - server: https://kubernetes.default.svc
-      namespace: harbor
-    - server: https://kubernetes.default.svc
-      namespace: rss
-    - server: https://kubernetes.default.svc
-      namespace: horenso
-    - server: https://kubernetes.default.svc
-      namespace: memory
+      namespace: ollama
   clusterResourceWhitelist:
     - group: '*'
       kind: CustomResourceDefinition

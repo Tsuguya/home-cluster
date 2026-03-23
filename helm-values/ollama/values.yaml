@@ -1,0 +1,63 @@
+replicaCount: 1
+
+ollama:
+  gpu:
+    enabled: false
+  models:
+    pull:
+      - nomic-embed-text
+  mountPath: /data/.ollama
+
+serviceAccount:
+  create: true
+  automount: false
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+persistentVolume:
+  enabled: true
+  size: 5Gi
+  storageClass: qnap-nfs
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+
+nodeSelector:
+  kubernetes.io/hostname: wn-03
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 2Gi
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 120
+  periodSeconds: 30
+  failureThreshold: 6
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  failureThreshold: 6

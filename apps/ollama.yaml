@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ollama
+  namespace: argocd
+spec:
+  project: ai
+  sources:
+    - repoURL: https://helm.otwld.com/
+      chart: ollama
+      targetRevision: "1.52.0"
+      helm:
+        releaseName: ollama
+        valueFiles:
+          - $values/helm-values/ollama/values.yaml
+    - repoURL: https://github.com/Tsuguya/home-cluster.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://github.com/Tsuguya/home-cluster.git
+      targetRevision: main
+      path: manifests/ollama
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ollama
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

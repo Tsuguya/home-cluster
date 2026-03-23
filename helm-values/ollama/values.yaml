@@ -11,6 +11,8 @@ ollama:
 extraEnv:
   - name: OLLAMA_HOME
     value: /data/.ollama
+  - name: HOME
+    value: /data
 
 serviceAccount:
   create: true

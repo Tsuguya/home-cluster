@@ -69,6 +69,10 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | notifications-controller (argocd) | Horenso (horenso) | 3000 | Alertmanager notifications |
 | Horenso (horenso) | task-dispatch-eventsource (argo) | 12002 | Task dispatch webhook |
 | Workflow pods (claude-code) | task-dispatch-eventsource (argo) | 12002 | Adjudication webhook |
+| Workflow pods (claude-code) | ArgoCD server (argocd) | 8080 | ArgoCD API access |
+| Workflow pods (claude-code) | memory (memory) | 3000 | Memory service |
+| memory (memory) | qdrant (qdrant) | 6333/6334 | Vector database |
+| memory (memory) | ollama (ollama) | 11434 | LLM inference |
 
 ## Excluded Pods (hostNetwork: true)
 
@@ -292,3 +296,21 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **controller** | host/remote-node → 8443 (CSI node registration) | kube-apiserver, 192.168.5.240:8080 (QNAP NAS) |
 | **operator** | (deny world) | kube-apiserver |
+
+## memory (1 policy)
+
+| Component | Ingress | Egress |
+|---|---|---|
+| **memory** | ingress/host/remote-node → 3000; claude-code (claude-code) → 3000 | qdrant (qdrant):6333, ollama (ollama):11434 |
+
+## qdrant (1 policy)
+
+| Component | Ingress | Egress |
+|---|---|---|
+| **qdrant** | memory (memory) → 6333/6334 | (none) |
+
+## ollama (1 policy)
+
+| Component | Ingress | Egress |
+|---|---|---|
+| **ollama** | memory (memory) → 11434 | registry.ollama.ai + *.ollama.com + *.r2.cloudflarestorage.com:443 |

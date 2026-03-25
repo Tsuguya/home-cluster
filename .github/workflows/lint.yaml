@@ -132,7 +132,7 @@ jobs:
         run: npm ci
         working-directory: .github/mcp/pr-review
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
 
       - uses: anthropics/claude-code-action@v1
         with:
@@ -195,7 +195,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
 
       - name: Install kubeconform
         run: |

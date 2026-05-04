@@ -230,7 +230,10 @@ spec:
           image: alpine:3.23
           command: [sh, -c]
           args:
-            - printf '{"auths":{"registry.infra.tgy.io":{"auth":"%s"}}}' "$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64)" > /docker-config/config.json
+            - |
+              HARBOR_AUTH=$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64 -w0)
+              HUB_AUTH=$(printf '%s:%s' "$HUB_USER" "$HUB_PASS" | base64 -w0)
+              printf '{"auths":{"registry.infra.tgy.io":{"auth":"%s"},"https://index.docker.io/v1/":{"auth":"%s"}}}' "$HARBOR_AUTH" "$HUB_AUTH" > /docker-config/config.json
           env:
             - name: HARBOR_USER
               valueFrom:
@@ -242,6 +245,16 @@ spec:
                 secretKeyRef:
                   name: harbor-robot-images
                   key: credential
+            - name: HUB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: dockerhub-pull-credentials
+                  key: username
+            - name: HUB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: dockerhub-pull-credentials
+                  key: password
           securityContext:
             runAsUser: 65532
             runAsNonRoot: true
@@ -319,7 +332,10 @@ spec:
           image: alpine:3.23
           command: [sh, -c]
           args:
-            - printf '{"auths":{"registry.infra.tgy.io":{"auth":"%s"}}}' "$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64)" > /docker-config/config.json
+            - |
+              HARBOR_AUTH=$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64 -w0)
+              HUB_AUTH=$(printf '%s:%s' "$HUB_USER" "$HUB_PASS" | base64 -w0)
+              printf '{"auths":{"registry.infra.tgy.io":{"auth":"%s"},"https://index.docker.io/v1/":{"auth":"%s"}}}' "$HARBOR_AUTH" "$HUB_AUTH" > /docker-config/config.json
           env:
             - name: HARBOR_USER
               valueFrom:
@@ -331,6 +347,16 @@ spec:
                 secretKeyRef:
                   name: harbor-robot-images
                   key: credential
+            - name: HUB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: dockerhub-pull-credentials
+                  key: username
+            - name: HUB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: dockerhub-pull-credentials
+                  key: password
           securityContext:
             runAsUser: 65532
             runAsNonRoot: true

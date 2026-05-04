@@ -169,7 +169,7 @@ spec:
               --frontend dockerfile.v0 \
               --local context=/workspace \
               --local dockerfile=/workspace \
-              --output type=image,name=registry.infra.tgy.io/tools/{{workflow.parameters.image-name}}:{{workflow.parameters.commit-sha}},push=true \
+              --output 'type=image,"name=registry.infra.tgy.io/tools/{{workflow.parameters.image-name}}:{{workflow.parameters.commit-sha}},registry.infra.tgy.io/tools/{{workflow.parameters.image-name}}:latest",push=true' \
               --metadata-file /workspace/metadata.json
             jq -r '."containerimage.digest"' /workspace/metadata.json > /workspace/digest
         env:
@@ -263,19 +263,8 @@ spec:
         command: [sh, -c]
         args:
           - |
-            REPO="registry.infra.tgy.io/tools/{{workflow.parameters.image-name}}"
-            IMAGE="$REPO@{{inputs.parameters.digest}}"
+            IMAGE="registry.infra.tgy.io/tools/{{workflow.parameters.image-name}}@{{inputs.parameters.digest}}"
             cosign sign --key /cosign/cosign.key --yes "$IMAGE"
-            echo "Adding latest tag..."
-            MANIFEST=$(curl -sf -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
-              -u "$HARBOR_USER:$HARBOR_PASS" \
-              "https://registry.infra.tgy.io/v2/tools/{{workflow.parameters.image-name}}/manifests/{{workflow.parameters.commit-sha}}")
-            echo "$MANIFEST" | curl -sf -X PUT \
-              -H "Content-Type: application/vnd.docker.distribution.manifest.v2+json" \
-              -u "$HARBOR_USER:$HARBOR_PASS" \
-              -d @- \
-              "https://registry.infra.tgy.io/v2/tools/{{workflow.parameters.image-name}}/manifests/latest" \
-              && echo "latest tag created" || echo "WARNING: failed to create latest tag"
         env:
           - name: HOME
             value: /tmp

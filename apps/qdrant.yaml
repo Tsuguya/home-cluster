@@ -26,3 +26,10 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: qdrant
+      namespace: qdrant
+      jsonPointers:
+        - /spec/volumeClaimTemplates

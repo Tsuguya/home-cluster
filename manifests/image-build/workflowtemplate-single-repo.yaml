@@ -170,7 +170,7 @@ spec:
               --local dockerfile=/workspace \
               --output type=image,name=registry.infra.tgy.io/tools/{{workflow.parameters.image-name}}:{{workflow.parameters.commit-sha}},push=true \
               --metadata-file /workspace/metadata.json
-            grep -oE 'sha256:[a-f0-9]{64}' /workspace/metadata.json | head -1 > /workspace/digest
+            grep -oE '"containerimage\.digest":"sha256:[a-f0-9]{64}"' /workspace/metadata.json | grep -oE 'sha256:[a-f0-9]{64}' > /workspace/digest
         env:
           - name: DOCKER_CONFIG
             value: /docker-config

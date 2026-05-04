@@ -1,0 +1,285 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: single-repo-image-build
+  namespace: image-build
+spec:
+  activeDeadlineSeconds: 1800
+  serviceAccountName: image-build-executor
+  entrypoint: main
+  arguments:
+    parameters:
+      - name: repo-url
+      - name: image-name
+      - name: commit-sha
+        value: main
+  podMetadata:
+    labels:
+      image-build: "true"
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  templates:
+    - name: main
+      steps:
+        - - name: build
+            template: buildkit-build
+        - - name: sign
+            template: cosign-sign
+            arguments:
+              parameters:
+                - name: digest
+                  value: "{{steps.build.outputs.parameters.digest}}"
+
+    - name: buildkit-build
+      podSpecPatch: '{"runtimeClassName": "kata"}'
+      metadata:
+        annotations:
+          io.katacontainers.config.hypervisor.virtio_fs_extra_args: '["--thread-pool-size=1", "--announce-submounts", "--xattr"]'
+      securityContext:
+        runAsUser: 0
+        runAsNonRoot: false
+        fsGroup: 0
+      volumes:
+        - name: workspace
+          emptyDir: {}
+        - name: docker-config
+          emptyDir: {}
+        - name: github-token
+          emptyDir: {}
+        - name: github-app-secret
+          secret:
+            secretName: github-app-private-key
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+        - name: clone-repo
+          image: alpine/git:v2.52.0
+          command: [sh, -c]
+          args:
+            - |
+              GITHUB_TOKEN=$(cat /github-token/token)
+              REPO_PATH="${REPO_URL#https://}"
+              git config --global --add safe.directory /workspace
+              git clone "https://x-access-token:${GITHUB_TOKEN}@${REPO_PATH}" /workspace
+              cd /workspace && git checkout "$COMMIT_SHA"
+          env:
+            - name: HOME
+              value: /tmp
+            - name: REPO_URL
+              value: "{{workflow.parameters.repo-url}}"
+            - name: COMMIT_SHA
+              value: "{{workflow.parameters.commit-sha}}"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: github-token
+              mountPath: /github-token
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+        - name: setup-registry-auth
+          image: alpine:3.23
+          command: [sh, -c]
+          args:
+            - printf '{"auths":{"registry.infra.tgy.io":{"auth":"%s"}}}' "$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64)" > /docker-config/config.json
+          env:
+            - name: HARBOR_USER
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-robot-images
+                  key: username
+            - name: HARBOR_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-robot-images
+                  key: credential
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: docker-config
+              mountPath: /docker-config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      container:
+        image: moby/buildkit:v0.29.0
+        command: [sh, -c]
+        args:
+          - |
+            mkdir -p /workspace/.buildkit /workspace/.buildkit/tmp
+            export BUILDKIT_TMPDIR=/workspace/.buildkit
+            export TMPDIR=/workspace/.buildkit/tmp
+            buildctl-daemonless.sh build \
+              --frontend dockerfile.v0 \
+              --local context=/workspace \
+              --local dockerfile=/workspace \
+              --output type=image,name=registry.infra.tgy.io/tools/{{workflow.parameters.image-name}}:{{workflow.parameters.commit-sha}},push=true \
+              --metadata-file /workspace/metadata.json
+            grep -oE 'sha256:[a-f0-9]{64}' /workspace/metadata.json | head -1 > /workspace/digest
+        env:
+          - name: DOCKER_CONFIG
+            value: /docker-config
+        securityContext:
+          privileged: true
+          allowPrivilegeEscalation: true
+          capabilities:
+            add: [ALL]
+        volumeMounts:
+          - name: workspace
+            mountPath: /workspace
+          - name: docker-config
+            mountPath: /docker-config
+            readOnly: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            memory: 4Gi
+      outputs:
+        parameters:
+          - name: digest
+            valueFrom:
+              path: /workspace/digest
+
+    - name: cosign-sign
+      inputs:
+        parameters:
+          - name: digest
+      securityContext:
+        runAsUser: 65532
+        runAsNonRoot: true
+        runAsGroup: 65532
+        fsGroup: 65532
+      volumes:
+        - name: docker-config
+          emptyDir: {}
+        - name: cosign-key
+          secret:
+            secretName: cosign-signing-key
+      initContainers:
+        - name: setup-registry-auth
+          image: alpine:3.23
+          command: [sh, -c]
+          args:
+            - printf '{"auths":{"registry.infra.tgy.io":{"auth":"%s"}}}' "$(printf '%s:%s' "$HARBOR_USER" "$HARBOR_PASS" | base64)" > /docker-config/config.json
+          env:
+            - name: HARBOR_USER
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-robot-images
+                  key: username
+            - name: HARBOR_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: harbor-robot-images
+                  key: credential
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: docker-config
+              mountPath: /docker-config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      container:
+        image: registry.infra.tgy.io/tools/argo-tools:latest
+        command: [sh, -c]
+        args:
+          - |
+            REPO="registry.infra.tgy.io/tools/{{workflow.parameters.image-name}}"
+            IMAGE="$REPO@{{inputs.parameters.digest}}"
+            cosign sign --key /cosign/cosign.key --yes "$IMAGE"
+            echo "Adding latest tag..."
+            MANIFEST=$(curl -sf -H "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+              -u "$HARBOR_USER:$HARBOR_PASS" \
+              "https://registry.infra.tgy.io/v2/tools/{{workflow.parameters.image-name}}/manifests/{{workflow.parameters.commit-sha}}")
+            echo "$MANIFEST" | curl -sf -X PUT \
+              -H "Content-Type: application/vnd.docker.distribution.manifest.v2+json" \
+              -u "$HARBOR_USER:$HARBOR_PASS" \
+              -d @- \
+              "https://registry.infra.tgy.io/v2/tools/{{workflow.parameters.image-name}}/manifests/latest" \
+              && echo "latest tag created" || echo "WARNING: failed to create latest tag"
+        env:
+          - name: HOME
+            value: /tmp
+          - name: COSIGN_PASSWORD
+            value: ""
+          - name: DOCKER_CONFIG
+            value: /docker-config
+          - name: HARBOR_USER
+            valueFrom:
+              secretKeyRef:
+                name: harbor-robot-images
+                key: username
+          - name: HARBOR_PASS
+            valueFrom:
+              secretKeyRef:
+                name: harbor-robot-images
+                key: credential
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: cosign-key
+            mountPath: /cosign
+            readOnly: true
+          - name: docker-config
+            mountPath: /docker-config
+            readOnly: true
+        resources:
+          requests:
+            cpu: 10m
+            memory: 64Mi
+          limits:
+            memory: 256Mi

@@ -27,7 +27,7 @@ metadata:
   name: talos-secureboot-build
   namespace: talos-build
 spec:
-  activeDeadlineSeconds: 1800
+  activeDeadlineSeconds: 3600
   serviceAccountName: talos-build-executor
   entrypoint: main
   arguments:

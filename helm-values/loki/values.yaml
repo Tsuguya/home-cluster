@@ -1,5 +1,8 @@
 deploymentMode: SingleBinary
 
+imagePullSecrets:
+  - name: dockerhub-pull-credentials
+
 singleBinary:
   replicas: 1
   resources:

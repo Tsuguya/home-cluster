@@ -22,6 +22,7 @@ spec:
         - matchName: "github.com"
         - matchName: "argoproj.github.io"
         - matchName: "grafana.github.io"
+        - matchName: "grafana-community.github.io"
         - matchName: "oauth2-proxy.github.io"
         - matchName: "aquasecurity.github.io"
         - matchName: "kyverno.github.io"

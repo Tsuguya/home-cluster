@@ -4,6 +4,8 @@ metadata:
   name: talos-build-executor
   namespace: talos-build
 automountServiceAccountToken: true
+imagePullSecrets:
+  - name: dockerhub-pull-credentials
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

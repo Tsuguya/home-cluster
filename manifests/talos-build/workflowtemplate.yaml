@@ -132,7 +132,7 @@ spec:
             - --arch
             - amd64
             - --system-extension-image
-            - ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
+            - ghcr.io/siderolabs/iscsi-tools:v0.2.0
             - --system-extension-image
             - ghcr.io/siderolabs/spin:v0.22.0
             - --system-extension-image
@@ -249,7 +249,7 @@ spec:
             - --arch
             - amd64
             - --system-extension-image
-            - ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
+            - ghcr.io/siderolabs/iscsi-tools:v0.2.0
             - --system-extension-image
             - ghcr.io/siderolabs/spin:v0.22.0
             - --system-extension-image
@@ -288,7 +288,7 @@ spec:
             - --arch
             - amd64
             - --system-extension-image
-            - ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
+            - ghcr.io/siderolabs/iscsi-tools:v0.2.0
             - --system-extension-image
             - ghcr.io/siderolabs/spin:v0.22.0
             - --system-extension-image

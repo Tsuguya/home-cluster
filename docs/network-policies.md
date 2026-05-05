@@ -70,8 +70,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Horenso (horenso) | task-dispatch-eventsource (argo) | 12002 | Task dispatch webhook |
 | Workflow pods (claude-code) | task-dispatch-eventsource (argo) | 12002 | Adjudication webhook |
 | Workflow pods (claude-code) | ArgoCD server (argocd) | 8080 | ArgoCD API access |
-| Workflow pods (claude-code) | memory (memory) | 3000 | Memory service |
-| memory (memory) | qdrant (qdrant) | 6333/6334 | Vector database |
+| memory (memory) | qdrant (qdrant) | 6333 | Vector database |
 | memory (memory) | ollama (ollama) | 11434 | LLM inference |
 
 ## Excluded Pods (hostNetwork: true)
@@ -92,7 +91,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 |---|---|---|
 | **server** | ingress, cloudflared, claude-code (claude-code) → 8080 | kube-apiserver, repo-server:8081, kanidm (kanidm):8443, redis:6379 |
 | **application-controller** | host → 8082 | kube-apiserver, repo-server:8081, redis:6379 |
-| **repo-server** | server, app-controller → 8081 | github.com + ghcr.io + {argoproj,grafana,oauth2-proxy,aquasecurity,kyverno,cloudnative-pg,kubernetes-sigs,prometheus-community,seaweedfs,stakater}.github.io + *.githubusercontent.com + charts.jetstack.io + helm.cilium.io + helm.goharbor.io + charts.external-secrets.io + external-secrets.io:443, redis:6379 |
+| **repo-server** | server, app-controller → 8081 | github.com + ghcr.io + {argoproj,grafana,grafana-community,oauth2-proxy,aquasecurity,kyverno,cloudnative-pg,kubernetes-sigs,prometheus-community,seaweedfs,stakater,qdrant}.github.io + *.githubusercontent.com + charts.jetstack.io + helm.cilium.io + helm.goharbor.io + charts.external-secrets.io + external-secrets.io + helm.otwld.com:443, redis:6379 |
 | **redis** | server, repo-server, app-controller → 6379 | (none) |
 | **applicationset-controller** | (deny world) | kube-apiserver |
 | **notifications-controller** | (deny world) | kube-apiserver, discord.com:443, horenso (horenso):3000 |

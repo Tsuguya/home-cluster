@@ -76,36 +76,11 @@ ExternalSecret: `manifests/secrets/talos-build-secureboot-signing-keys.yaml`
 
 SecureBoot プロファイルはデフォルトで `lockdown=confidentiality` を設定するが、これは BPF の `bpf_probe_read` をブロックし **Tetragon と Cilium eBPF を壊す**。`lockdown=integrity` に上書きすることで、カーネル整合性保護を維持しつつ BPF を許可する。
 
-## iscsi-tools 互換性問題
+## iscsi-tools 互換性問題（解決済み 2026-05-05）
 
-### 問題
+upstream `e4afe22` ("fix: iscsi-tools and multipath-tools", 2026-03-15) で `consolidate extension services` 後のホストバイナリ消失問題が修復され、Issue #12951 が CLOSED。
 
-siderolabs/extensions の `fb4eb042` ("consolidate extension services") で iscsi-tools のアーキテクチャが変更された:
-
-- **旧**: バイナリをホスト rootfs overlay (`/usr/local/sbin/`) に配置 + bind mount でコンテナに共有
-- **新**: 自己完結型コンテナ rootfs (`/usr/local/lib/containers/iscsid/`) にのみ配置
-
-Trident CSI はホストの `/usr/local/sbin/iscsiadm` を参照するため、新アーキテクチャでは iSCSI マウントが失敗する。
-
-### 対策
-
-旧アーキテクチャ版の extension image をミラーして pin:
-
-```
-ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation
-```
-
-元イメージ: `ghcr.io/siderolabs/iscsi-tools@sha256:b30127b2f3ea6a49aa73dcf18c30da1fa1d2604da00c60519f8f00b4c6d25294`
-
-**注意**: このパッケージは GHCR で public に設定済み（GitHub App トークンでは private GHCR パッケージにアクセス不可のため）。
-
-**暫定措置**: siderolabs/extensions がホストレベルバイナリ配置を復活したら、公式版に戻す。
-
-### Talos v1.12.5 アップグレードブロッカー
-
-Talos v1.12.5 では iscsi-tools extension のバイナリ配置パスが変更され（`/usr/local/sbin/` → `/usr/local/lib/containers/iscsid/usr/local/sbin/`）、旧版ミラーを pin していても CSI ドライバが壊れる。**v1.12.4 に留まること。**
-
-- Issue: https://github.com/siderolabs/talos/issues/12951
+`ghcr.io/siderolabs/iscsi-tools:v0.2.0` で全ノード Trident PVC マウント動作確認済み（v1.13.0 + Talos v1.13.0 上で）。自前ミラー (`ghcr.io/tsuguya/iscsi-tools:v0.2.0-pre-consolidation`) は廃止。
 
 ## 新ノードへの SecureBoot 適用手順
 
@@ -195,5 +170,5 @@ SecureBoot 有効の UEFI に未署名 installer を書くと **Secure Boot Viol
 - [x] 全ノード SecureBoot 有効化完了
 - [x] TPM ディスク暗号化（STATE + EPHEMERAL、全 6 ノード LUKS2 暗号化完了）
 - [x] Kata Containers 3.27.0 extension 追加（全ノード）
-- [ ] siderolabs/extensions に issue: ホストレベル iscsiadm 復活要求
-- [ ] Talos v1.12.5 アップグレード（Issue #12951 解決待ち）
+- [x] iscsi-tools 上流 v0.2.0 に切り替え（Issue #12951 解決済み 2026-05-05）
+- [x] Talos v1.13.0 / Kubernetes v1.35.4 アップグレード完了（2026-05-05）

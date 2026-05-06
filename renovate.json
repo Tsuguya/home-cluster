@@ -76,6 +76,12 @@
       "matchPackagePatterns": ["^ghcr.io/siderolabs/(iscsi-tools|spin|kata-containers)$"],
       "groupName": "talos-extensions",
       "automerge": false
+    },
+    {
+      "description": "Pin claude-code-action until anthropics/claude-code-action#1260 lands (Issue #1242)",
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["anthropics/claude-code-action"],
+      "allowedVersions": "<=1.0.99"
     }
   ]
 }

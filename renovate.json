@@ -13,7 +13,7 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/kustomize/qnap-csi/upstream\\.yaml$"],
+      "managerFilePatterns": ["/kustomize/qnap-csi/upstream\\.yaml$/"],
       "matchStrings": [
         "# upstream: qnap-dev/QNAP-CSI-PlugIn@(?<currentValue>v\\S+)"
       ],
@@ -22,7 +22,7 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/kustomize/qnap-csi/upstream\\.yaml$"],
+      "managerFilePatterns": ["/kustomize/qnap-csi/upstream\\.yaml$/"],
       "matchStrings": [
         "--qts-cgi-image=(?<depName>[^:]+):(?<currentValue>v\\S+)"
       ],
@@ -30,7 +30,7 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/kustomize/qnap-csi/upstream\\.yaml$"],
+      "managerFilePatterns": ["/kustomize/qnap-csi/upstream\\.yaml$/"],
       "matchStrings": [
         "tridentImage: (?<depName>[^:]+):(?<currentValue>v\\S+)"
       ],
@@ -38,7 +38,7 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/manifests/talos-build/workflowtemplate\\.yaml$"],
+      "managerFilePatterns": ["/manifests/talos-build/workflowtemplate\\.yaml$/"],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s*\\n\\s*-\\s*\\S+:(?<currentValue>\\S+)"
       ]

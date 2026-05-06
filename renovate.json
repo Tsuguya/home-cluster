@@ -35,6 +35,13 @@
         "tridentImage: (?<depName>[^:]+):(?<currentValue>v\\S+)"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/manifests/talos-build/workflowtemplate\\.yaml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s*\\n\\s*-\\s*\\S+:(?<currentValue>\\S+)"
+      ]
     }
   ],
   "packageRules": [
@@ -63,6 +70,12 @@
       "description": "Group seaweedfs packages",
       "matchPackagePatterns": ["seaweedfs"],
       "groupName": "seaweedfs"
+    },
+    {
+      "description": "Group Talos system extensions",
+      "matchPackagePatterns": ["^ghcr.io/siderolabs/(iscsi-tools|spin|kata-containers)$"],
+      "groupName": "talos-extensions",
+      "automerge": false
     }
   ]
 }

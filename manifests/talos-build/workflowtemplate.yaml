@@ -132,10 +132,13 @@ spec:
             - --arch
             - amd64
             - --system-extension-image
+            # renovate: datasource=docker depName=ghcr.io/siderolabs/iscsi-tools
             - ghcr.io/siderolabs/iscsi-tools:v0.2.0
             - --system-extension-image
+            # renovate: datasource=docker depName=ghcr.io/siderolabs/spin
             - ghcr.io/siderolabs/spin:v0.22.0
             - --system-extension-image
+            # renovate: datasource=docker depName=ghcr.io/siderolabs/kata-containers
             - ghcr.io/siderolabs/kata-containers:3.27.0
             - --base-installer-image
             - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
@@ -249,10 +252,13 @@ spec:
             - --arch
             - amd64
             - --system-extension-image
+            # renovate: datasource=docker depName=ghcr.io/siderolabs/iscsi-tools
             - ghcr.io/siderolabs/iscsi-tools:v0.2.0
             - --system-extension-image
+            # renovate: datasource=docker depName=ghcr.io/siderolabs/spin
             - ghcr.io/siderolabs/spin:v0.22.0
             - --system-extension-image
+            # renovate: datasource=docker depName=ghcr.io/siderolabs/kata-containers
             - ghcr.io/siderolabs/kata-containers:3.27.0
             - --base-installer-image
             - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
@@ -288,10 +294,13 @@ spec:
             - --arch
             - amd64
             - --system-extension-image
+            # renovate: datasource=docker depName=ghcr.io/siderolabs/iscsi-tools
             - ghcr.io/siderolabs/iscsi-tools:v0.2.0
             - --system-extension-image
+            # renovate: datasource=docker depName=ghcr.io/siderolabs/spin
             - ghcr.io/siderolabs/spin:v0.22.0
             - --system-extension-image
+            # renovate: datasource=docker depName=ghcr.io/siderolabs/kata-containers
             - ghcr.io/siderolabs/kata-containers:3.27.0
             - --base-installer-image
             - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"

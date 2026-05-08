@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: talos-extension-bump
+  namespace: argo
+spec:
+  template:
+    serviceAccountName: workflow-executor
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    container:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+  dependencies:
+    - name: deployed
+      eventSourceName: argocd-deployed
+      eventName: deployed
+      filters:
+        script: |-
+          if event.body == nil then return false end
+          if event.body.app == "talos-build" then return true end
+          return false
+  triggers:
+    - template:
+        name: extension-rebuild
+        conditions: "deployed"
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: talos-extension-rebuild-
+                namespace: talos-build
+                labels:
+                  triggered-by: extension-bump
+              spec:
+                workflowTemplateRef:
+                  name: talos-secureboot-build
+                arguments:
+                  parameters:
+                    - name: version
+                      value: ""

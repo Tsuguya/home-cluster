@@ -71,14 +71,84 @@ spec:
   templates:
     - name: main
       steps:
+        - - name: resolve-version
+            template: resolve-version
+            arguments:
+              parameters:
+                - name: version
+                  value: "{{workflow.parameters.version}}"
         - - name: build-and-push-installer
             template: build-and-push-installer
+            arguments:
+              parameters:
+                - name: version
+                  value: "{{steps.resolve-version.outputs.parameters.version}}"
           - name: build-and-push-iso
             template: build-and-push-iso
+            arguments:
+              parameters:
+                - name: version
+                  value: "{{steps.resolve-version.outputs.parameters.version}}"
         - - name: finalize-release
             template: finalize-release
+            arguments:
+              parameters:
+                - name: version
+                  value: "{{steps.resolve-version.outputs.parameters.version}}"
+
+    - name: resolve-version
+      inputs:
+        parameters:
+          - name: version
+      outputs:
+        parameters:
+          - name: version
+            valueFrom:
+              path: /tmp/version.txt
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      container:
+        image: registry.infra.tgy.io/tools/argo-tools:latest
+        command: [sh, -c]
+        args:
+          - |
+            set -u
+            VERSION="{{inputs.parameters.version}}"
+            if [ -z "$VERSION" ]; then
+              RESPONSE=$(curl -sf -m 10 https://api.github.com/repos/Tsuguya/talos-custom-build/releases/latest) || {
+                echo "ERROR: GitHub API request failed" >&2
+                exit 1
+              }
+              VERSION=$(echo "$RESPONSE" | jq -r '.tag_name // empty')
+            fi
+            if [ -z "$VERSION" ]; then
+              echo "ERROR: could not resolve Talos version (tag_name missing)" >&2
+              exit 1
+            fi
+            echo "Resolved version: $VERSION" >&2
+            printf '%s' "$VERSION" > /tmp/version.txt
+        securityContext:
+          runAsUser: 65532
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: tmp
+            mountPath: /tmp
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            memory: 64Mi
 
     - name: build-and-push-installer
+      inputs:
+        parameters:
+          - name: version
       volumes:
         - name: docker-config
           emptyDir: {}
@@ -125,7 +195,7 @@ spec:
               mountPath: /github-token
               readOnly: true
         - name: build
-          image: "ghcr.io/tsuguya/imager:{{workflow.parameters.version}}"
+          image: "ghcr.io/tsuguya/imager:{{inputs.parameters.version}}"
           command: [/bin/imager]
           args:
             - secureboot-installer
@@ -141,7 +211,7 @@ spec:
             # renovate: datasource=docker depName=ghcr.io/siderolabs/kata-containers
             - ghcr.io/siderolabs/kata-containers:3.30.0
             - --base-installer-image
-            - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
+            - "ghcr.io/tsuguya/installer-base:{{inputs.parameters.version}}"
             - --extra-kernel-arg
             - "-lockdown"
             - --extra-kernel-arg
@@ -174,7 +244,7 @@ spec:
           runAsNonRoot: true
         env:
           - name: VERSION
-            value: "{{workflow.parameters.version}}"
+            value: "{{inputs.parameters.version}}"
           - name: DOCKER_CONFIG
             value: /tmp
           - name: GHCR_TOKEN
@@ -197,6 +267,9 @@ spec:
             readOnly: true
 
     - name: build-and-push-iso
+      inputs:
+        parameters:
+          - name: version
       volumes:
         - name: docker-config
           emptyDir: {}
@@ -245,7 +318,7 @@ spec:
               mountPath: /github-token
               readOnly: true
         - name: build-secureboot-iso
-          image: "ghcr.io/tsuguya/imager:{{workflow.parameters.version}}"
+          image: "ghcr.io/tsuguya/imager:{{inputs.parameters.version}}"
           command: [/bin/imager]
           args:
             - secureboot-iso
@@ -261,7 +334,7 @@ spec:
             # renovate: datasource=docker depName=ghcr.io/siderolabs/kata-containers
             - ghcr.io/siderolabs/kata-containers:3.30.0
             - --base-installer-image
-            - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
+            - "ghcr.io/tsuguya/installer-base:{{inputs.parameters.version}}"
             - --extra-kernel-arg
             - "-lockdown"
             - --extra-kernel-arg
@@ -287,7 +360,7 @@ spec:
             - name: build-sb-iso
               mountPath: /build-sb-iso
         - name: build-iso
-          image: "ghcr.io/tsuguya/imager:{{workflow.parameters.version}}"
+          image: "ghcr.io/tsuguya/imager:{{inputs.parameters.version}}"
           command: [/bin/imager]
           args:
             - iso
@@ -303,7 +376,7 @@ spec:
             # renovate: datasource=docker depName=ghcr.io/siderolabs/kata-containers
             - ghcr.io/siderolabs/kata-containers:3.30.0
             - --base-installer-image
-            - "ghcr.io/tsuguya/installer-base:{{workflow.parameters.version}}"
+            - "ghcr.io/tsuguya/installer-base:{{inputs.parameters.version}}"
             - --extra-kernel-arg
             - "-lockdown"
             - --extra-kernel-arg
@@ -336,7 +409,7 @@ spec:
           runAsNonRoot: true
         env:
           - name: VERSION
-            value: "{{workflow.parameters.version}}"
+            value: "{{inputs.parameters.version}}"
         resources:
           requests:
             cpu: 50m
@@ -358,6 +431,9 @@ spec:
             readOnly: true
 
     - name: finalize-release
+      inputs:
+        parameters:
+          - name: version
       volumes:
         - name: github-token
           emptyDir: {}
@@ -399,7 +475,7 @@ spec:
           runAsNonRoot: true
         env:
           - name: VERSION
-            value: "{{workflow.parameters.version}}"
+            value: "{{inputs.parameters.version}}"
         resources:
           requests:
             cpu: 10m

@@ -31,3 +31,11 @@ spec:
         - ports:
             - port: "3000"
               protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            eventsource-name: argocd-deployed
+            io.kubernetes.pod.namespace: argo
+      toPorts:
+        - ports:
+            - port: "12003"
+              protocol: TCP

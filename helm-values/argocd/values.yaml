@@ -182,6 +182,11 @@ notifications:
       headers:
         - name: Content-Type
           value: application/json
+    service.webhook.argo-events: |
+      url: http://argocd-deployed-eventsource-svc.argo.svc.cluster.local:12003/deployed
+      headers:
+        - name: Content-Type
+          value: application/json
   subscriptions:
     - recipients:
         - discord
@@ -206,6 +211,12 @@ notifications:
         send:
           - app-health-degraded
         when: app.status.health.status == 'Degraded'
+    trigger.on-deployed: |
+      - description: Application is synced and healthy. Triggered once per commit.
+        oncePer: app.status.operationState.syncResult.revision
+        send:
+          - app-deployed
+        when: app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
   templates:
     template.app-sync-succeeded: |
       webhook:
@@ -280,4 +291,15 @@ notifications:
               "event": "health-degraded",
               "health_status": "{{.app.status.health.status}}",
               "url": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
+            }
+    template.app-deployed: |
+      webhook:
+        argo-events:
+          method: POST
+          body: |
+            {
+              "app": "{{.app.metadata.name}}",
+              "namespace": "{{.app.spec.destination.namespace}}",
+              "revision": "{{.app.status.sync.revision}}",
+              "syncStatus": "{{.app.status.sync.status}}"
             }

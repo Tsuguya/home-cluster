@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: talos-build
   namespace: argocd
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.argo-events: ""
 spec:
   project: argo
   source:

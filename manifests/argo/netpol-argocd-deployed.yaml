@@ -1,0 +1,32 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: argocd-deployed-eventsource
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      eventsource-name: argocd-deployed
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: argocd-notifications-controller
+            io.kubernetes.pod.namespace: argocd
+      toPorts:
+        - ports:
+            - port: "12003"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            eventbus-name: default
+      toPorts:
+        - ports:
+            - port: "4222"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP

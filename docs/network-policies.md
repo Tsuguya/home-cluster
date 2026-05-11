@@ -110,11 +110,11 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **alertmanager-eventsource** | alertmanager (monitoring) → 12001 | kube-apiserver, eventbus:4222 |
 | **argocd-deployed-eventsource** | notifications-controller (argocd) → 12003 | kube-apiserver, eventbus:4222 |
 | **task-dispatch-eventsource** | horenso (horenso), claude-code (claude-code) → 12002 | kube-apiserver, eventbus:4222 |
-| **task-status-sync-eventsource** | (deny world) | kube-apiserver, eventbus:4222 |
-| **task-status-sync-sensor** | (deny world) | kube-apiserver, eventbus:4222 |
+| **task-status-sync-eventsource** | (none) | kube-apiserver, eventbus:4222 |
+| **task-status-sync-sensor** | (none) | kube-apiserver, eventbus:4222 |
 | **task-fail-sync** (task-fail-sync=true) | (deny world) | horenso (horenso):3000 |
 | **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate, task-dispatch) | (deny world) | kube-apiserver, eventbus:4222, workflows-server:2746 |
-| **talos-extension-bump-sensor** | (deny world) | kube-apiserver, eventbus:4222 |
+| **talos-extension-bump-sensor** | (none) | kube-apiserver, eventbus:4222 |
 | **events-controller** | host → 8081 | kube-apiserver, eventbus:8222 |
 | **eventbus** | eventsource (github-webhook), alertmanager-eventsource (alertmanager-webhook), task-dispatch-eventsource (task-dispatch), task-status-sync-eventsource (task-status-sync), argocd-deployed-eventsource (argocd-deployed), sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate, task-dispatch, task-status-sync, talos-extension-bump) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
 | **workflow-pods** (backup-workflow, pxe-sync, talos-build, kanidm-repl-exchange, kanidm-backup除外) | (deny world) | kube-apiserver, HTTPS 443, 192.168.10.200-202/192.168.10.230-232:50000 (Talos apid), seaweedfs-filer (seaweedfs):8333 |

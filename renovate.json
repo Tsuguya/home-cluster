@@ -4,6 +4,7 @@
     "config:recommended"
   ],
   "platformAutomerge": false,
+  "minimumReleaseAge": "3 days",
   "argocd": {
     "managerFilePatterns": ["/apps/.+\\.yaml$/"]
   },

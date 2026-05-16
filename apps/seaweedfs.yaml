@@ -20,9 +20,7 @@ spec:
     server: https://kubernetes.default.svc
     namespace: seaweedfs
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+    # automated sync temporarily disabled for iSCSI->NFS volume storage migration
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true

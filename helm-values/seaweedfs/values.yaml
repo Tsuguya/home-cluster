@@ -91,6 +91,10 @@ volume:
       mountPath: /tmp
 
 filer:
+  # filer runs as a self-managed Deployment (manifests/seaweedfs/filer-deployment.yaml)
+  # because it is stateless with the PostgreSQL backend. The chart still emits the
+  # s3 Service and the bucket-hook below, which target component=filer pods.
+  enabled: false
   replicas: 1
   data:
     type: "emptyDir"

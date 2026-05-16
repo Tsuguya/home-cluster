@@ -53,7 +53,7 @@ volume:
     - name: data
       type: "persistentVolumeClaim"
       size: "50Gi"
-      storageClass: "qnap-iscsi"
+      storageClass: "qnap-nfs"
       maxVolumes: 0
   idx: {}
   logs:

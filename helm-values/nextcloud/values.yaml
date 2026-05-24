@@ -12,6 +12,7 @@ nextcloud:
     s3.config.php: false
     reverse-proxy.config.php: false
     redis.config.php: false
+    autoconfig.php: false
   phpConfigs:
     uploadlimit.ini: |
       upload_max_filesize = 16G
@@ -58,6 +59,9 @@ nextcloud:
     custom.config.php: |-
       <?php
       $CONFIG = array(
+        'installed' => true,
+        'instanceid' => 'oc' . substr(hash('sha256', 'nc.tgy.io'), 0, 8),
+        'trusted_domains' => array('nc.tgy.io', 'localhost'),
         'trusted_proxies' => array('10.0.0.0/8'),
         'overwriteprotocol' => 'https',
         'overwrite.cli.url' => 'https://nc.tgy.io',

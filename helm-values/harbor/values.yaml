@@ -51,6 +51,10 @@ persistence:
     jobservice:
       jobLog:
         storageClass: "-"
+    redis:
+      storageClass: qnap-nfs
+    trivy:
+      storageClass: qnap-nfs
 
 trivy:
   enabled: true

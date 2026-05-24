@@ -73,7 +73,7 @@ nodeSelector:
 
 persistence:
   enabled: true
-  storageClassName: qnap-iscsi
+  storageClassName: qnap-nfs
   size: 10Gi
 
 serviceAccount:

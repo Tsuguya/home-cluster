@@ -49,7 +49,7 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          storageClassName: qnap-iscsi
+          storageClassName: qnap-nfs
           resources:
             requests:
               storage: 20Gi

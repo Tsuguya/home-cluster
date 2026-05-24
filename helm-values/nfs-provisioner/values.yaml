@@ -6,7 +6,7 @@ nfs:
 
 storageClass:
   name: qnap-nfs
-  defaultClass: false
+  defaultClass: true
   archiveOnDelete: "true"
   accessModes: ReadWriteOnce
 

@@ -108,7 +108,7 @@ cronjob:
 
 persistence:
   enabled: true
-  storageClass: qnap-iscsi
+  storageClass: qnap-nfs
   size: 5Gi
 
 podSecurityContext:

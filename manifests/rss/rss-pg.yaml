@@ -15,7 +15,7 @@ spec:
     nodeSelector:
       kubernetes.io/hostname: wn-01
   storage:
-    storageClass: qnap-iscsi
+    storageClass: qnap-nfs
     size: 5Gi
   bootstrap:
     initdb:

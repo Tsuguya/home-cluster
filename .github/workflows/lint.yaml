@@ -192,9 +192,10 @@ jobs:
           find kustomize -name '*.yaml' -exec cat {} + >> "$all_yaml" 2>/dev/null
 
           # Phase 4: extract unique images and verify with crane
+          # Skip internal Harbor: requires auth from external CI runner.
           mapfile -t images < <(grep -hE '^\s*image:\s+' "$all_yaml" \
             | sed -E 's/^\s*image:\s*//; s/^["'\'']//; s/["'\'']$//' \
-            | grep -vE '^\s*$|\{\{|^null$' \
+            | grep -vE '^\s*$|\{\{|^null$|^registry\.infra\.tgy\.io/' \
             | sort -u)
 
           echo "Checking ${#images[@]} unique images..."

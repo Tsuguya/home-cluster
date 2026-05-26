@@ -16,6 +16,9 @@ singleBinary:
   persistence:
     storageClass: qnap-nfs
     size: 10Gi
+    whenScaled: Retain
+    whenDeleted: Retain
+    enableStatefulSetAutoDeletePVC: false
   extraArgs:
     - -config.expand-env=true
   extraEnvFrom:

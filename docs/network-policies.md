@@ -112,7 +112,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **task-dispatch-eventsource** | horenso (horenso), claude-code (claude-code) → 12002 | kube-apiserver, eventbus:4222 |
 | **task-status-sync-eventsource** | (none) | kube-apiserver, eventbus:4222 |
 | **task-status-sync-sensor** | (none) | kube-apiserver, eventbus:4222 |
-| **task-fail-sync** (task-fail-sync=true) | (deny world) | horenso (horenso):3000 |
+| **task-fail-sync** (task-fail-sync=true) | (none) | horenso (horenso):3000 |
 | **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, alert-investigate, task-dispatch) | (deny world) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **talos-extension-bump-sensor** | (none) | kube-apiserver, eventbus:4222 |
 | **events-controller** | host → 8081 | kube-apiserver, eventbus:8222 |

@@ -68,6 +68,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Workflow pods (claude-code) | Prometheus (monitoring) | 9090 | Metrics query |
 | Workflow pods (claude-code) | Horenso (horenso) | 3000 | Task dispatch |
 | notifications-controller (argocd) | Horenso (horenso) | 3000 | Alertmanager notifications |
+| task-fail-sync pods (argo) | Horenso (horenso) | 3000 | Task failure notification |
 | notifications-controller (argocd) | argocd-deployed eventsource (argo) | 12003 | ArgoCD deployment event relay |
 | Horenso (horenso) | task-dispatch-eventsource (argo) | 12002 | Task dispatch webhook |
 | Workflow pods (claude-code) | task-dispatch-eventsource (argo) | 12002 | Adjudication webhook |

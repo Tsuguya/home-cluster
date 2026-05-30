@@ -10,7 +10,7 @@ jobs:
   kubeconform:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install kubeconform
         run: |
@@ -36,7 +36,7 @@ jobs:
   helm-template:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install tools
         run: |
@@ -113,7 +113,7 @@ jobs:
   image-existence:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install tools
         run: |
@@ -122,7 +122,7 @@ jobs:
           curl -fsSL https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_x86_64.tar.gz \
             | tar xz -C /usr/local/bin crane
 
-      - uses: azure/setup-helm@v5
+      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
 
       - name: Check image existence
         run: |
@@ -233,9 +233,9 @@ jobs:
       issues: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: "24"
 
@@ -243,12 +243,12 @@ jobs:
         run: npm ci
         working-directory: .github/mcp/pr-review
 
-      - uses: azure/setup-helm@v5
+      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
 
       # Pinned to v1.0.99 — v1.0.100+ has a regression where install.sh
       # silently fails and the SDK can't fall back to its bundled binary.
       # Unpin once anthropics/claude-code-action#1260 lands.
-      - uses: anthropics/claude-code-action@v1.0.99
+      - uses: anthropics/claude-code-action@c3d45e8e941e1b2ad7b278c57482d9c5bf1f35b3 # v1.0.99
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_bots: "renovate[bot]"
@@ -299,7 +299,7 @@ jobs:
       issues: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.head_ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -309,7 +309,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - uses: azure/setup-helm@v5
+      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
 
       - name: Install kubeconform
         run: |
@@ -324,7 +324,7 @@ jobs:
       # Pinned to v1.0.99 — v1.0.100+ has a regression where install.sh
       # silently fails and the SDK can't fall back to its bundled binary.
       # Unpin once anthropics/claude-code-action#1260 lands.
-      - uses: anthropics/claude-code-action@v1.0.99
+      - uses: anthropics/claude-code-action@c3d45e8e941e1b2ad7b278c57482d9c5bf1f35b3 # v1.0.99
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_bots: "renovate[bot]"

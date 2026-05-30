@@ -89,6 +89,23 @@
       "matchManagers": ["github-actions"],
       "matchDepNames": ["anthropics/claude-code-action"],
       "allowedVersions": "<=1.0.99"
+    },
+    {
+      "description": "Pin external image digests in build pipelines (gated by digest-cooldown workflow)",
+      "matchFileNames": ["manifests/image-build/**", "manifests/talos-build/**"],
+      "matchDatasources": ["docker"],
+      "pinDigests": true
+    },
+    {
+      "description": "Do not pin first-party signed images (own registry)",
+      "matchPackageNames": ["registry.infra.tgy.io/**"],
+      "pinDigests": false
+    },
+    {
+      "description": "Docker digest age gate is unenforceable (renovate#38656); digest-cooldown workflow gates instead",
+      "matchDatasources": ["docker"],
+      "matchUpdateTypes": ["digest"],
+      "minimumReleaseAge": "0"
     }
   ]
 }

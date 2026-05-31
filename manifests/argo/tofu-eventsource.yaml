@@ -86,6 +86,34 @@ spec:
         key: credential
       active: false
       contentType: json
+    memory:
+      owner: Tsuguya
+      repository: memory
+      webhook:
+        endpoint: /memory
+        port: "12000"
+        method: POST
+      events:
+        - push
+      webhookSecret:
+        name: memory-github-webhook
+        key: credential
+      active: false
+      contentType: json
+    horenso:
+      owner: Tsuguya
+      repository: horenso
+      webhook:
+        endpoint: /horenso
+        port: "12000"
+        method: POST
+      events:
+        - push
+      webhookSecret:
+        name: horenso-github-webhook
+        key: credential
+      active: false
+      contentType: json
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor

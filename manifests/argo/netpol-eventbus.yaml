@@ -24,6 +24,8 @@ spec:
         - matchLabels:
             sensor-name: images-build
         - matchLabels:
+            sensor-name: single-repo-build
+        - matchLabels:
             sensor-name: alert-investigate
         - matchLabels:
             eventsource-name: task-dispatch

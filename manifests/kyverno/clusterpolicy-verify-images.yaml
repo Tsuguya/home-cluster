@@ -29,7 +29,7 @@ spec:
                       -----END PUBLIC KEY-----
                     signatureAlgorithm: sha256
                   signatureAlgorithm: sha256
-          mutateDigest: false
+          mutateDigest: true
           required: true
           verifyDigest: true
           useCache: true

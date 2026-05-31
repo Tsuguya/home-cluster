@@ -264,7 +264,7 @@ spec:
         args:
           - |
             IMAGE="registry.infra.tgy.io/tools/{{workflow.parameters.image-name}}@{{inputs.parameters.digest}}"
-            cosign sign --key /cosign/cosign.key --yes "$IMAGE"
+            cosign sign --registry-referrers-mode=legacy --new-bundle-format=false --use-signing-config=false --key /cosign/cosign.key --yes "$IMAGE"
         env:
           - name: HOME
             value: /tmp

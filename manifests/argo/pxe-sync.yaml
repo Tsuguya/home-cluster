@@ -54,7 +54,7 @@ spec:
         labels:
           pxe-sync: "true"
       container:
-        image: alpine:3.23
+        image: alpine:3.24
         resources:
           requests:
             cpu: 10m
@@ -107,7 +107,7 @@ spec:
             capabilities:
               drop: [ALL]
       container:
-        image: alpine:3.23
+        image: alpine:3.24
         resources:
           requests:
             cpu: 10m

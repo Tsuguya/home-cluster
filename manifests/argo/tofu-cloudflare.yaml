@@ -99,7 +99,7 @@ spec:
             limits:
               memory: 64Mi
         - name: git-clone
-          image: alpine/git:v2.52.0
+          image: alpine/git:v2.54.0
           command: [sh, -c]
           args:
             - |
@@ -233,7 +233,7 @@ spec:
             limits:
               memory: 32Mi
         - name: git-clone
-          image: alpine/git:v2.52.0
+          image: alpine/git:v2.54.0
           command: [sh, -c]
           args:
             - |

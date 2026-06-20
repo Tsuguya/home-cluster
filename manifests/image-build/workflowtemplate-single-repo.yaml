@@ -157,7 +157,7 @@ spec:
             limits:
               memory: 64Mi
       container:
-        image: moby/buildkit:v0.30.0@sha256:0168606be2315b7c807a03b3d8aa79beefdb31c98740cebdffdfeebf31190c9f
+        image: moby/buildkit:v0.31.0@sha256:a095b3d11ce1a9a05b6064ef515dfca0291ec5bcf2ea8178da8f6461924294e1
         command: [sh, -c]
         args:
           - |

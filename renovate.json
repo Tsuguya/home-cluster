@@ -102,8 +102,7 @@
       "pinDigests": false
     },
     {
-      "description": "Docker digest age gate is unenforceable (renovate#38656); digest-cooldown workflow gates instead",
-      "matchDatasources": ["docker"],
+      "description": "Digest age gate is unenforceable (renovate#38656 for docker, no commit timestamp for action digests) and leaves renovate/stability-days pending forever; digest-cooldown workflow gates instead",
       "matchUpdateTypes": ["digest", "pinDigest"],
       "minimumReleaseAge": "0"
     }

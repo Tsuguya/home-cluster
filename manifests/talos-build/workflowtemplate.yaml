@@ -205,8 +205,9 @@ spec:
             # renovate: datasource=docker depName=ghcr.io/siderolabs/iscsi-tools
             - ghcr.io/siderolabs/iscsi-tools:v0.2.0
             - --system-extension-image
-            # renovate: datasource=docker depName=ghcr.io/siderolabs/spin
-            - ghcr.io/siderolabs/spin:v0.24.0
+            # self-built mirror until siderolabs publishes spin v0.25.x
+            # (build: talos-custom-build/extensions/spin)
+            - ghcr.io/tsuguya/spin:v0.25.1@sha256:013755d0cfb72578ac199358e1e3bb4e74584c7bcb80dc464cd0c3539496d751
             - --system-extension-image
             # renovate: datasource=docker depName=ghcr.io/siderolabs/kata-containers
             - ghcr.io/siderolabs/kata-containers:3.30.0
@@ -328,8 +329,9 @@ spec:
             # renovate: datasource=docker depName=ghcr.io/siderolabs/iscsi-tools
             - ghcr.io/siderolabs/iscsi-tools:v0.2.0
             - --system-extension-image
-            # renovate: datasource=docker depName=ghcr.io/siderolabs/spin
-            - ghcr.io/siderolabs/spin:v0.24.0
+            # self-built mirror until siderolabs publishes spin v0.25.x
+            # (build: talos-custom-build/extensions/spin)
+            - ghcr.io/tsuguya/spin:v0.25.1@sha256:013755d0cfb72578ac199358e1e3bb4e74584c7bcb80dc464cd0c3539496d751
             - --system-extension-image
             # renovate: datasource=docker depName=ghcr.io/siderolabs/kata-containers
             - ghcr.io/siderolabs/kata-containers:3.30.0
@@ -370,8 +372,9 @@ spec:
             # renovate: datasource=docker depName=ghcr.io/siderolabs/iscsi-tools
             - ghcr.io/siderolabs/iscsi-tools:v0.2.0
             - --system-extension-image
-            # renovate: datasource=docker depName=ghcr.io/siderolabs/spin
-            - ghcr.io/siderolabs/spin:v0.24.0
+            # self-built mirror until siderolabs publishes spin v0.25.x
+            # (build: talos-custom-build/extensions/spin)
+            - ghcr.io/tsuguya/spin:v0.25.1@sha256:013755d0cfb72578ac199358e1e3bb4e74584c7bcb80dc464cd0c3539496d751
             - --system-extension-image
             # renovate: datasource=docker depName=ghcr.io/siderolabs/kata-containers
             - ghcr.io/siderolabs/kata-containers:3.30.0

@@ -122,7 +122,7 @@ jobs:
           curl -fsSL https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_x86_64.tar.gz \
             | tar xz -C /usr/local/bin crane
 
-      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
 
       - name: Check image existence
         run: |
@@ -243,7 +243,7 @@ jobs:
         run: npm ci
         working-directory: .github/mcp/pr-review
 
-      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
 
       # Pinned to v1.0.99 — v1.0.100+ has a regression where install.sh
       # silently fails and the SDK can't fall back to its bundled binary.
@@ -309,7 +309,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
 
       - name: Install kubeconform
         run: |

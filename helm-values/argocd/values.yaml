@@ -254,7 +254,7 @@ notifications:
                 "url": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}?operation=true",
                 "color": 15298678,
                 "fields": [
-                  {"name": "Error", "value": "{{.app.status.operationState.message | trunc 500 }}", "inline": false}
+                  {"name": "Error", "value": {{.app.status.operationState.message | trunc 500 | toJson}}, "inline": false}
                 ]
               }]
             }
@@ -265,7 +265,7 @@ notifications:
               "app": "{{.app.metadata.name}}",
               "event": "sync-failed",
               "sync_status": "Failed",
-              "message": "{{.app.status.operationState.message | trunc 500 }}",
+              "message": {{.app.status.operationState.message | trunc 500 | toJson}},
               "url": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}?operation=true"
             }
     template.app-health-degraded: |

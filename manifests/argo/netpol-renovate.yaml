@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: renovate
+  namespace: argo
+spec:
+  endpointSelector:
+    matchLabels:
+      renovate: "true"
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            app: harbor
+            component: nginx
+            io.kubernetes.pod.namespace: harbor
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP

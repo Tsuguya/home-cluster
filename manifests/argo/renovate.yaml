@@ -1,0 +1,137 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: renovate-executor
+  namespace: argo
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: renovate-executor
+  namespace: argo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argo-workflows-edit
+subjects:
+  - kind: ServiceAccount
+    name: renovate-executor
+    namespace: argo
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: renovate
+  namespace: argo
+spec:
+  activeDeadlineSeconds: 3600
+  serviceAccountName: renovate-executor
+  entrypoint: main
+  podMetadata:
+    labels:
+      renovate: "true"
+  templates:
+    - name: main
+      volumes:
+        - name: github-token
+          emptyDir: {}
+        - name: github-app-secret
+          secret:
+            secretName: github-app-private-key
+        - name: workdir
+          emptyDir: {}
+      initContainers:
+        - name: github-auth
+          image: registry.infra.tgy.io/tools/argo-tools:latest
+          command: [github-auth.sh]
+          env:
+            - name: GITHUB_APP_ID
+              value: "2998228"
+            - name: GITHUB_APP_INSTALLATION_ID
+              value: "113765957"
+          securityContext:
+            runAsUser: 65532
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: github-app-secret
+              mountPath: /github-app
+              readOnly: true
+            - name: github-token
+              mountPath: /github-token
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+      container:
+        image: ghcr.io/renovatebot/renovate:43.251.3@sha256:e5c59392e4fc8279e2034773f356c06e0a5ffc0c5ad97ab9c2edc1d9944fb9af
+        command: [sh, -c]
+        args:
+          - |
+            set -e
+            export RENOVATE_TOKEN=$(cat /github-token/token)
+            export RENOVATE_HOST_RULES=$(node -e "console.log(JSON.stringify([{matchHost:'registry.infra.tgy.io',username:process.env.HARBOR_USER,password:process.env.HARBOR_PASS,hostType:'docker'}]))")
+            node /usr/src/app/dist/renovate.js
+        env:
+          - name: HARBOR_USER
+            valueFrom:
+              secretKeyRef:
+                name: renovate-harbor-robot
+                key: username
+          - name: HARBOR_PASS
+            valueFrom:
+              secretKeyRef:
+                name: renovate-harbor-robot
+                key: password
+          - name: RENOVATE_PLATFORM
+            value: github
+          - name: RENOVATE_REPOSITORIES
+            value: '["Tsuguya/home-cluster","Tsuguya/home-infra","Tsuguya/home-cloudflare"]'
+          - name: RENOVATE_AUTODISCOVER
+            value: "false"
+          - name: RENOVATE_ONBOARDING
+            value: "false"
+          - name: LOG_LEVEL
+            value: info
+          # renovate image runs under the argo restricted-PSA uid (65532);
+          # give it a writable HOME and base dir so git/cache work
+          - name: HOME
+            value: /tmp
+          - name: RENOVATE_BASE_DIR
+            value: /tmp/renovate
+        volumeMounts:
+          - name: github-token
+            mountPath: /github-token
+            readOnly: true
+          - name: workdir
+            mountPath: /tmp
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+---
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: renovate-periodic
+  namespace: argo
+spec:
+  schedules:
+    - "0 */4 * * *"
+  timezone: Asia/Tokyo
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  workflowSpec:
+    workflowTemplateRef:
+      name: renovate

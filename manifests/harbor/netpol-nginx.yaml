@@ -41,6 +41,9 @@ spec:
         - matchLabels:
             app.kubernetes.io/managed-by: trivy-operator
             io.kubernetes.pod.namespace: trivy-system
+        - matchLabels:
+            renovate: "true"
+            io.kubernetes.pod.namespace: argo
       toPorts:
         - ports:
             - port: "8443"

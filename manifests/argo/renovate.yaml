@@ -75,7 +75,7 @@ spec:
             set -e
             export RENOVATE_TOKEN=$(cat /github-token/token)
             export RENOVATE_HOST_RULES=$(node -e "console.log(JSON.stringify([{matchHost:'registry.infra.tgy.io',username:process.env.HARBOR_USER,password:process.env.HARBOR_PASS,hostType:'docker'}]))")
-            node /usr/src/app/dist/renovate.js
+            exec renovate
         env:
           - name: HARBOR_USER
             valueFrom:

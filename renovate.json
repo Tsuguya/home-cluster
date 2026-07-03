@@ -65,19 +65,26 @@
     },
     {
       "description": "Group QNAP CSI packages (chart version + all images)",
-      "matchPackagePatterns": ["qnap-dev/QNAP-CSI-PlugIn", "qnapsystem/"],
-      "groupName": "qnap-csi"
+      "groupName": "qnap-csi",
+      "matchPackageNames": [
+        "/qnap-dev/QNAP-CSI-PlugIn/",
+        "/qnapsystem//"
+      ]
     },
     {
       "description": "Group seaweedfs packages",
-      "matchPackagePatterns": ["seaweedfs"],
-      "groupName": "seaweedfs"
+      "groupName": "seaweedfs",
+      "matchPackageNames": [
+        "/seaweedfs/"
+      ]
     },
     {
       "description": "Group Talos system extensions",
-      "matchPackagePatterns": ["^ghcr.io/siderolabs/(iscsi-tools|spin|kata-containers)$"],
       "groupName": "talos-extensions",
-      "automerge": false
+      "automerge": false,
+      "matchPackageNames": [
+        "/^ghcr.io/siderolabs/(iscsi-tools|spin|kata-containers)$/"
+      ]
     },
     {
       "description": "Pin Gateway API to <1.5.0 until Cilium 1.20 ships v1.5 conformance (Cilium 1.19 supports v1.4.1 only)",

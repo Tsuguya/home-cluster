@@ -36,7 +36,12 @@ spec:
             return event.body.ref == "refs/heads/main"
           end
           if event.body.action ~= nil and event.body.issue ~= nil then
+            -- only the Dependency Dashboard, and ignore renovate's own edits
+            -- (bot unchecking the box) to avoid a self-trigger loop
             return event.body.action == "edited"
+              and event.body.issue.title == "Dependency Dashboard"
+              and event.body.sender ~= nil
+              and event.body.sender.type == "User"
           end
           return false
     - name: home-infra

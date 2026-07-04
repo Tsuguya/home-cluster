@@ -1,0 +1,114 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: renovate-webhook
+  namespace: argo
+spec:
+  template:
+    serviceAccountName: workflow-executor
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      seccompProfile:
+        type: RuntimeDefault
+    container:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          memory: 64Mi
+      securityContext:
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+  dependencies:
+    - name: home-cluster
+      eventSourceName: github-webhook
+      eventName: renovate-home-cluster
+      filters:
+        script: &renovateFilter |-
+          if event.body == nil then return false end
+          if event.body.ref ~= nil then
+            return event.body.ref == "refs/heads/main"
+          end
+          if event.body.action ~= nil and event.body.issue ~= nil then
+            -- only the Dependency Dashboard, and ignore renovate's own edits
+            -- (bot unchecking the box) to avoid a self-trigger loop
+            return event.body.action == "edited"
+              and event.body.issue.title == "Dependency Dashboard"
+              and event.body.sender ~= nil
+              and event.body.sender.type == "User"
+          end
+          return false
+    - name: home-infra
+      eventSourceName: github-webhook
+      eventName: renovate-home-infra
+      filters:
+        script: *renovateFilter
+    - name: home-cloudflare
+      eventSourceName: github-webhook
+      eventName: renovate-home-cloudflare
+      filters:
+        script: *renovateFilter
+  triggers:
+    - template:
+        name: renovate-home-cluster
+        conditions: "home-cluster"
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: renovate-home-cluster-
+                namespace: argo
+              spec:
+                workflowTemplateRef:
+                  name: renovate
+                arguments:
+                  parameters:
+                    - name: repositories
+                      value: '["Tsuguya/home-cluster"]'
+    - template:
+        name: renovate-home-infra
+        conditions: "home-infra"
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: renovate-home-infra-
+                namespace: argo
+              spec:
+                workflowTemplateRef:
+                  name: renovate
+                arguments:
+                  parameters:
+                    - name: repositories
+                      value: '["Tsuguya/home-infra"]'
+    - template:
+        name: renovate-home-cloudflare
+        conditions: "home-cloudflare"
+        argoWorkflow:
+          operation: submit
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: renovate-home-cloudflare-
+                namespace: argo
+              spec:
+                workflowTemplateRef:
+                  name: renovate
+                arguments:
+                  parameters:
+                    - name: repositories
+                      value: '["Tsuguya/home-cloudflare"]'

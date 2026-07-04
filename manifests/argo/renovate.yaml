@@ -24,6 +24,13 @@ metadata:
   name: renovate
   namespace: argo
 spec:
+  arguments:
+    parameters:
+      - name: repositories
+        value: '["Tsuguya/home-cluster","Tsuguya/home-infra","Tsuguya/home-cloudflare"]'
+  synchronization:
+    mutex:
+      name: renovate
   activeDeadlineSeconds: 3600
   serviceAccountName: renovate-executor
   entrypoint: main
@@ -90,7 +97,7 @@ spec:
           - name: RENOVATE_PLATFORM
             value: github
           - name: RENOVATE_REPOSITORIES
-            value: '["Tsuguya/home-cluster","Tsuguya/home-infra","Tsuguya/home-cloudflare"]'
+            value: "{{workflow.parameters.repositories}}"
           - name: RENOVATE_AUTODISCOVER
             value: "false"
           - name: RENOVATE_ONBOARDING

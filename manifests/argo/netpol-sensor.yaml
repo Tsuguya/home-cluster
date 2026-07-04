@@ -17,6 +17,7 @@ spec:
           - single-repo-build
           - alert-investigate
           - task-dispatch
+          - renovate-webhook
   ingressDeny:
     - fromEntities:
         - world

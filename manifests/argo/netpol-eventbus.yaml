@@ -39,6 +39,8 @@ spec:
             eventsource-name: argocd-deployed
         - matchLabels:
             sensor-name: talos-extension-bump
+        - matchLabels:
+            sensor-name: renovate-webhook
       toPorts:
         - ports:
             - port: "4222"

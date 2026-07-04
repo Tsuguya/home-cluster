@@ -114,6 +114,51 @@ spec:
         key: credential
       active: false
       contentType: json
+    renovate-home-cluster:
+      owner: Tsuguya
+      repository: home-cluster
+      webhook:
+        endpoint: /renovate-home-cluster
+        port: "12000"
+        method: POST
+      events:
+        - push
+        - issues
+      webhookSecret:
+        name: renovate-home-cluster-webhook
+        key: credential
+      active: false
+      contentType: json
+    renovate-home-infra:
+      owner: Tsuguya
+      repository: home-infra
+      webhook:
+        endpoint: /renovate-home-infra
+        port: "12000"
+        method: POST
+      events:
+        - push
+        - issues
+      webhookSecret:
+        name: renovate-home-infra-webhook
+        key: credential
+      active: false
+      contentType: json
+    renovate-home-cloudflare:
+      owner: Tsuguya
+      repository: home-cloudflare
+      webhook:
+        endpoint: /renovate-home-cloudflare
+        port: "12000"
+        method: POST
+      events:
+        - push
+        - issues
+      webhookSecret:
+        name: renovate-home-cloudflare-webhook
+        key: credential
+      active: false
+      contentType: json
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor

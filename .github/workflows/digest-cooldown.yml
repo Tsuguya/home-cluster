@@ -16,6 +16,6 @@ jobs:
   cooldown:
     runs-on: ubuntu-latest
     steps:
-      - uses: Tsuguya/images/digest-cooldown@1e732584cd5d8ec4e6d5da4e29d6de7d3572f841 # main
+      - uses: Tsuguya/images/digest-cooldown@a613c276e82db3b9cb2cea18e526dce366e8aed8 # main
         with:
           cooldown-days: 3

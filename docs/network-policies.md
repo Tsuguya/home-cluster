@@ -74,7 +74,6 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | Horenso (horenso) | task-dispatch-eventsource (argo) | 12002 | Task dispatch webhook |
 | Workflow pods (claude-code) | task-dispatch-eventsource (argo) | 12002 | Adjudication webhook |
 | Workflow pods (claude-code) | ArgoCD server (argocd) | 8080 | ArgoCD API access |
-| Workflow pods (claude-code) | memory (memory) | 3000 | Memory service access |
 | memory (memory) | qdrant (qdrant) | 6333 | Vector database |
 | memory (memory) | ollama (ollama) | 11434 | LLM inference |
 
@@ -103,7 +102,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **redis-secret-init** (Job) | (deny world) | kube-apiserver |
 | **cloudflared** | (deny world) | *.v2.argotunnel.com + cftunnel.com + h2.cftunnel.com + quic.cftunnel.com:443/7844 (7844 TCP+UDP), server:8080, eventsource (argo):12000, kanidm (kanidm):8443, nextcloud (nextcloud):80, harbor-nginx (harbor):8443 |
 
-## argo (18 policies)
+## argo (19 policies)
 
 | Component | Ingress | Egress |
 |---|---|---|
@@ -116,7 +115,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **task-status-sync-eventsource** | (none) | kube-apiserver, eventbus:4222 |
 | **task-status-sync-sensor** | (none) | kube-apiserver, eventbus:4222 |
 | **task-fail-sync** (task-fail-sync=true) | (none) | horenso (horenso):3000 |
-| **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, single-repo-build, alert-investigate, task-dispatch) | (deny world) | kube-apiserver, eventbus:4222, workflows-server:2746 |
+| **sensor** (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, single-repo-build, alert-investigate, task-dispatch, renovate-webhook) | (deny world) | kube-apiserver, eventbus:4222, workflows-server:2746 |
 | **talos-extension-bump-sensor** | (none) | kube-apiserver, eventbus:4222 |
 | **events-controller** | host → 8081 | kube-apiserver, eventbus:8222 |
 | **eventbus** | eventsource (github-webhook), alertmanager-eventsource (alertmanager-webhook), task-dispatch-eventsource (task-dispatch), task-status-sync-eventsource (task-status-sync), argocd-deployed-eventsource (argocd-deployed), sensors (tofu-cloudflare, upgrade-k8s, pxe-sync, talos-build, images-build, single-repo-build, alert-investigate, task-dispatch, task-status-sync, talos-extension-bump) → 4222; self → 6222/7777; events-controller → 8222 | self:6222/7777 |
@@ -125,6 +124,7 @@ All regular pods can reach kube-dns for DNS resolution. Individual CNPs below do
 | **pxe-sync** (pxe-sync=true) | (deny world) | kube-apiserver, github.com + api.github.com + *.githubusercontent.com + dl-cdn.alpinelinux.org :443, seaweedfs-filer (seaweedfs):8333, QNAP NAS (192.168.5.240):2049 (NFS) |
 | **kanidm-backup** (kanidm-backup=true) | (deny world) | kube-apiserver, *.r2.cloudflarestorage.com:443, seaweedfs-filer (seaweedfs):8333 |
 | **kanidm-repl-exchange** (kanidm-repl-exchange=true) | (deny world) | kube-apiserver, seaweedfs-filer (seaweedfs):8333 |
+| **renovate** (renovate=true) | (none) | harbor-nginx (harbor):8443 |
 
 ## monitoring (11 policies)
 
